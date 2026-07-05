@@ -1,0 +1,145 @@
+<div class="dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="header-avatar-section">
+      <div class="avatar-wrap">
+        <img [src]="avatarUrl()" [alt]="user().first_name" class="avatar"
+             (error)="$any($event.target).src='assets/images/avatar-male.png'" />
+        <span class="status-dot"
+              [class.active]="user().is_active && user().is_email_verified"
+              [class.pending]="!user().is_email_verified"
+              [class.disabled]="user().is_email_verified && !user().is_active"></span>
+      </div>
+      <div>
+        <h2 class="user-name">{{ user().first_name }} {{ user().last_name }}</h2>
+        <p class="user-role">{{ user().role?.name ?? '—' }}</p>
+        <mat-chip [color]="statusColor()" highlighted class="status-chip">{{ statusLabel() }}</mat-chip>
+      </div>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Body -->
+  <div class="dialog-body">
+    <!-- Contact -->
+    <section class="info-section">
+      <h4 class="section-title">Contact</h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <mat-icon class="info-icon">email</mat-icon>
+          <div>
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ user().email }}</span>
+          </div>
+        </div>
+        @if (user().mobile) {
+          <div class="info-item">
+            <mat-icon class="info-icon">phone</mat-icon>
+            <div>
+              <span class="info-label">Mobile</span>
+              <span class="info-value">{{ user().mobile }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Work -->
+    <section class="info-section">
+      <h4 class="section-title">Work Details</h4>
+      <div class="info-grid">
+        @if (user().position) {
+          <div class="info-item">
+            <mat-icon class="info-icon">work</mat-icon>
+            <div>
+              <span class="info-label">Position</span>
+              <span class="info-value">{{ user().position }}</span>
+            </div>
+          </div>
+        }
+        @if (user().location) {
+          <div class="info-item">
+            <mat-icon class="info-icon">location_on</mat-icon>
+            <div>
+              <span class="info-label">Location</span>
+              <span class="info-value">{{ user().location }}</span>
+            </div>
+          </div>
+        }
+        @if (user().report_to) {
+          <div class="info-item">
+            <mat-icon class="info-icon">supervisor_account</mat-icon>
+            <div>
+              <span class="info-label">Reports To</span>
+              <span class="info-value">{{ user().report_to }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Account -->
+    <section class="info-section">
+      <h4 class="section-title">Account</h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <mat-icon class="info-icon">verified_user</mat-icon>
+          <div>
+            <span class="info-label">Email Verified</span>
+            <span class="info-value" [class.verified]="user().is_email_verified">
+              {{ user().is_email_verified ? 'Verified' : 'Not Verified' }}
+            </span>
+          </div>
+        </div>
+        @if (user().created_at) {
+          <div class="info-item">
+            <mat-icon class="info-icon">calendar_today</mat-icon>
+            <div>
+              <span class="info-label">Joined</span>
+              <span class="info-value">{{ user().created_at | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        }
+        @if (user().last_login) {
+          <div class="info-item">
+            <mat-icon class="info-icon">login</mat-icon>
+            <div>
+              <span class="info-label">Last Login</span>
+              <span class="info-value">{{ user().last_login | date:'medium' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Actions -->
+  <div class="dialog-actions">
+    @if (!user().is_email_verified) {
+      <button mat-stroked-button color="accent" (click)="resendCode()">
+        <mat-icon>mark_email_unread</mat-icon>
+        Resend Verification
+      </button>
+    }
+    @if (user().is_email_verified) {
+      @if (user().is_active) {
+        <button mat-stroked-button color="warn" (click)="toggleStatus()">
+          <mat-icon>person_off</mat-icon>
+          Disable User
+        </button>
+      } @else {
+        <button mat-stroked-button color="primary" (click)="toggleStatus()">
+          <mat-icon>how_to_reg</mat-icon>
+          Enable User
+        </button>
+      }
+    }
+    <button mat-flat-button color="primary" (click)="close()">Close</button>
+  </div>
+</div>

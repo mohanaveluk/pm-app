@@ -1,0 +1,211 @@
+<!-- ═══ HERO ═══════════════════════════════════════════════════════════ -->
+<section class="about-hero">
+  <div class="about-hero__overlay"></div>
+  <div class="container about-hero__inner" @fadeUp>
+    <div class="about-hero__badge"><mat-icon>factory</mat-icon> Industrial Construction Leaders</div>
+    <h1>Transforming Industrial Construction<br>Through Digital Innovation</h1>
+    <p>Empowering EPC contractors, manufacturers, and industrial operators with intelligent<br class="d-none-sm"> project and material management solutions.</p>
+    <div class="hero-actions">
+      <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+        <mat-icon>calendar_today</mat-icon> Schedule a Demo
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/features">
+        <mat-icon>star</mat-icon> Explore Features
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MISSION & VISION ══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="mv-grid">
+      <div class="mv-card mv-card--mission pm-card" @fadeUp>
+        <div class="mv-card__icon"><mat-icon>flag</mat-icon></div>
+        <h3>Our Mission</h3>
+        <p>To provide industrial organizations with a digital platform that improves efficiency, quality, visibility, and traceability throughout the project lifecycle — from engineering design through asset commissioning and maintenance.</p>
+        <div class="mv-pillars">
+          @for (p of ['Efficiency','Quality','Visibility','Traceability']; track p) {
+            <span class="mv-pill">{{ p }}</span>
+          }
+        </div>
+      </div>
+      <div class="mv-card mv-card--vision pm-card" @fadeUp>
+        <div class="mv-card__icon mv-card__icon--v"><mat-icon>visibility</mat-icon></div>
+        <h3>Our Vision</h3>
+        <p>To become the industry's most trusted digital platform for industrial construction and asset lifecycle management — powering the world's most complex engineering projects with intelligence, traceability and collaboration.</p>
+        <div class="mv-pillars">
+          @for (p of ['Trusted','Intelligent','Scalable','Global']; track p) {
+            <span class="mv-pill mv-pill--v">{{ p }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ OUR STORY / TIMELINE ═════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="story-layout">
+      <div class="story-text" @fadeUp>
+        <span class="section-tag">Our Story</span>
+        <h2>Built From Real Industrial Pain</h2>
+        <p class="story-lead">The platform was created to solve the complex challenges faced by large-scale industrial construction projects managing millions of material records across dozens of sites.</p>
+        <p>Traditional spreadsheets and disconnected systems create cascading problems across project teams:</p>
+        <ul class="pain-list">
+          @for (pain of [
+            {icon:'content_copy',    text:'Material Duplication & Data Inconsistency'},
+            {icon:'schedule',        text:'Procurement Delays from Poor Visibility'},
+            {icon:'report_problem',  text:'Quality Issues & NCR Backlogs'},
+            {icon:'inventory_2',     text:'Inventory Excesses and Critical Shortages'},
+            {icon:'handshake',       text:'Supplier Inefficiencies and AVL Management Chaos'}
+          ]; track pain.text) {
+            <li><mat-icon>{{ pain.icon }}</mat-icon><span>{{ pain.text }}</span></li>
+          }
+        </ul>
+        <p class="story-resolve">Our platform unifies engineering, procurement, warehouse, inspection, and construction execution into a single enterprise solution — eliminating silos and driving project success.</p>
+      </div>
+      <div class="timeline" [@staggerList]="timeline.length">
+        @for (event of timeline; track event.year; let last = $last) {
+          <div class="tl-item">
+            <div class="tl-marker" [style.background]="event.color">{{ event.year }}</div>
+            <div class="tl-body pm-card">
+              <h5>{{ event.title }}</h5>
+              <p>{{ event.desc }}</p>
+            </div>
+          </div>
+          @if (!last) { <div class="tl-line"></div> }
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CORE VALUES ════════════════════════════════════════════════════ -->
+<section class="section values-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">Core Values</span>
+      <h2>What We Stand For</h2>
+      <p>The principles that guide every decision, every product feature and every customer interaction</p>
+    </div>
+    <div class="values-grid" [@staggerList]="values.length">
+      @for (v of values; track v.title) {
+        <div class="val-card">
+          <div class="val-card__icon" [style.background]="v.bg" [style.color]="v.color">
+            <mat-icon>{{ v.icon }}</mat-icon>
+          </div>
+          <h5>{{ v.title }}</h5>
+          <p>{{ v.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INDUSTRIES WE SERVE ══════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Industries</span>
+      <h2>Industries We Serve</h2>
+      <p>Deep domain expertise and purpose-built workflows for every major industrial construction sector</p>
+    </div>
+    <div class="ind-grid" [@staggerList]="industries.length">
+      @for (ind of industries; track ind.title) {
+        <div class="ind-chip pm-card">
+          <div class="ind-chip__icon" [style.color]="ind.color" [style.background]="ind.color+'14'">
+            <mat-icon>{{ ind.icon }}</mat-icon>
+          </div>
+          <div>
+            <strong>{{ ind.title }}</strong>
+            <span>{{ ind.count }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLATFORM STATISTICS ═══════════════════════════════════════════ -->
+<section class="section stats-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">By the Numbers</span>
+      <h2>Platform Scale & Impact</h2>
+    </div>
+    <div class="stats-grid" [@staggerList]="stats.length">
+      @for (s of stats; track s.label; let i = $index) {
+        <div class="stat-card">
+          <div class="stat-card__icon" [style.color]="s.color"><mat-icon>{{ s.icon }}</mat-icon></div>
+          <div class="stat-card__val" [style.color]="s.color">{{ formatStat(animatedStats()[i], i) }}</div>
+          <div class="stat-card__lbl">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHY CHOOSE US ══════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Why Choose Us</span>
+      <h2>Why Customers Choose Our Platform</h2>
+      <p>Enterprise grade, industry proven, globally trusted — the platform industrial leaders rely on</p>
+    </div>
+    <div class="why-grid" [@staggerList]="whyCards.length">
+      @for (w of whyCards; track w.title) {
+        <div class="why-card pm-card">
+          <div class="why-card__icon" [style.background]="w.color+'14'" [style.color]="w.color">
+            <mat-icon>{{ w.icon }}</mat-icon>
+          </div>
+          <h5>{{ w.title }}</h5>
+          <p>{{ w.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEADERSHIP ════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Leadership</span>
+      <h2>The Team Behind the Platform</h2>
+      <p>Industry veterans and technology experts united by a passion for industrial digital transformation</p>
+    </div>
+    <div class="leaders-grid" [@staggerList]="leaders.length">
+      @for (l of leaders; track l.name) {
+        <div class="leader-card pm-card">
+          <div class="leader-card__avatar" [style.background]="l.color">{{ l.initials }}</div>
+          <div class="leader-card__info">
+            <strong>{{ l.name }}</strong>
+            <span class="leader-pos" [style.color]="l.color">{{ l.position }}</span>
+            <p>{{ l.desc }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT CTA ════════════════════════════════════════════════════ -->
+<section class="about-cta">
+  <div class="about-cta__overlay"></div>
+  <div class="container about-cta__inner" @fadeUp>
+    <div class="cta-badge"><mat-icon>support_agent</mat-icon> Get In Touch</div>
+    <h2>Ready to Transform Your Industrial Operations?</h2>
+    <p>Talk to our industrial construction experts and see the platform in action</p>
+    <div class="cta-actions">
+      <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+        <mat-icon>rocket_launch</mat-icon> Request Demo
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/pricing">
+        <mat-icon>attach_money</mat-icon> View Pricing
+      </a>
+    </div>
+  </div>
+</section>

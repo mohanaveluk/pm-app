@@ -1,0 +1,313 @@
+<!-- ═══════════════════════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════════════════════════ -->
+<section class="contact-hero" aria-labelledby="hero-title">
+  <div class="contact-hero__overlay" aria-hidden="true"></div>
+
+  <div class="container contact-hero__inner" @fadeUp>
+    <div class="hero-badge" aria-hidden="true">
+      <mat-icon>support_agent</mat-icon>
+      Industrial Support Team
+    </div>
+    <h1 id="hero-title">Contact Us</h1>
+    <p>
+      We're here to help. Reach out to our support team for assistance with
+      platform onboarding, material management, ERP integration, or any
+      general inquiry.
+    </p>
+  </div>
+
+  <!-- Decorative SVG wave -->
+  <div class="hero-wave" aria-hidden="true">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="var(--wave-fill,#F4F8FB)" />
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONTACT INFO CARDS
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light" aria-labelledby="info-title">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Get In Touch</span>
+      <h2 id="info-title">How to Reach Us</h2>
+      <p>Multiple channels available — choose whatever works best for you</p>
+    </div>
+
+    <div class="info-cards" [@stagger]="contactCards.length">
+      @for (card of contactCards; track card.title) {
+        <div class="info-card pm-card">
+          <div class="info-card__icon"
+               [style.background]="card.bg"
+               [style.color]="card.color"
+               aria-hidden="true">
+            <mat-icon>{{ card.icon }}</mat-icon>
+          </div>
+          <h3 class="info-card__title">{{ card.title }}</h3>
+          @if (card.href) {
+            <a class="info-card__value"
+               [href]="card.href"
+               [style.color]="card.color">
+              {{ card.value }}
+            </a>
+          } @else {
+            <span class="info-card__value" [style.color]="card.color">{{ card.value }}</span>
+          }
+          <p class="info-card__desc">{{ card.description }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONTACT FORM  ·  SUCCESS STATE
+════════════════════════════════════════════════════════════ -->
+<section class="section" aria-labelledby="form-title">
+  <div class="container">
+    <div class="form-layout">
+
+      <!-- Left: copy block -->
+      <aside class="form-aside" @fadeUp aria-hidden="true">
+        <span class="section-tag">Send a Message</span>
+        <h2 id="form-title">Tell Us How We Can Help</h2>
+        <p>
+          Whether you need help with platform onboarding, material data
+          migration, ERP integration, or pricing — our expert team is
+          ready to assist.
+        </p>
+
+        <ul class="form-aside__list">
+          @for (item of [
+            {icon:'rocket_launch',  text:'Platform Onboarding & Setup'},
+            {icon:'inventory_2',    text:'Material Management Queries'},
+            {icon:'hub',            text:'ERP & CMMS Integration'},
+            {icon:'attach_money',   text:'Pricing & Enterprise Plans'},
+            {icon:'build_circle',   text:'Technical Support'},
+            {icon:'school',         text:'Training & Documentation'}
+          ]; track item.text) {
+            <li>
+              <span class="aside-icon" aria-hidden="true">
+                <mat-icon>{{ item.icon }}</mat-icon>
+              </span>
+              <span>{{ item.text }}</span>
+            </li>
+          }
+        </ul>
+
+        <div class="response-badge">
+          <mat-icon aria-hidden="true">timer</mat-icon>
+          Typical response time: <strong>within 24 hours</strong>
+        </div>
+      </aside>
+
+      <!-- Right: form card or success card -->
+      <div class="form-panel">
+
+        <!-- ── SUCCESS STATE ─────────────────────────────────────── -->
+        @if (submitted()) {
+          <div class="success-card pm-card" @successIn role="status" aria-live="polite">
+            <div class="success-card__icon" aria-hidden="true">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <h3>Thank You for Contacting Us</h3>
+            <p>
+              Your message has been successfully submitted. Our support team
+              will review your inquiry and get back to you shortly.
+            </p>
+            <p class="success-note">
+              <mat-icon aria-hidden="true">schedule</mat-icon>
+              We typically respond within 24 hours.
+            </p>
+            <div class="success-actions">
+              <button mat-raised-button class="btn-primary" (click)="resetForm()">
+                <mat-icon>edit</mat-icon> Submit Another Request
+              </button>
+              <a mat-stroked-button class="btn-secondary" routerLink="/home">
+                <mat-icon>home</mat-icon> Return Home
+              </a>
+            </div>
+          </div>
+        }
+
+        <!-- ── FORM STATE ────────────────────────────────────────── -->
+        @if (!submitted()) {
+          <mat-card class="form-card" @fadeIn>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon class="form-card__icon" aria-hidden="true">send</mat-icon>
+                Send Us a Message
+              </mat-card-title>
+              <mat-card-subtitle>
+                All fields marked * are required
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <form [formGroup]="form"
+                    (ngSubmit)="onSubmit()"
+                    novalidate
+                    aria-label="Contact form">
+
+                <!-- Name row -->
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-w">
+                    <mat-label>First Name *</mat-label>
+                    <mat-icon matPrefix aria-hidden="true">person</mat-icon>
+                    <input matInput
+                           formControlName="firstName"
+                           placeholder="e.g. Rajesh"
+                           autocomplete="given-name"
+                           aria-required="true" />
+                    @if (err('firstName')) {
+                      <mat-error>{{ err('firstName') }}</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-w">
+                    <mat-label>Last Name *</mat-label>
+                    <mat-icon matPrefix aria-hidden="true">person_outline</mat-icon>
+                    <input matInput
+                           formControlName="lastName"
+                           placeholder="e.g. Kumar"
+                           autocomplete="family-name"
+                           aria-required="true" />
+                    @if (err('lastName')) {
+                      <mat-error>{{ err('lastName') }}</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+
+                <!-- Email -->
+                <mat-form-field appearance="outline" class="full-w">
+                  <mat-label>Email Address *</mat-label>
+                  <mat-icon matPrefix aria-hidden="true">mail</mat-icon>
+                  <input matInput
+                         type="email"
+                         formControlName="email"
+                         placeholder="you@company.com"
+                         autocomplete="email"
+                         aria-required="true" />
+                  @if (err('email')) {
+                    <mat-error>{{ err('email') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <!-- Mobile -->
+                <mat-form-field appearance="outline" class="full-w">
+                  <mat-label>Mobile Number</mat-label>
+                  <mat-icon matPrefix aria-hidden="true">call</mat-icon>
+                  <input matInput
+                         type="tel"
+                         formControlName="mobile"
+                         placeholder="+91 98765 43210"
+                         autocomplete="tel" />
+                  @if (err('mobile')) {
+                    <mat-error>{{ err('mobile') }}</mat-error>
+                  }
+                  <mat-hint>Optional — include country code</mat-hint>
+                </mat-form-field>
+
+                <!-- Message -->
+                <mat-form-field appearance="outline" class="full-w">
+                  <mat-label>Message *</mat-label>
+                  <mat-icon matPrefix aria-hidden="true">chat</mat-icon>
+                  <textarea matInput
+                            formControlName="message"
+                            rows="5"
+                            placeholder="Describe your question or requirement in detail…"
+                            maxlength="1000"
+                            aria-required="true"></textarea>
+                  @if (err('message')) {
+                    <mat-error>{{ err('message') }}</mat-error>
+                  }
+                  <mat-hint align="end">{{ messageLength }} / 1000</mat-hint>
+                </mat-form-field>
+
+                <!-- Submit -->
+                <div class="form-submit">
+                  <button mat-raised-button
+                          type="submit"
+                          class="submit-btn"
+                          [disabled]="loading()"
+                          aria-label="Send your message">
+                    @if (loading()) {
+                      <mat-spinner diameter="20" aria-hidden="true" />
+                      <span>Sending…</span>
+                    } @else {
+                      <ng-container>
+                        <mat-icon aria-hidden="true">send</mat-icon>
+                        <span>Send Message</span>
+                      </ng-container>
+                    }
+                  </button>
+                  <p class="form-privacy">
+                    <mat-icon aria-hidden="true">lock</mat-icon>
+                    Your data is secure and will never be shared.
+                  </p>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SOCIAL MEDIA
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light social-section" aria-labelledby="social-title">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Follow Us</span>
+      <h2 id="social-title">Connect With Us</h2>
+      <p>Stay updated on platform releases, industry insights and construction tech news</p>
+    </div>
+
+    <div class="social-row" [@stagger]="socialLinks.length">
+      @for (s of socialLinks; track s.label) {
+        <a class="social-btn"
+           [href]="s.url"
+           target="_blank"
+           rel="noopener noreferrer"
+           [attr.aria-label]="'Follow us on ' + s.label"
+           [matTooltip]="s.label"
+           [style.--social-color]="s.color">
+          <mat-icon aria-hidden="true">{{ s.icon }}</mat-icon>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER CTA
+════════════════════════════════════════════════════════════ -->
+<section class="section contact-cta" aria-labelledby="cta-title">
+  <div class="contact-cta__overlay" aria-hidden="true"></div>
+  <div class="container contact-cta__inner" @fadeUp>
+    <div class="cta-badge" aria-hidden="true">
+      <mat-icon>support</mat-icon> Need Immediate Assistance?
+    </div>
+    <h2 id="cta-title">Our dedicated support team is ready to assist you.</h2>
+    <p>Available Monday to Saturday, 9 AM – 6 PM IST</p>
+    <div class="cta-actions">
+      <a mat-raised-button
+         href="tel:+919876543210"
+         class="cta-btn-primary"
+         aria-label="Call our support team">
+        <mat-icon>call</mat-icon> Call Now
+      </a>
+      <a mat-stroked-button
+         href="mailto:support@icmp.io"
+         class="cta-btn-outline"
+         aria-label="Email our support team">
+        <mat-icon>mail</mat-icon> Email Support
+      </a>
+    </div>
+  </div>
+</section>

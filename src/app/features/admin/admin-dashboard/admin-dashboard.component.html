@@ -1,0 +1,205 @@
+<div class="dashboard page-enter">
+
+  <!-- Top bar -->
+  <div class="dash-topbar">
+    <div class="container">
+      <div class="dash-topbar__inner">
+        <div>
+          <h1>
+            Good {{ greeting }},
+            <span class="name">{{ currentUser()?.firstName || 'Admin' }}</span>
+          </h1>
+          <p class="dash-topbar__sub">
+            {{ summary()?.organization?.name || 'Your Organisation' }} &nbsp;·&nbsp;
+            <span class="status-chip status-chip--active">
+              <span class="material-icons" style="font-size:14px">verified</span>
+              {{ summary()?.organization?.status || 'Active' }}
+            </span>
+          </p>
+        </div>
+        <div class="dash-topbar__actions">
+          <a mat-raised-button routerLink="/admin/users/create" class="btn-primary">
+            <span class="material-icons">person_add</span> Add User
+          </a>
+          <a mat-icon-button routerLink="/admin/organization/profile"
+             aria-label="Organisation settings" matTooltip="Organisation Profile">
+            <span class="material-icons">settings</span>
+          </a>
+          <button mat-icon-button class="notif-btn" aria-label="Notifications">
+            <span class="material-icons">notifications</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container dash-body">
+
+    <!-- Stat Cards -->
+    <div class="stat-grid" [@staggerIn]="quickStats.length">
+      @for (s of quickStats; track s.label) {
+        <div class="stat-card pm-card">
+          <div class="stat-card__icon" [style.background]="s.color + '18'" [style.color]="s.color">
+            <span class="material-icons">{{ s.icon }}</span>
+          </div>
+          <div class="stat-card__body">
+            <div class="stat-card__value">{{ s.value }}</div>
+            <div class="stat-card__label">{{ s.label }}</div>
+            <div class="stat-card__change">{{ s.change }}</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="dash-grid">
+
+      <!-- Left column -->
+      <div class="dash-col dash-col--main">
+
+        <!-- Subscription card -->
+        @if (summary()?.subscription; as sub) {
+          <mat-card class="sub-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar>workspace_premium</mat-icon>
+              <mat-card-title>Current Subscription</mat-card-title>
+              <mat-card-subtitle>{{ sub.billingCycle | titlecase }} Plan</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="sub-details">
+                <div class="sub-item">
+                  <span class="sub-item__label">Plan</span>
+                  <span class="sub-item__value">{{ sub.planName }}</span>
+                </div>
+                <div class="sub-item">
+                  <span class="sub-item__label">Amount</span>
+                  <span class="sub-item__value">${{ sub.amount }}/{{ sub.billingCycle === 'MONTHLY' ? 'mo' : 'yr' }}</span>
+                </div>
+                <div class="sub-item">
+                  <span class="sub-item__label">Renews</span>
+                  <span class="sub-item__value">{{ sub.endDate | date:'mediumDate' }}</span>
+                </div>
+                <div class="sub-item">
+                  <span class="sub-item__label">Status</span>
+                  <span class="status-chip status-chip--active">{{ sub.status }}</span>
+                </div>
+              </div>
+
+              <div class="utilization">
+                <div class="utilization__header">
+                  <span>User Utilization</span>
+                  <span [style.color]="utilizationColor">{{ utilizationPercent }}%</span>
+                </div>
+                <mat-progress-bar mode="determinate" [value]="utilizationPercent"
+                                  [color]="utilizationPercent > 80 ? 'warn' : 'primary'" />
+                <div class="utilization__footer">
+                  <span>{{ summary()?.users?.total }} / {{ summary()?.users?.maxAllowed }} users</span>
+                  <a mat-button routerLink="/admin/users/create" class="add-user-link">+ Add User</a>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        } @else if (!loading()) {
+          <mat-card class="no-sub-card">
+            <div class="no-sub-inner">
+              <span class="material-icons">workspace_premium</span>
+              <h3>No Active Subscription</h3>
+              <p>Subscribe to unlock the full platform.</p>
+              <a mat-raised-button class="btn-primary" routerLink="/home">View Plans</a>
+            </div>
+          </mat-card>
+        }
+
+        <!-- User Overview -->
+        <mat-card class="users-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>people</mat-icon>
+            <mat-card-title>User Overview</mat-card-title>
+            <mat-card-subtitle>Organisation member breakdown</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="user-stats">
+              <div class="user-stat">
+                <div class="user-stat__num" style="color:var(--primary)">{{ summary()?.users?.total ?? 0 }}</div>
+                <div class="user-stat__lbl">Total</div>
+              </div>
+              <div class="user-stat">
+                <div class="user-stat__num" style="color:var(--success)">{{ summary()?.users?.active ?? 0 }}</div>
+                <div class="user-stat__lbl">Active</div>
+              </div>
+              <div class="user-stat">
+                <div class="user-stat__num" style="color:#9e9e9e">{{ summary()?.users?.inactive ?? 0 }}</div>
+                <div class="user-stat__lbl">Inactive</div>
+              </div>
+              <div class="user-stat">
+                <div class="user-stat__num" style="color:var(--warning)">
+                  {{ (summary()?.users?.maxAllowed ?? 0) - (summary()?.users?.total ?? 0) }}
+                </div>
+                <div class="user-stat__lbl">Available Slots</div>
+              </div>
+            </div>
+            <div class="user-btn">
+              <a mat-stroked-button routerLink="/admin/users/create" class="full-width-btn">
+                <span class="material-icons">person_add</span> Add New User
+              </a>
+              <a mat-stroked-button routerLink="/admin/users" class="full-width-btn">
+                <span class="material-icons">person</span> View Users
+              </a>
+            </div>
+                        
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+
+      <!-- Right column: Activity feed -->
+      <div class="dash-col dash-col--side">
+        <mat-card class="activity-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>history</mat-icon>
+            <mat-card-title>Recent Activity</mat-card-title>
+            <mat-card-subtitle>Latest organisation events</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="activity-list">
+              @for (a of recentActivity; track a.text) {
+                <div class="activity-item">
+                  <div class="activity-item__icon" [style.background]="a.color + '18'" [style.color]="a.color">
+                    <span class="material-icons">{{ a.icon }}</span>
+                  </div>
+                  <div class="activity-item__body">
+                    <p>{{ a.text }}</p>
+                    <span>{{ a.time }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Org Info -->
+        <mat-card class="org-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>business</mat-icon>
+            <mat-card-title>Organisation</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="org-info">
+              <div class="org-info__row">
+                <span class="material-icons">tag</span>
+                <span>{{ summary()?.organization?.code || '—' }}</span>
+              </div>
+              <div class="org-info__row">
+                <span class="material-icons">circle</span>
+                <span class="status-chip status-chip--active">{{ summary()?.organization?.status || 'ACTIVE' }}</span>
+              </div>
+            </div>
+            <a mat-stroked-button routerLink="/admin/organization/profile" class="full-width-btn" style="margin-top:12px">
+              <span class="material-icons">settings</span> Organisation Settings
+            </a>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+    </div>
+  </div>
+</div>

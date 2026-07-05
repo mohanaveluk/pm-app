@@ -1,0 +1,221 @@
+<div class="reg-page">
+
+  <!-- Left sidebar -->
+  <div class="reg-page__sidebar" aria-hidden="true">
+    <div class="sidebar-inner">
+      <div class="sidebar-logo">
+        <span class="material-icons">dashboard</span>
+        <span>PM <strong>Portal</strong></span>
+      </div>
+      <h2>Start Your<br>Organisation<br>Journey</h2>
+      <p>Set up your workspace in under 2 minutes.</p>
+
+      <div class="sidebar-steps">
+        <div class="s-step" [class.done]="step1Done()" [class.active]="!step1Done()">
+          <div class="s-step__dot">
+            @if (step1Done()) { <span class="material-icons">check</span> }
+            @else { 1 }
+          </div>
+          <div>
+            <div class="s-step__title">Organisation Details</div>
+            <div class="s-step__sub">Name, email &amp; contact</div>
+          </div>
+        </div>
+        <div class="s-step" [class.done]="step2Done()" [class.active]="step1Done() && !step2Done()">
+          <div class="s-step__dot">
+            @if (step2Done()) { <span class="material-icons">check</span> }
+            @else { 2 }
+          </div>
+          <div>
+            <div class="s-step__title">Email Verification</div>
+            <div class="s-step__sub">Confirm with OTP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right content -->
+  <div class="reg-page__content">
+    <div class="reg-wrap" @fadeUp>
+
+      <mat-stepper linear #stepper orientation="horizontal" class="pm-stepper">
+
+        <!-- ══════════════════════════════════════════════════════
+             STEP 1 — Organisation Details
+        ═══════════════════════════════════════════════════════ -->
+        <mat-step [stepControl]="step1" label="Organisation">
+          <div class="step-header">
+            <div class="step-icon"><span class="material-icons">business</span></div>
+            <div>
+              <h2>Register Your Organisation</h2>
+              <p>Tell us about your company to get started.</p>
+            </div>
+          </div>
+
+          @if (serverError() && !step1Done()) {
+            <div class="err-banner">
+              <span class="material-icons">error_outline</span>{{ serverError() }}
+            </div>
+          }
+
+          <form [formGroup]="step1" class="step-form">
+            <div class="form-row-2">
+              <mat-form-field appearance="outline">
+                <mat-label>Organisation Name *</mat-label>
+                <mat-icon matPrefix>business</mat-icon>
+                <input matInput formControlName="organizationName" placeholder="Acme Corp" />
+                @if (err(step1,'organizationName')) {
+                  <mat-error>{{ err(step1,'organizationName') }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Legal Name</mat-label>
+                <input matInput formControlName="legalName" placeholder="Acme Corporation LLC" />
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Business Email *</mat-label>
+              <mat-icon matPrefix>email</mat-icon>
+              <input matInput type="email" formControlName="email"
+                     placeholder="admin@acmecorp.com"
+                     (input)="clearEmailTakenError()" />
+              @if (step1.get('email')?.hasError('emailTaken') && step1.get('email')?.touched) {
+                <mat-error>
+                  This email is already registered.
+                  <a class="inline-login-link" routerLink="/auth/login">Sign in instead?</a>
+                </mat-error>
+              } @else if (err(step1,'email')) {
+                <mat-error>{{ err(step1,'email') }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="form-row-2">
+              <mat-form-field appearance="outline">
+                <mat-label>Phone Number</mat-label>
+                <mat-icon matPrefix>phone</mat-icon>
+                <input matInput formControlName="phoneNumber" placeholder="+1 234 567 8900" />
+                @if (err(step1,'phoneNumber')) {
+                  <mat-error>{{ err(step1,'phoneNumber') }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Website</mat-label>
+                <mat-icon matPrefix>language</mat-icon>
+                <input matInput formControlName="website" placeholder="https://acmecorp.com" />
+                @if (err(step1,'website')) {
+                  <mat-error>{{ err(step1,'website') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button mat-raised-button class="next-btn" (click)="submitStep1()" [disabled]="loading()">
+              @if (loading()) { <ng-container><mat-spinner diameter="20" /></ng-container> }
+              @else {
+              <ng-container>
+                <span>Send Verification Code</span>
+                <mat-icon>arrow_forward</mat-icon>
+              </ng-container>}
+            </button>
+          </div>
+          <p class="step-note">
+            Already have an account? <a routerLink="/auth/login">Sign in</a>
+          </p>
+        </mat-step>
+
+        <!-- ══════════════════════════════════════════════════════
+             STEP 2 — Email Verification  /  Verified success
+        ═══════════════════════════════════════════════════════ -->
+        <mat-step [stepControl]="step2" label="Verify Email">
+
+          <!-- ── OTP form — shown until verified ─────────────── -->
+          @if (!step2Done()) {
+            <div class="step-header">
+              <div class="step-icon step-icon--green">
+                <span class="material-icons">mark_email_read</span>
+              </div>
+              <div>
+                <h2>Verify Your Email</h2>
+                <p>Enter the 6-digit code sent to <strong>{{ orgEmail() }}</strong></p>
+              </div>
+            </div>
+
+            @if (serverError() && step1Done() && !step2Done()) {
+              <div class="err-banner">
+                <span class="material-icons">error_outline</span>{{ serverError() }}
+              </div>
+            }
+
+            <form [formGroup]="step2" class="step-form otp-form">
+              <mat-form-field appearance="outline" class="otp-field">
+                <mat-label>6-Digit Verification Code</mat-label>
+                <mat-icon matPrefix>pin</mat-icon>
+                <input matInput formControlName="otp" placeholder="000000"
+                       maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                       aria-label="One-time verification code" />
+                @if (err(step2,'otp')) {
+                  <mat-error>{{ err(step2,'otp') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="resend-row">
+                <span class="resend-hint">Didn't receive it?</span>
+                @if (resendTimer() > 0) {
+                  <span class="resend-timer">Resend in {{ resendTimer() }}s</span>
+                } @else {
+                  <button type="button" mat-button class="resend-btn"
+                          (click)="resendOtp()" [disabled]="loading()">
+                    <span class="material-icons">refresh</span> Resend OTP
+                  </button>
+                }
+              </div>
+            </form>
+
+            <div class="step-actions">
+              <button mat-button class="back-btn" matStepperPrevious>
+                <span class="material-icons">arrow_back</span> Back
+              </button>
+              <button mat-raised-button class="next-btn"
+                      (click)="submitStep2()" [disabled]="loading()">
+                @if (loading()) { <mat-spinner diameter="20" /> }
+                @else {
+                  <ng-container>
+                    <span>Verify &amp; Continue</span>
+                    <mat-icon>arrow_forward</mat-icon>
+                  </ng-container>
+              }
+              </button>
+            </div>
+          }
+
+          <!-- ── Verified success card ─────────────────────────── -->
+          @if (step2Done()) {
+            <div class="verified-card" @fadeUp role="status" aria-live="polite">
+              <div class="verified-icon-wrap" aria-hidden="true">
+                <span class="material-icons verified-icon">verified</span>
+              </div>
+              <h2 class="verified-title">Email Verified!</h2>
+              <p class="verified-body">
+                Your email address <strong>{{ orgEmail() }}</strong> has been successfully verified.
+              </p>
+              <p class="verified-body">
+                Your organisation account is now active. You can log in to access your dashboard and complete your profile.
+              </p>
+              <div class="verified-actions">
+                <a mat-raised-button class="verified-login-btn" routerLink="/auth/login">
+                  <span class="material-icons">login</span> Go to Login
+                </a>
+              </div>
+            </div>
+          }
+
+        </mat-step>
+
+      </mat-stepper>
+    </div>
+  </div>
+
+</div>

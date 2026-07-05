@@ -1,0 +1,76 @@
+<mat-toolbar class="header" [class.scrolled]="scrolled()">
+  <div class="header__inner container">
+
+    <!-- Logo -->
+    <a class="logo" routerLink="/home" aria-label="PM Portal Home">
+      <mat-icon class="logo__icon">dashboard</mat-icon>
+      <span class="logo__text">PM <strong>Portal</strong></span>
+    </a>
+
+    <!-- Desktop Nav -->
+    <nav class="nav desktop-only" aria-label="Main navigation">
+      @for (link of navLinks; track link.path) {
+        <a class="nav__link" [routerLink]="link.path" routerLinkActive="nav__link--active">
+          {{ link.label }}
+        </a>
+      }
+    </nav>
+
+    <!-- Actions -->
+    <div class="actions desktop-only">
+      @if (!auth.authenticated()) {
+        <a mat-button class="btn-ghost" routerLink="/auth/login">Sign In</a>
+        <a mat-raised-button class="btn-primary" routerLink="/auth/register-organization">
+          Get Started
+        </a>
+      } @else {
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="avatar-btn" aria-label="User menu">
+          <div class="avatar">{{ (currentUser()?.firstName || 'U')[0].toUpperCase() }}</div>
+        </button>
+        <mat-menu #userMenu="matMenu" xPosition="before">
+          <div class="user-menu-header">
+            <div class="user-menu-avatar">{{ (currentUser()?.firstName || 'U')[0].toUpperCase() }}</div>
+            <div>
+              <div class="user-menu-name">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</div>
+              <div class="user-menu-role">{{ currentUser()?.role }}</div>
+            </div>
+          </div>
+          <mat-divider />
+          <button mat-menu-item [routerLink]="dashboardRoute">
+            <mat-icon>dashboard</mat-icon> Dashboard
+          </button>
+          <button mat-menu-item routerLink="/profile">
+            <mat-icon>manage_accounts</mat-icon> Edit My Profile
+          </button>
+          <mat-divider />
+          <button mat-menu-item (click)="logout()" class="logout-item">
+            <mat-icon>logout</mat-icon> Sign Out
+          </button>
+        </mat-menu>
+      }
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button mat-icon-button class="mobile-only hamburger" (click)="menuOpen.set(!menuOpen())" aria-label="Toggle menu">
+      <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+
+<!-- Mobile Menu Drawer -->
+@if (menuOpen()) {
+  <nav class="mobile-menu mobile-only" (click)="menuOpen.set(false)" aria-label="Mobile navigation">
+    @for (link of navLinks; track link.path) {
+      <a class="mobile-menu__link" [routerLink]="link.path">{{ link.label }}</a>
+    }
+    <div class="mobile-menu__actions">
+      @if (!auth.authenticated()) {
+        <a mat-button routerLink="/auth/login" class="mobile-btn-ghost">Sign In</a>
+        <a mat-raised-button routerLink="/auth/register-organization" class="btn-primary w-full">Get Started</a>
+      } @else {
+        <a mat-button [routerLink]="dashboardRoute">Dashboard</a>
+        <button mat-button (click)="logout()">Sign Out</button>
+      }
+    </div>
+  </nav>
+}

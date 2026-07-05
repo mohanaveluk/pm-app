@@ -1,0 +1,314 @@
+<div class="edit-profile-page">
+
+  <!-- ── Page header ────────────────────────────────────────────── -->
+  <div class="ep-header">
+    <div class="ep-header__inner">
+      <a mat-icon-button routerLink="/dashboard" class="back-btn" aria-label="Back to dashboard">
+        <span class="material-icons">arrow_back</span>
+      </a>
+      <div>
+        <h1 class="ep-title">My Profile</h1>
+        <p class="ep-sub">Update your personal and professional details</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading skeleton ───────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="ep-body">
+      <div class="skeleton-wrap" role="status" aria-label="Loading profile…">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="skeleton-row">
+            <div class="sk-label"></div>
+            <div class="sk-input"></div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Load error ─────────────────────────────────────────────── -->
+  @if (loadErr() && !loading()) {
+    <div class="ep-body">
+      <div class="load-err" role="alert" @fadeUp>
+        <span class="material-icons">error_outline</span>
+        <div>
+          <strong>Could not load profile</strong>
+          <p>{{ loadErr() }}</p>
+        </div>
+        <button mat-stroked-button (click)="onReset()">
+          <span class="material-icons">refresh</span> Retry
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Main content ───────────────────────────────────────────── -->
+  @if (!loading() && !loadErr()) {
+    <div class="ep-body" @fadeUp>
+
+      <!-- ── Organisation read-only banner ──────────────────────── -->
+      @if (orgName()) {
+        <div class="org-banner">
+          <div class="org-banner__icon" aria-hidden="true">
+            <span class="material-icons">business</span>
+          </div>
+          <div class="org-banner__info">
+            <span class="org-banner__name">{{ orgName() }}</span>
+            @if (legalName()) {
+              <span class="org-banner__legal">{{ legalName() }}</span>
+            }
+          </div>
+          @if (website()) {
+            <a class="org-banner__web" [href]="website()" target="_blank" rel="noopener noreferrer">
+              <span class="material-icons">language</span>{{ website() }}
+            </a>
+          }
+          <span class="org-banner__badge">Your Organisation</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- ════════════════════════════════════════════════════════
+             SECTION 1 — Personal Information
+        ═════════════════════════════════════════════════════════ -->
+        <section class="form-section">
+          <div class="section-head">
+            <div class="section-icon" style="background:rgba(25,118,210,.1)">
+              <span class="material-icons" style="color:#1976D2">person</span>
+            </div>
+            <div>
+              <h2>Personal Information</h2>
+              <p>Your name, contact and date of birth</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>First Name *</mat-label>
+              <mat-icon matPrefix>person_outline</mat-icon>
+              <input matInput formControlName="firstName" placeholder="John" />
+              @if (err('firstName')) { <mat-error>{{ err('firstName') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Last Name *</mat-label>
+              <mat-icon matPrefix>person_outline</mat-icon>
+              <input matInput formControlName="lastName" placeholder="Smith" />
+              @if (err('lastName')) { <mat-error>{{ err('lastName') }}</mat-error> }
+            </mat-form-field>
+
+            <!-- Email — read-only -->
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Email Address</mat-label>
+              <mat-icon matPrefix>email</mat-icon>
+              <input matInput [value]="userEmail()" readonly aria-label="Email address (read-only)" />
+              <mat-hint>
+                <span class="material-icons" style="font-size:13px;vertical-align:middle">lock</span>
+                Email cannot be changed. Contact your administrator.
+              </mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Mobile Number</mat-label>
+              <mat-icon matPrefix>phone</mat-icon>
+              <input matInput formControlName="mobile" placeholder="+91 98765 43210" />
+              @if (err('mobile')) { <mat-error>{{ err('mobile') }}</mat-error> }
+              <mat-hint>Include country code</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Date of Birth</mat-label>
+              <mat-icon matPrefix>cake</mat-icon>
+              <input matInput [matDatepicker]="dobPicker" formControlName="dob"
+                     placeholder="DD/MM/YYYY" [max]="maxDob" />
+              <mat-datepicker-toggle matIconSuffix [for]="dobPicker" />
+              <mat-datepicker #dobPicker startView="multi-year" />
+            </mat-form-field>
+          </div>
+        </section>
+
+        <mat-divider />
+
+        <!-- ════════════════════════════════════════════════════════
+             SECTION 2 — Change Password  (optional)
+        ═════════════════════════════════════════════════════════ -->
+        <section class="form-section">
+          <div class="section-head">
+            <div class="section-icon" style="background:rgba(103,58,183,.1)">
+              <span class="material-icons" style="color:#673AB7">lock_reset</span>
+            </div>
+            <div>
+              <h2>Change Password</h2>
+              <p>Leave both fields blank to keep your current password</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="password-col">
+              <mat-form-field appearance="outline">
+                <mat-label>New Password</mat-label>
+                <mat-icon matPrefix>lock</mat-icon>
+                <input matInput [type]="showPassword() ? 'text' : 'password'"
+                       formControlName="newPassword"
+                       placeholder="Min 10 chars, upper + lower + number"
+                       autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button"
+                        (click)="showPassword.set(!showPassword())"
+                        [matTooltip]="showPassword() ? 'Hide' : 'Show'">
+                  <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                @if (err('newPassword')) { <mat-error>{{ err('newPassword') }}</mat-error> }
+              </mat-form-field>
+
+              @if (form.get('newPassword')?.value) {
+                <div class="strength-bar">
+                  <div class="strength-track">
+                    <div class="strength-fill"
+                         [style.width.%]="passwordStrength * 25"
+                         [style.background]="strengthColor"></div>
+                  </div>
+                  <span class="strength-label" [style.color]="strengthColor">{{ strengthLabel }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="password-col">
+              <mat-form-field appearance="outline">
+                <mat-label>Confirm New Password</mat-label>
+                <mat-icon matPrefix>lock_open</mat-icon>
+                <input matInput [type]="showConfirm() ? 'text' : 'password'"
+                       formControlName="confirmPassword"
+                       placeholder="Re-enter new password"
+                       autocomplete="new-password" />
+                <button mat-icon-button matSuffix type="button"
+                        (click)="showConfirm.set(!showConfirm())"
+                        [matTooltip]="showConfirm() ? 'Hide' : 'Show'">
+                  <mat-icon>{{ showConfirm() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                @if (passwordMismatch) {
+                  <mat-error>Passwords do not match</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider />
+
+        <!-- ════════════════════════════════════════════════════════
+             SECTION 3 — Work Details
+        ═════════════════════════════════════════════════════════ -->
+        <section class="form-section">
+          <div class="section-head">
+            <div class="section-icon" style="background:rgba(46,125,50,.1)">
+              <span class="material-icons" style="color:#2E7D32">work</span>
+            </div>
+            <div>
+              <h2>Work Details</h2>
+              <p>Your role, location and team associations within the organisation</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <!-- Position -->
+            <mat-form-field appearance="outline">
+              <mat-label>Position</mat-label>
+              <mat-icon matPrefix>engineering</mat-icon>
+              <mat-select formControlName="position">
+                <mat-option value="">— Not specified —</mat-option>
+                @for (p of positions; track p) {
+                  <mat-option [value]="p">{{ p }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Location -->
+            <mat-form-field appearance="outline">
+              <mat-label>Location</mat-label>
+              <mat-icon matPrefix>location_on</mat-icon>
+              <mat-select formControlName="location">
+                <mat-option value="">— Not specified —</mat-option>
+                @for (l of locations; track l) {
+                  <mat-option [value]="l">{{ l }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Reports To — single select from org users -->
+            <mat-form-field appearance="outline">
+              <mat-label>Reports To</mat-label>
+              <mat-icon matPrefix>manage_accounts</mat-icon>
+              <mat-select formControlName="reportTo">
+                <mat-option value="">— Not assigned —</mat-option>
+                @if (orgUsers.length === 0) {
+                  <mat-option disabled>No colleagues available</mat-option>
+                }
+                @for (u of orgUsers; track u.email) {
+                  <mat-option [value]="u.fullName">
+                    {{ u.fullName }}
+                    <span class="opt-email">· {{ u.email }}</span>
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-hint>Your direct manager</mat-hint>
+            </mat-form-field>
+
+            <!-- Works With — multi-select from org users -->
+            <mat-form-field appearance="outline">
+              <mat-label>Works With</mat-label>
+              <mat-icon matPrefix>people</mat-icon>
+              <mat-select formControlName="worksWith" multiple>
+                @if (orgUsers.length === 0) {
+                  <mat-option disabled>No colleagues available</mat-option>
+                }
+                @for (u of orgUsers; track u.email) {
+                  <mat-option [value]="u.fullName">
+                    {{ u.fullName }}
+                    <span class="opt-email">· {{ u.email }}</span>
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-hint>Team members you collaborate with</mat-hint>
+            </mat-form-field>
+
+            <!-- Projects Worked On — multi-select -->
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Projects Worked On</mat-label>
+              <mat-icon matPrefix>folder_open</mat-icon>
+              <mat-select formControlName="projectsWorkedOn" multiple>
+                @for (p of projectOptions; track p) {
+                  <mat-option [value]="p">{{ p }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Select all applicable projects</mat-hint>
+            </mat-form-field>
+          </div>
+        </section>
+
+        <!-- ── Sticky action bar ──────────────────────────────────── -->
+        <div class="bottom-bar">
+          <button mat-button type="button" class="discard-btn"
+                  (click)="onReset()" [disabled]="saving()">
+            <span class="material-icons">refresh</span> Discard Changes
+          </button>
+          <button mat-raised-button type="submit" class="save-btn"
+                  [disabled]="saving() || (form.pristine && !form.get('newPassword')?.value)">
+            @if (saving()) {
+              <mat-spinner diameter="18" />
+              <span>Saving…</span>
+            } @else {
+              <ng-container>
+                <mat-icon>save</mat-icon>
+                <span>Save Changes</span>
+              </ng-container>               
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+
+</div>

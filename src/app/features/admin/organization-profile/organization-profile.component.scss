@@ -1,0 +1,237 @@
+// ── Page shell ────────────────────────────────────────────────────
+.org-profile-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 80px 24px 80px;
+  @media(max-width: 640px) { padding: 20px 16px 80px; }
+}
+
+// ── Page header ───────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+
+  &__left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+.back-btn {
+  margin-top: 2px;
+  color: #5a7a9e !important;
+}
+
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a2942);
+  margin: 0 0 4px;
+}
+
+.page-sub {
+  color: #5a7a9e;
+  font-size: .92rem;
+  margin: 0;
+}
+
+.unsaved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #ED6C02;
+  background: rgba(237,108,2,.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  .material-icons { font-size: 14px; }
+  mat-icon: {    margin-bottom: -11px;}
+}
+
+// ── Shared button styles ──────────────────────────────────────────
+.save-btn {
+  background: var(--primary, #0F4C81) !important;
+  color: #fff !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 0 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  .material-icons { font-size: 18px; margin-bottom: -11px !important;}
+  &:disabled { opacity: .6; }
+  mat-spinner { --mdc-circular-progress-active-indicator-color: #fff; }
+  mat-icon: {    margin-bottom: -11px !important;}
+}
+
+.reset-btn {
+  height: 42px !important;
+  border-radius: 8px !important;
+  color: #5a7a9e !important;
+  border-color: #c8d6e5 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  .material-icons { font-size: 18px; }
+}
+
+// ── Skeleton loader ───────────────────────────────────────────────
+.skeleton-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-label,
+.skeleton-input {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8eef4 25%, #f4f8fb 50%, #e8eef4 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.skeleton-label { height: 14px; width: 120px; }
+.skeleton-input { height: 52px; width: 100%; }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ── Load error ────────────────────────────────────────────────────
+.load-err-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 12px;
+  padding: 20px 24px;
+  color: #c62828;
+
+  .material-icons { font-size: 28px; flex-shrink: 0; }
+
+  strong { display: block; font-size: 1rem; margin-bottom: 2px; }
+  p      { font-size: .88rem; margin: 0; color: #b71c1c; }
+
+  button { margin-left: auto; flex-shrink: 0; }
+}
+
+// ── Form sections ─────────────────────────────────────────────────
+.form-section {
+  background: var(--surface, #fff);
+  border-radius: 14px;
+  border: 1px solid #e2eaf4;
+  box-shadow: 0 2px 12px rgba(15,76,129,.06);
+  padding: 28px 28px 20px;
+  margin-bottom: 20px;
+
+  @media(max-width: 600px) { padding: 20px 16px 14px; }
+}
+
+mat-divider { margin: 0 !important; border-color: #e8eef4 !important; }
+
+.section-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 2px;
+    color: var(--text-primary, #1a2942);
+  }
+
+  p {
+    font-size: .85rem;
+    color: #5a7a9e;
+    margin: 0;
+  }
+}
+
+.section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .material-icons { font-size: 22px; }
+}
+
+.section-divider {
+  border-color: #e8eef4 !important;
+}
+
+// ── Fields grid ───────────────────────────────────────────────────
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+
+  @media(max-width: 600px) { grid-template-columns: 1fr; }
+
+  mat-form-field { width: 100%; }
+}
+
+.field-span-2 { grid-column: span 2; @media(max-width: 600px) { grid-column: span 1; } }
+
+// ── Bottom action bar ─────────────────────────────────────────────
+.bottom-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface, #fff);
+  border-top: 1px solid #e8eef4;
+  padding: 14px 0;
+  margin-top: 12px;
+  z-index: 10;
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.cancel-btn {
+  color: #5a7a9e !important;
+  height: 42px !important;
+}
+
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #2e7d32;
+  .material-icons { font-size: 16px; }
+}

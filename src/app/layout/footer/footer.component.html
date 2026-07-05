@@ -1,0 +1,67 @@
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+
+      <!-- Brand -->
+      <div class="footer__brand">
+        <div class="footer__logo">
+          <mat-icon>dashboard</mat-icon>
+          <span>PM <strong>Portal</strong></span>
+        </div>
+        <p class="footer__tagline">
+          Enterprise-grade project management for modern teams. Collaborate, track, and deliver with confidence.
+        </p>
+        <div class="footer__social">
+          @for (s of social; track s.icon) {
+            <button class="social-btn" [attr.aria-label]="s.label">
+              <mat-icon>{{ s.icon }}</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer__col">
+        <h4>Quick Links</h4>
+        <ul>
+          @for (link of quickLinks; track link.path) {
+            <li><a [routerLink]="link.path">{{ link.label }}</a></li>
+          }
+        </ul>
+      </div>
+
+      <!-- Product -->
+      <div class="footer__col">
+        <h4>Product</h4>
+        <ul>
+          <li><a routerLink="/auth/register-organization">Register Organization</a></li>
+          <li><a routerLink="/auth/login">Sign In</a></li>
+          <li><a routerLink="/home">Documentation</a></li>
+          <li><a routerLink="/home">API Reference</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="footer__col">
+        <h4>Contact</h4>
+        <address>
+          <p><mat-icon>location_on</mat-icon> 123 Enterprise Blvd, Suite 400<br>San Francisco, CA 94105</p>
+          <p><mat-icon>email</mat-icon> hello&#64;pmportal.io</p>
+          <p><mat-icon>phone</mat-icon> +1 (800) 123-4567</p>
+        </address>
+      </div>
+
+    </div>
+
+    <div class="footer__bottom">
+      <p>&copy; {{ year }} PM Portal. All rights reserved.</p>
+      <div class="footer__legal">
+        <a href="#">Privacy Policy</a>
+        <span>·</span>
+        <a href="#">Terms of Service</a>
+        <span>·</span>
+        <a href="#">Cookie Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>

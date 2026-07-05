@@ -1,0 +1,99 @@
+<div class="login-page">
+
+  <!-- Left illustration panel -->
+  <div class="login-page__left" aria-hidden="true">
+    <div class="left-content">
+      <div class="left-logo">
+        <span class="material-icons">dashboard</span>
+        <span>PM <strong>Portal</strong></span>
+      </div>
+      <h2>Manage Projects.<br>Empower Teams.<br>Deliver Results.</h2>
+      <p>Join thousands of organisations running smarter projects with PM Portal's enterprise-grade tools.</p>
+      <div class="left-features">
+        @for (f of features; track f) {
+          <div class="left-feature">
+            <span class="material-icons">check_circle</span>
+            <span>{{ f }}</span>
+          </div>
+        }
+      </div>
+      <div class="left-illustration">
+        <div class="il-card il-card--1"><span class="material-icons">task_alt</span><span>12 Tasks Done</span></div>
+        <div class="il-card il-card--2"><span class="material-icons">people</span><span>8 Members</span></div>
+        <div class="il-card il-card--3"><span class="material-icons">trending_up</span><span>+40% Velocity</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="login-page__right">
+    <div class="login-form-wrap" @fadeUp>
+
+      <div class="login-form__header">
+        <h1>Welcome back</h1>
+        <p>Sign in to your organisation's workspace</p>
+      </div>
+
+      @if (loginError()) {
+        <div class="error-banner" role="alert">
+          <span class="material-icons">error_outline</span>
+          {{ loginError() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email Address</mat-label>
+          <mat-icon matPrefix>email</mat-icon>
+          <input matInput type="email" formControlName="email"
+                 placeholder="you@company.com" autocomplete="email"
+                 aria-label="Email address" />
+          @if (form.get('email')?.touched && emailErr) {
+            <mat-error>{{ emailErr }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput [type]="showPassword() ? 'text' : 'password'"
+                 formControlName="password" autocomplete="current-password"
+                 aria-label="Password" />
+          <button mat-icon-button matSuffix type="button"
+                  (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('password')?.touched && passErr) {
+            <mat-error>{{ passErr }}</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-checkbox formControlName="rememberMe" color="primary">Remember me</mat-checkbox>
+          <a class="forgot-link" routerLink="/auth/forgot-password">Forgot password?</a>
+        </div>
+
+        <button mat-raised-button type="submit" class="submit-btn btn-primary"
+                [disabled]="loading()" aria-label="Sign in">
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+           <ng-container>
+            <mat-icon>login</mat-icon> Sign In
+            </ng-container>
+          }
+        </button>
+
+      </form>
+
+      <p class="register-cta">
+        New to PM Portal?
+        <a routerLink="/auth/register-organization">Register your organisation</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>

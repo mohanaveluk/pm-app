@@ -1,0 +1,193 @@
+<!-- ═══ HERO ═══════════════════════════════════════════════════════════ -->
+<section class="feat-hero">
+  <div class="feat-hero__overlay"></div>
+  <div class="container feat-hero__inner" @fadeUp>
+    <div class="feat-hero__badge">
+      <mat-icon>star</mat-icon> Enterprise Platform
+    </div>
+    <h1>Enterprise Industrial Construction<br>Management Platform</h1>
+    <p>Manage Engineering, Procurement, Construction, Quality, Materials, Inventory, Suppliers,<br class="d-none-sm"> and Asset Lifecycle from a Single Platform.</p>
+    <div class="feat-hero__actions">
+      <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+        <mat-icon>rocket_launch</mat-icon> Request Demo
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/auth/register-organization">
+        <mat-icon>play_circle</mat-icon> Start Free Trial
+      </a>
+    </div>
+    <div class="feat-hero__stats">
+      @for (s of stats; track s.label; let i = $index) {
+        <div class="hs-stat">
+          <strong [style.color]="s.color">{{ formatStat(animatedStats()[i], i) }}</strong>
+          <span>{{ s.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE MODULES ═══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Core Capabilities</span>
+      <h2>Complete Platform Feature Set</h2>
+      <p>Every module you need to digitize industrial construction — from material master to asset handover</p>
+    </div>
+    <div class="feat-grid" [@staggerList]="featureModules.length">
+      @for (m of featureModules; track m.title) {
+        <div class="feat-module-card pm-card">
+          <div class="feat-module-card__header" [style.background]="'linear-gradient(135deg,'+m.color+'18,'+m.color+'08)'">
+            <div class="feat-module-card__icon" [style.background]="m.bg" [style.color]="m.color">
+              <mat-icon>{{ m.icon }}</mat-icon>
+            </div>
+            <h4>{{ m.title }}</h4>
+          </div>
+          <ul class="feat-list">
+            @for (f of m.features; track f) {
+              <li>
+                <mat-icon [style.color]="m.color">check_circle</mat-icon>
+                <span>{{ f }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INDUSTRIES ════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Industries</span>
+      <h2>Industries We Serve</h2>
+      <p>Purpose-built workflows for the world's most demanding industrial construction environments</p>
+    </div>
+    <div class="ind-grid" [@staggerList]="industries.length">
+      @for (ind of industries; track ind.title) {
+        <div class="ind-card pm-card">
+          <div class="ind-card__icon" [style.background]="ind.bg" [style.color]="ind.color">
+            <mat-icon>{{ ind.icon }}</mat-icon>
+          </div>
+          <h5>{{ ind.title }}</h5>
+          <p>{{ ind.desc }}</p>
+          <a mat-button [style.color]="ind.color" routerLink="/auth/register-organization" class="ind-link">
+            Learn More <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BENEFITS ══════════════════════════════════════════════════════ -->
+<section class="section benefits-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">Why Choose Us</span>
+      <h2>Platform Benefits That Drive Results</h2>
+      <p>Measurable outcomes for EPC contractors, industrial operators and asset managers</p>
+    </div>
+    <div class="ben-grid" [@staggerList]="benefits.length">
+      @for (b of benefits; track b.title) {
+        <div class="ben-card">
+          <div class="ben-card__icon" [style.background]="b.color+'22'" [style.color]="b.color">
+            <mat-icon>{{ b.icon }}</mat-icon>
+          </div>
+          <h5>{{ b.title }}</h5>
+          <p>{{ b.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INTEGRATION ECOSYSTEM ════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Integrations</span>
+      <h2>Integration Ecosystem</h2>
+      <p>Pre-built connectors and open APIs to connect with your existing enterprise technology landscape</p>
+    </div>
+    <div class="integ-grid" [@staggerList]="integrations.length">
+      @for (intg of integrations; track intg.name) {
+        <div class="integ-card pm-card" [matTooltip]="intg.category">
+          <div class="integ-card__icon" [style.background]="intg.color+'14'" [style.color]="intg.color">
+            <mat-icon>{{ intg.icon }}</mat-icon>
+          </div>
+          <div class="integ-card__info">
+            <strong>{{ intg.name }}</strong>
+            <span class="integ-cat" [style.color]="intg.color">{{ intg.category }}</span>
+          </div>
+          <span class="integ-badge">Connected</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ANALYTICS PREVIEW ════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Analytics</span>
+      <h2>Real-Time Project Intelligence Dashboard</h2>
+      <p>Executive visibility across every project, warehouse, inspection and procurement activity</p>
+    </div>
+    <div class="dash-mock pm-card" @fadeUp>
+      <div class="dash-mock__bar">
+        <div class="dash-mock__title">
+          <mat-icon>analytics</mat-icon>
+          <span>Project Intelligence — Live Dashboard</span>
+        </div>
+        <div class="dash-mock__meta">
+          <span class="live-badge"><span class="live-dot"></span>Live</span>
+          <mat-chip>Q2 2025</mat-chip>
+        </div>
+      </div>
+      <div class="dash-mock__body">
+        <div class="kpi-strip">
+          @for (k of kpiCards; track k.label) {
+            <div class="kpi-item">
+              <div class="kpi-item__head">
+                <mat-icon [style.color]="k.color">{{ k.icon }}</mat-icon>
+                <span>{{ k.label }}</span>
+                <strong [style.color]="k.color">{{ k.value }}</strong>
+              </div>
+              <mat-progress-bar mode="determinate" [value]="k.pct"
+                [style.--mdc-linear-progress-active-indicator-color]="k.color"
+                [style.--mdc-linear-progress-track-color]="k.color+'22'" />
+              <span class="kpi-trend" [class.up]="k.trend.startsWith('+')">
+                <mat-icon>{{ k.trend.startsWith('+') ? 'trending_up' : 'trending_down' }}</mat-icon>
+                {{ k.trend }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA BANNER ════════════════════════════════════════════════════ -->
+<section class="feat-cta">
+  <div class="feat-cta__overlay"></div>
+  <div class="container feat-cta__inner" @fadeUp>
+    <h2>Ready to Digitize Your Industrial Construction Operations?</h2>
+    <p>Join 100+ industrial leaders who have transformed their project management with our platform</p>
+    <div class="cta-actions">
+      <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+        <mat-icon>rocket_launch</mat-icon> Request Demo
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/pricing">
+        <mat-icon>attach_money</mat-icon> View Pricing
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/about-us">
+        <mat-icon>info</mat-icon> About Us
+      </a>
+    </div>
+  </div>
+</section>

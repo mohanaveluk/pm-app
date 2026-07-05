@@ -1,0 +1,136 @@
+@use '@angular/material' as mat;
+@include mat.core();
+
+$pm-primary: mat.m2-define-palette(mat.$m2-blue-palette, 700, 400, 900);
+$pm-accent:  mat.m2-define-palette(mat.$m2-light-blue-palette, 400);
+$pm-warn:    mat.m2-define-palette(mat.$m2-red-palette);
+$pm-theme:   mat.m2-define-light-theme((
+  color: (primary: $pm-primary, accent: $pm-accent, warn: $pm-warn),
+  typography: mat.m2-define-typography-config(),
+  density: 0,
+));
+@include mat.all-component-themes($pm-theme);
+
+:root {
+  --hdr:      #0F4C81;
+  --hdr-hov:  #1565C0;
+  --body-bg:  #F4F8FB;
+  --primary:  #1976D2;
+  --secondary:#42A5F5;
+  --footer:   #0B2E59;
+  --card:     #FFFFFF;
+  --border:   #DCE5EE;
+  --success:  #2E7D32;
+  --warning:  #ED6C02;
+  --error:    #D32F2F;
+  --sh-sm:    0 2px 8px rgba(15,76,129,.08);
+  --sh-md:    0 4px 20px rgba(15,76,129,.13);
+  --sh-lg:    0 8px 40px rgba(15,76,129,.20);
+  --r-sm:     8px;
+  --r-md:     12px;
+  --r-lg:     20px;
+  --ease:     .25s cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family: Roboto,'Segoe UI',sans-serif;
+  background:var(--body-bg);
+  color:#1a2b4a;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,h5,h6{font-weight:600;line-height:1.3;color:#0d2137}
+h1{font-size:clamp(2rem,4vw,3.2rem)}
+h2{font-size:clamp(1.5rem,3vw,2.4rem)}
+h3{font-size:clamp(1.1rem,2.5vw,1.7rem)}
+a{color:var(--primary);text-decoration:none}
+
+.container{width:100%;max-width:1240px;margin:0 auto;padding:0 24px}
+.section{padding:80px 0}
+.section--alt{background:#edf2f8}
+.section-header{text-align:center;margin-bottom:56px}
+.section-header h2{margin-bottom:12px}
+.section-header p{color:#5a7a9e;font-size:1.1rem;max-width:600px;margin:0 auto}
+
+.btn-primary{
+  background:var(--primary)!important;color:#fff!important;
+  border-radius:var(--r-sm)!important;padding:0 28px!important;height:48px!important;
+  font-size:1rem!important;font-weight:500!important;
+  transition:background var(--ease),transform var(--ease),box-shadow var(--ease)!important;
+  &:hover{background:#1557b0!important;box-shadow:0 4px 16px rgba(25,118,210,.38)!important;transform:translateY(-1px)!important}
+}
+.btn-secondary{
+  background:transparent!important;border:2px solid var(--primary)!important;
+  color:var(--primary)!important;border-radius:var(--r-sm)!important;
+  padding:0 28px!important;height:48px!important;font-size:1rem!important;font-weight:500!important;
+  transition:all var(--ease)!important;
+  &:hover{background:rgba(25,118,210,.07)!important;transform:translateY(-1px)!important}
+}
+.btn-white{
+  background:#fff!important;color:var(--primary)!important;
+  border-radius:var(--r-sm)!important;padding:0 28px!important;height:48px!important;
+  font-size:1rem!important;font-weight:600!important;
+  transition:all var(--ease)!important;box-shadow:var(--sh-md)!important;
+  &:hover{transform:translateY(-2px)!important;box-shadow:var(--sh-lg)!important}
+}
+
+.pm-card{
+  background:var(--card);border-radius:var(--r-md);
+  box-shadow:var(--sh-sm);border:1px solid var(--border);
+  transition:box-shadow var(--ease),transform var(--ease);
+  &:hover{box-shadow:var(--sh-md);transform:translateY(-4px)}
+}
+
+.glass{
+  background:rgba(255,255,255,.15);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.25);
+}
+
+.status-chip{
+  border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:4px;
+  &--active{background:#e8f5e9;color:var(--success)}
+  &--warning{background:#fff3e0;color:var(--warning)}
+  &--error{background:#ffebee;color:var(--error)}
+  &--info{background:#e3f2fd;color:var(--primary)}
+}
+
+.skeleton{
+  background:linear-gradient(90deg,#e8eef5 25%,#d6e0ea 50%,#e8eef5 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm);
+}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.page-enter{animation:pageFadeIn .4s ease forwards}
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.mat-mdc-form-field{width:100%}
+.mat-mdc-card{border-radius:var(--r-md)!important}
+
+// Spinner inside MDC buttons: label must be flex and spinner needs an explicit size
+.mat-mdc-button .mdc-button__label,
+.mat-mdc-raised-button .mdc-button__label,
+.mat-mdc-stroked-button .mdc-button__label,
+.mat-mdc-flat-button .mdc-button__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+button mat-progress-spinner,
+button mat-spinner {
+  flex-shrink: 0;
+
+  svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+@media(max-width:768px){
+  .section{padding:48px 0}
+  .section-header{margin-bottom:32px}
+  .container{padding:0 16px}
+}

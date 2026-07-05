@@ -1,0 +1,492 @@
+<!-- ═══════════════════════════════════════════════════════════
+     HERO BANNER
+════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  @for (slide of heroSlides; track slide.title; let i = $index) {
+    <div class="hero__slide" [class.active]="currentSlide() === i" [style.background]="slide.gradient">
+      <div class="hero__overlay"></div>
+      <div class="container hero__inner">
+        <div class="hero__content" @fadeUp>
+          <span class="hero__tag">
+            <mat-icon>{{ slide.icon }}</mat-icon> {{ slide.tag }}
+          </span>
+          <h1 class="hero__title">{{ slide.title }}</h1>
+          <p class="hero__sub">{{ slide.subtitle }}</p>
+          <div class="hero__actions">
+            <a mat-raised-button class="hero-btn-primary" routerLink="/auth/register-organization">
+              <mat-icon>rocket_launch</mat-icon> Request Demo
+            </a>
+            <a mat-stroked-button class="hero-btn-outline" routerLink="/auth/login">
+              Explore Features <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+            </a>
+          </div>
+          <div class="hero__trust">
+            <span><mat-icon>verified</mat-icon> ISO 9001 Compliant</span>
+            <span><mat-icon>security</mat-icon> Enterprise Security</span>
+            <span><mat-icon>cloud_done</mat-icon> 99.9% Uptime SLA</span>
+          </div>
+        </div>
+        <div class="hero__visual">
+          <div class="hero__panel-grid">
+            @for (w of kpiWidgets.slice(0,4); track w.label) {
+              <div class="hero-kpi">
+                <div class="hero-kpi__head">
+                  <mat-icon [style.color]="w.color">{{ w.icon }}</mat-icon>
+                  <span>{{ w.label }}</span>
+                </div>
+                <div class="hero-kpi__val">{{ w.value }}{{ w.unit }}</div>
+                <mat-progress-bar mode="determinate" [value]="w.pct" [style.--mdc-linear-progress-active-indicator-color]="w.color" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <!-- slide dots -->
+      <div class="hero__dots">
+        @for (s of heroSlides; track s.title; let di = $index) {
+          <button class="hero__dot" [class.active]="currentSlide() === di" (click)="goToSlide(di)" [attr.aria-label]="'Slide ' + (di+1)"></button>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INDUSTRIES
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Industries We Empower</span>
+      <h2>Built for Every Industrial Sector</h2>
+      <p>Purpose-built workflows for the world's most complex industrial construction environments</p>
+    </div>
+    <div class="grid-4" [@staggerList]="industries.length">
+      @for (ind of industries; track ind.title) {
+        <div class="ind-card pm-card">
+          <div class="ind-card__icon" [style.background]="ind.bg" [style.color]="ind.color">
+            <mat-icon>{{ ind.icon }}</mat-icon>
+          </div>
+          <h4>{{ ind.title }}</h4>
+          <p>{{ ind.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PLATFORM OVERVIEW / LIFECYCLE
+════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Platform Overview</span>
+      <h2>One Platform for the Complete Construction Lifecycle</h2>
+      <p>From engineering design through asset handover — every stage connected in a single system</p>
+    </div>
+    <div class="lifecycle-row" [@staggerList]="lifecycle.length">
+      @for (stage of lifecycle; track stage.label; let i = $index; let last = $last) {
+        <div class="lc-step">
+          <div class="lc-step__icon" [style.background]="stage.color + '18'" [style.border-color]="stage.color">
+            <mat-icon [style.color]="stage.color">{{ stage.icon }}</mat-icon>
+          </div>
+          <div class="lc-step__num" [style.background]="stage.color">{{ i + 1 }}</div>
+          <h5>{{ stage.label }}</h5>
+          <p>{{ stage.desc }}</p>
+        </div>
+        @if (!last) {
+          <div class="lc-arrow"><mat-icon>chevron_right</mat-icon></div>
+        }
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MATERIAL TYPES
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Material Management</span>
+      <h2>Manage Every Material Type</h2>
+      <p>Comprehensive material master covering every category across industrial construction projects</p>
+    </div>
+    <div class="grid-4" [@staggerList]="materialTypes.length">
+      @for (m of materialTypes; track m.title) {
+        <div class="mat-card pm-card">
+          <div class="mat-card__icon" [style.background]="m.color + '18'">
+            <mat-icon [style.color]="m.color">{{ m.icon }}</mat-icon>
+          </div>
+          <h5>{{ m.title }}</h5>
+          <p>{{ m.desc }}</p>
+          <span class="mat-stat" [style.color]="m.color">{{ m.stat }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MATERIAL INTELLIGENCE FRAMEWORK
+════════════════════════════════════════════════════════════ -->
+<section class="section intel-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">Material Intelligence</span>
+      <h2>Comprehensive Material Data Model</h2>
+      <p>Every attribute, certification, and relationship — structured for enterprise-scale industrial projects</p>
+    </div>
+    <div class="grid-4" [@staggerList]="capabilities.length">
+      @for (cap of capabilities; track cap.title) {
+        <div class="cap-card">
+          <div class="cap-card__icon"><mat-icon>{{ cap.icon }}</mat-icon></div>
+          <h5>{{ cap.title }}</h5>
+          <p>{{ cap.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WAREHOUSE & INVENTORY
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Warehouse Operations</span>
+      <h2>Smart Warehouse Operations</h2>
+      <p>Real-time inventory visibility from goods receipt to material issue at the construction face</p>
+    </div>
+    <div class="wh-layout">
+      <div class="wh-features" [@staggerList]="8">
+        @for (f of [
+          {icon:'download',         title:'Material Receiving',    desc:'GRN with inspection integration and discrepancy reporting'},
+          {icon:'inventory',        title:'Inventory Tracking',    desc:'Real-time stock levels across all warehouse locations'},
+          {icon:'qr_code_scanner',  title:'Barcode & QR Codes',    desc:'Scan-based receiving, picking and stock movements'},
+          {icon:'location_on',      title:'Location Management',   desc:'Multi-zone, rack and bin-level location tracking'},
+          {icon:'swap_horiz',       title:'Material Transfers',    desc:'Inter-site and inter-project material movements'},
+          {icon:'bookmark_add',     title:'Reservations',          desc:'Reserve materials against work orders and MIRs'},
+          {icon:'fact_check',       title:'Inventory Audits',      desc:'Cycle counting and reconciliation with ERP'},
+          {icon:'sensors',          title:'Real-time Availability', desc:'Live stock visibility for procurement and planning'}
+        ]; track f.title) {
+          <div class="wh-feature-item pm-card">
+            <div class="wh-feature-item__icon"><mat-icon>{{ f.icon }}</mat-icon></div>
+            <div>
+              <h5>{{ f.title }}</h5>
+              <p>{{ f.desc }}</p>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="wh-dashboard" @fadeUp>
+        <div class="wh-dash-header">
+          <mat-icon>warehouse</mat-icon>
+          <span>Warehouse Dashboard</span>
+          <span class="live-badge"><span class="live-dot"></span>Live</span>
+        </div>
+        @for (w of kpiWidgets; track w.label) {
+          <div class="wh-kpi">
+            <div class="wh-kpi__meta">
+              <mat-icon [style.color]="w.color">{{ w.icon }}</mat-icon>
+              <span>{{ w.label }}</span>
+              <strong [style.color]="w.color">{{ w.value }}{{ w.unit }}</strong>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="w.pct"
+              [style.--mdc-linear-progress-active-indicator-color]="w.color"
+              [style.--mdc-linear-progress-track-color]="w.color + '22'" />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     QA/QC INSPECTION
+════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">QA/QC Management</span>
+      <h2>Quality Assurance & Compliance</h2>
+      <p>End-to-end quality management from vendor inspection through site acceptance and punch-list clearance</p>
+    </div>
+    <div class="grid-3" [@staggerList]="10">
+      @for (q of [
+        {icon:'assignment',         title:'Inspection Requests',     desc:'Raise and track inspection call-offs against ITP milestones',       color:'#0F4C81'},
+        {icon:'inventory_2',        title:'Material Inspection',     desc:'Document material properties, dimensions and certifications',       color:'#1565C0'},
+        {icon:'factory',            title:'Vendor Inspection',       desc:'Third-party and in-house vendor shop inspection management',        color:'#1976D2'},
+        {icon:'verified',           title:'Factory Acceptance Tests', desc:'FAT procedures, punch items and completion sign-off',              color:'#2E7D32'},
+        {icon:'check_circle',       title:'Site Acceptance Tests',   desc:'SAT documentation with automated checklist workflows',              color:'#546E7A'},
+        {icon:'description',        title:'Quality Documentation',   desc:'MTC, PMI, pressure test and radiography report repository',        color:'#ED6C02'},
+        {icon:'report_problem',     title:'NCR Management',          desc:'Non-conformance reports with corrective action tracking',           color:'#D32F2F'},
+        {icon:'gavel',              title:'Compliance Tracking',     desc:'Project specifications, code compliance and deviation management',  color:'#FFC107'},
+        {icon:'history',            title:'Audit Trails',            desc:'Immutable audit log for every inspection and approval action',      color:'#546E7A'},
+        {icon:'account_tree',       title:'Traceability',            desc:'Heat number to installation point full material traceability',      color:'#0F4C81'},
+      ]; track q.title) {
+        <div class="qaqc-card pm-card">
+          <div class="qaqc-card__icon" [style.background]="q.color+'18'" [style.color]="q.color">
+            <mat-icon>{{ q.icon }}</mat-icon>
+          </div>
+          <h5>{{ q.title }}</h5>
+          <p>{{ q.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SUPPLIER & VENDOR MANAGEMENT
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Supplier Management</span>
+      <h2>Supplier Qualification & Performance</h2>
+      <p>Digitize your approved vendor list and drive continuous supplier improvement across all categories</p>
+    </div>
+    <div class="supplier-grid" [@staggerList]="8">
+      @for (s of [
+        {icon:'how_to_reg',    title:'Supplier Registration',     desc:'Self-service supplier portal for profile and document submission', step:'01'},
+        {icon:'rate_review',   title:'Vendor Evaluation',         desc:'Technical and commercial evaluation workflows with scoring',     step:'02'},
+        {icon:'search',        title:'Supplier Audits',           desc:'On-site and remote audit scheduling with checklist management', step:'03'},
+        {icon:'grid_on',       title:'Qualification Matrix',      desc:'Material category-wise qualification status and expiry tracking', step:'04'},
+        {icon:'bar_chart',     title:'Performance Scorecards',    desc:'KPI-based supplier performance tracking and benchmarking',      step:'05'},
+        {icon:'verified',      title:'Approved Vendor List',      desc:'Category-specific AVL with validity and renewal workflows',     step:'06'},
+        {icon:'receipt_long',  title:'Procurement Tracking',      desc:'RFQ, bidding and purchase order status visibility',             step:'07'},
+        {icon:'gavel',         title:'Contract Management',       desc:'Contract repository with milestones and compliance monitoring', step:'08'},
+      ]; track s.title) {
+        <div class="sup-card pm-card">
+          <div class="sup-card__step">{{ s.step }}</div>
+          <div class="sup-card__icon"><mat-icon>{{ s.icon }}</mat-icon></div>
+          <h5>{{ s.title }}</h5>
+          <p>{{ s.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ERP / CMMS INTEGRATION
+════════════════════════════════════════════════════════════ -->
+<section class="section intel-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">Enterprise Integration</span>
+      <h2>Seamless Enterprise Integration</h2>
+      <p>Pre-built connectors to leading ERP, CMMS, engineering and procurement systems</p>
+    </div>
+    <div class="integ-layout">
+      <div class="integ-hub">
+        <div class="integ-hub__center">
+          <mat-icon>hub</mat-icon>
+          <span>ICMP</span>
+          <small>Integration Hub</small>
+        </div>
+        <div class="integ-hub__ring">
+          @for (intg of integrations; track intg.name) {
+            <div class="integ-node" [matTooltip]="intg.category">
+              <mat-icon>{{ intg.icon }}</mat-icon>
+              <span>{{ intg.name }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="integ-details" [@staggerList]="integrations.length">
+        @for (intg of integrations; track intg.name) {
+          <div class="integ-card">
+            <div class="integ-card__icon"><mat-icon>{{ intg.icon }}</mat-icon></div>
+            <div>
+              <h5>{{ intg.name }}</h5>
+              <span class="integ-cat">{{ intg.category }}</span>
+            </div>
+            <span class="integ-badge">Connected</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ANALYTICS DASHBOARD PREVIEW
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Analytics</span>
+      <h2>Real-Time Project Intelligence</h2>
+      <p>Executive dashboards and operational KPIs giving complete visibility across every project and site</p>
+    </div>
+    <div class="analytics-mock pm-card" @fadeUp>
+      <div class="analytics-mock__header">
+        <div class="am-title"><mat-icon>analytics</mat-icon> Project Intelligence Dashboard</div>
+        <div class="am-meta">
+          <span class="live-badge"><span class="live-dot"></span> Live</span>
+          <mat-chip>Q2 2025</mat-chip>
+        </div>
+      </div>
+      <div class="analytics-mock__body">
+        <div class="am-stats-row">
+          @for (s of [
+            {label:'Active Projects', val:'24', icon:'folder_open', color:'#1565C0'},
+            {label:'Materials On-Site', val:'1.2M', icon:'inventory_2', color:'#2E7D32'},
+            {label:'Open NCRs', val:'47', icon:'report_problem', color:'#D32F2F'},
+            {label:'POs In Progress', val:'312', icon:'receipt_long', color:'#ED6C02'},
+          ]; track s.label) {
+            <div class="am-stat-card" [style.border-top-color]="s.color">
+              <mat-icon [style.color]="s.color">{{ s.icon }}</mat-icon>
+              <span class="am-stat-val" [style.color]="s.color">{{ s.val }}</span>
+              <span class="am-stat-lbl">{{ s.label }}</span>
+            </div>
+          }
+        </div>
+        <div class="am-kpi-grid">
+          @for (w of kpiWidgets; track w.label) {
+            <div class="am-kpi-item">
+              <div class="am-kpi-head">
+                <mat-icon [style.color]="w.color">{{ w.icon }}</mat-icon>
+                <span>{{ w.label }}</span>
+                <strong [style.color]="w.color">{{ w.value }}{{ w.unit }}</strong>
+              </div>
+              <mat-progress-bar mode="determinate" [value]="w.pct"
+                [style.--mdc-linear-progress-active-indicator-color]="w.color"
+                [style.--mdc-linear-progress-track-color]="w.color + '22'" />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STATS
+════════════════════════════════════════════════════════════ -->
+<section class="section stats-section">
+  <div class="container">
+    <div class="section-head section-head--light" @fadeUp>
+      <span class="section-tag section-tag--light">Platform Scale</span>
+      <h2>Trusted by Industrial Leaders Worldwide</h2>
+    </div>
+    <div class="stats-grid" [@staggerList]="stats.length">
+      @for (s of stats; track s.label; let i = $index) {
+        <div class="stat-card">
+          <div class="stat-card__icon" [style.color]="s.color">
+            <mat-icon>{{ s.icon }}</mat-icon>
+          </div>
+          <div class="stat-card__val" [style.color]="s.color">
+            {{ formatStat(animatedStats()[i], i) }}
+          </div>
+          <div class="stat-card__lbl">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WHY CHOOSE US
+════════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Why Choose Us</span>
+      <h2>Why Industrial Leaders Choose Our Platform</h2>
+      <p>Proven results across EPC, petrochemical, steel and heavy industrial projects globally</p>
+    </div>
+    <div class="grid-4" [@staggerList]="whyCards.length">
+      @for (w of whyCards; track w.title) {
+        <div class="why-card pm-card">
+          <div class="why-card__icon" [style.color]="w.color" [style.background]="w.color + '12'">
+            <mat-icon>{{ w.icon }}</mat-icon>
+          </div>
+          <h5>{{ w.title }}</h5>
+          <p>{{ w.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TESTIMONIALS
+════════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Client Stories</span>
+      <h2>What Our Clients Say</h2>
+      <p>Hear from project directors, materials managers and quality engineers at leading industrial organizations</p>
+    </div>
+    <div class="testimonials-wrap">
+      <div class="testimonial-main pm-card" @fadeUp>
+        @for (t of testimonials; track t.name; let i = $index) {
+          @if (currentTestimonial() === i) {
+            <div class="testimonial-body" @fadeIn>
+              <div class="test-quote"><mat-icon>format_quote</mat-icon></div>
+              <p class="test-text">"{{ t.text }}"</p>
+              <div class="test-author">
+                <div class="test-avatar" [style.background]="t.color">{{ t.initials }}</div>
+                <div>
+                  <strong>{{ t.name }}</strong>
+                  <span>{{ t.role }}, {{ t.company }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+        <div class="testimonial-dots">
+          @for (t of testimonials; track t.name; let i = $index) {
+            <button class="hero__dot" [class.active]="currentTestimonial() === i" (click)="goToTestimonial(i)"></button>
+          }
+        </div>
+      </div>
+      <div class="testimonial-list">
+        @for (t of testimonials; track t.name; let i = $index) {
+          <div class="test-mini" [class.active]="currentTestimonial() === i" (click)="goToTestimonial(i)">
+            <div class="test-avatar test-avatar--sm" [style.background]="t.color">{{ t.initials }}</div>
+            <div>
+              <strong>{{ t.name }}</strong>
+              <span>{{ t.company }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CTA BANNER
+════════════════════════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="cta-overlay"></div>
+  <div class="container cta-inner" @fadeUp>
+    <div class="cta-badge"><mat-icon>factory</mat-icon> Enterprise Industrial Platform</div>
+    <h2>Transform Your Industrial Construction Operations</h2>
+    <p>Join 100+ industrial clients who have digitized their EPC and heavy industrial project management</p>
+    <div class="cta-actions">
+      <a mat-raised-button class="cta-btn-primary" routerLink="/auth/register-organization">
+        <mat-icon>rocket_launch</mat-icon> Request Demo
+      </a>
+      <a mat-stroked-button class="cta-btn-outline" routerLink="/auth/register-organization">
+        <mat-icon>calendar_today</mat-icon> Schedule Consultation
+      </a>
+      <a mat-stroked-button class="cta-btn-outline" routerLink="/auth/login">
+        <mat-icon>support_agent</mat-icon> Contact Sales
+      </a>
+    </div>
+    <div class="cta-trust">
+      <span><mat-icon>verified_user</mat-icon> Enterprise Security</span>
+      <span><mat-icon>support</mat-icon> 24/7 Support</span>
+      <span><mat-icon>update</mat-icon> Free Onboarding</span>
+      <span><mat-icon>payment</mat-icon> Flexible Pricing</span>
+    </div>
+  </div>
+</section>

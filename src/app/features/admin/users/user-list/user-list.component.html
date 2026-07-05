@@ -1,0 +1,229 @@
+<div class="user-list-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Team Members</h1>
+      <p class="page-subtitle">Manage your organisation's users</p>
+    </div>
+
+    <div class="header-actions">
+      <!-- View Toggle -->
+      <mat-button-toggle-group [value]="viewMode()" (change)="viewMode.set($event.value)" class="view-toggle" aria-label="View mode">
+        <mat-button-toggle value="grid" matTooltip="Grid view">
+          <mat-icon>grid_view</mat-icon>
+        </mat-button-toggle>
+        <mat-button-toggle value="table" matTooltip="Table view">
+          <mat-icon>table_rows</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <button mat-raised-button color="primary" class="add-btn" (click)="addUser()">
+        <mat-icon>person_add</mat-icon>
+        Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="48"></mat-spinner>
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && users().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">people_outline</mat-icon>
+      <p>No users found for this organisation.</p>
+      <button mat-raised-button color="primary" (click)="addUser()">Add First User</button>
+    </div>
+  }
+
+  @if (!loading() && users().length > 0) {
+
+    <!-- ── GRID VIEW ── -->
+    @if (viewMode() === 'grid') {
+      <div class="users-grid" [@staggerIn]="users().length">
+        @for (user of users(); track user.id) {
+          <mat-card class="user-card" (click)="openDetail(user)">
+            <div class="card-top">
+              <div class="avatar-wrap">
+                <img [src]="avatarUrl(user)" [alt]="user.first_name" class="avatar"
+                     (error)="$any($event.target).src='/avatar-default.svg'" />
+                <span class="status-dot"
+                      [class.active]="user.is_active && user.is_email_verified"
+                      [class.pending]="!user.is_email_verified"
+                      [class.disabled]="user.is_email_verified && !user.is_active"></span>
+              </div>
+              <div class="user-info">
+                <h3 class="user-name">{{ user.first_name }} {{ user.last_name }}</h3>
+                <p class="user-role">{{ user.role?.name ?? '—' }}</p>
+                <p class="user-email">{{ user.email }}</p>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="card-meta">
+              @if (user.location) {
+                <span class="meta-item">
+                  <mat-icon class="meta-icon">location_on</mat-icon>{{ user.location }}
+                </span>
+              }
+              @if (user.report_to) {
+                <span class="meta-item">
+                  <mat-icon class="meta-icon">supervisor_account</mat-icon>{{ user.report_to }}
+                </span>
+              }
+              @if (user.position) {
+                <span class="meta-item">
+                  <mat-icon class="meta-icon">work</mat-icon>{{ user.position }}
+                </span>
+              }
+            </div>
+
+            <div class="card-footer">
+              <mat-chip [color]="statusColor(user)" highlighted>{{ statusLabel(user) }}</mat-chip>
+
+              <div class="action-icons" (click)="$event.stopPropagation()">
+                @if (!user.is_email_verified) {
+                  <button mat-icon-button color="accent" matTooltip="Resend verification code"
+                          (click)="resendCode(user, $event)">
+                    <mat-icon>mark_email_unread</mat-icon>
+                  </button>
+                }
+                @if (user.is_email_verified) {
+                  @if (user.is_active) {
+                    <button mat-icon-button color="warn" matTooltip="Disable user"
+                            (click)="toggleStatus(user, $event)">
+                      <mat-icon>person_off</mat-icon>
+                    </button>
+                  } @else {
+                    <button mat-icon-button color="primary" matTooltip="Enable user"
+                            (click)="toggleStatus(user, $event)">
+                      <mat-icon>how_to_reg</mat-icon>
+                    </button>
+                  }
+                }
+                <button mat-icon-button matTooltip="View details"
+                        (click)="openDetail(user); $event.stopPropagation()">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+            </div>
+          </mat-card>
+        }
+      </div>
+    }
+
+    <!-- ── TABLE VIEW ── -->
+    @if (viewMode() === 'table') {
+      <div class="table-wrap">
+        <table mat-table [dataSource]="users()" class="users-table">
+
+          <!-- Avatar + Name column -->
+          <ng-container matColumnDef="avatar">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let user">
+              <div class="table-avatar-wrap">
+                <img [src]="avatarUrl(user)" [alt]="user.first_name" class="table-avatar"
+                     (error)="$any($event.target).src='/avatar-default.svg'" />
+                <span class="status-dot"
+                      [class.active]="user.is_active && user.is_email_verified"
+                      [class.pending]="!user.is_email_verified"
+                      [class.disabled]="user.is_email_verified && !user.is_active"></span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let user">
+              <div class="table-name-cell">
+                <span class="tbl-name">{{ user.first_name }} {{ user.last_name }}</span>
+                <span class="tbl-email">{{ user.email }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Role</th>
+            <td mat-cell *matCellDef="let user">
+              <span class="tbl-role">{{ user.role?.name ?? '—' }}</span>
+              @if (user.position) {
+                <span class="tbl-position">{{ user.position }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef>Location</th>
+            <td mat-cell *matCellDef="let user">
+              @if (user.location) {
+                <span class="tbl-meta">
+                  <mat-icon class="tbl-icon">location_on</mat-icon>{{ user.location }}
+                </span>
+              } @else { <span class="tbl-empty">—</span> }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="report_to">
+            <th mat-header-cell *matHeaderCellDef>Reports To</th>
+            <td mat-cell *matCellDef="let user">
+              @if (user.report_to) {
+                <span class="tbl-meta">
+                  <mat-icon class="tbl-icon">supervisor_account</mat-icon>{{ user.report_to }}
+                </span>
+              } @else { <span class="tbl-empty">—</span> }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let user">
+              <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
+                {{ statusLabel(user) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let user">
+              <div class="tbl-actions">
+                @if (!user.is_email_verified) {
+                  <button mat-icon-button color="accent" matTooltip="Resend verification code"
+                          (click)="resendCode(user, $event)">
+                    <mat-icon>mark_email_unread</mat-icon>
+                  </button>
+                }
+                @if (user.is_email_verified) {
+                  @if (user.is_active) {
+                    <button mat-icon-button color="warn" matTooltip="Disable user"
+                            (click)="toggleStatus(user, $event)">
+                      <mat-icon>person_off</mat-icon>
+                    </button>
+                  } @else {
+                    <button mat-icon-button color="primary" matTooltip="Enable user"
+                            (click)="toggleStatus(user, $event)">
+                      <mat-icon>how_to_reg</mat-icon>
+                    </button>
+                  }
+                }
+                <button mat-icon-button matTooltip="View details" (click)="openDetail(user)">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
+          <tr mat-row *matRowDef="let user; columns: tableColumns;"
+              class="table-row" (click)="openDetail(user)"></tr>
+        </table>
+      </div>
+    }
+
+  }
+</div>

@@ -1,0 +1,275 @@
+<div class="org-profile-page">
+
+  <!-- ── Page header ────────────────────────────────────────────── -->
+  <div class="page-header" @fadeUp>
+    <div class="page-header__left">
+      <a mat-icon-button class="back-btn" routerLink="/admin/dashboard" aria-label="Back to dashboard">
+        <span class="material-icons">arrow_back</span>
+      </a>
+      <div>
+        <h1 class="page-title">Organisation Profile</h1>
+        <p class="page-sub">Manage your company details, address and tax information</p>
+      </div>
+    </div>
+
+    @if (!loading() && !loadErr()) {
+      <div class="page-header__actions">
+        @if (form.dirty) {
+          <span class="unsaved-badge">
+            <span class="material-icons">edit</span> Unsaved changes
+          </span>
+        }
+        <button mat-stroked-button class="reset-btn"
+                (click)="onReset()" [disabled]="saving()">
+          <span class="material-icons">refresh</span> Reset
+        </button>
+        <button mat-raised-button class="save-btn"
+                (click)="onSubmit()" [disabled]="saving() || form.pristine">
+          @if (saving()) {
+            <ng-container>
+              <mat-spinner diameter="18" />
+              <span>Saving…</span>
+            </ng-container>
+          } @else {
+            <ng-container>
+              <mat-icon>save</mat-icon>
+              <span>Save Changes</span>
+            </ng-container>
+          }
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- ── Loading skeleton ───────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="skeleton-wrap" aria-label="Loading profile…" role="status">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="skeleton-row">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-input"></div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Load error ─────────────────────────────────────────────── -->
+  @if (loadErr() && !loading()) {
+    <div class="load-err-card" @fadeUp role="alert">
+      <span class="material-icons">error_outline</span>
+      <div>
+        <strong>Could not load profile</strong>
+        <p>{{ loadErr() }}</p>
+      </div>
+      <button mat-stroked-button (click)="onReset()">
+        <span class="material-icons">refresh</span> Retry
+      </button>
+    </div>
+  }
+
+  <!-- ── Form ───────────────────────────────────────────────────── -->
+  @if (!loading() && !loadErr()) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate @fadeUp>
+
+      <!-- ── Section: Company Identity ─────────────────────────── -->
+      <section class="form-section">
+        <div class="section-label">
+          <div class="section-icon" style="background:rgba(25,118,210,.1)">
+            <span class="material-icons" style="color:#1976D2">business</span>
+          </div>
+          <div>
+            <h2>Company Identity</h2>
+            <p>Legal and display names for your organisation</p>
+          </div>
+        </div>
+
+        <div class="fields-grid">
+          <mat-form-field appearance="outline" class="field-span-2">
+            <mat-label>Organisation Name *</mat-label>
+            <mat-icon matPrefix>business</mat-icon>
+            <input matInput formControlName="organizationName"
+                   placeholder="e.g. Acme Construction Ltd." />
+            @if (err('organizationName')) {
+              <mat-error>{{ err('organizationName') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-span-2">
+            <mat-label>Legal Name</mat-label>
+            <mat-icon matPrefix>gavel</mat-icon>
+            <input matInput formControlName="legalName"
+                   placeholder="e.g. Acme Construction Private Limited" />
+            <mat-hint>Registered legal entity name, if different from display name</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider class="section-divider" />
+
+      <!-- ── Section: Contact Details ──────────────────────────── -->
+      <section class="form-section">
+        <div class="section-label">
+          <div class="section-icon" style="background:rgba(46,125,50,.1)">
+            <span class="material-icons" style="color:#2E7D32">contact_phone</span>
+          </div>
+          <div>
+            <h2>Contact Details</h2>
+            <p>Primary email, phone and website</p>
+          </div>
+        </div>
+
+        <div class="fields-grid">
+          <mat-form-field appearance="outline" class="field-span-2">
+            <mat-label>Business Email *</mat-label>
+            <mat-icon matPrefix>email</mat-icon>
+            <input matInput type="email" formControlName="email"
+                   placeholder="admin@acmecorp.com"
+                   autocomplete="email" />
+            @if (err('email')) {
+              <mat-error>{{ err('email') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone Number</mat-label>
+            <mat-icon matPrefix>phone</mat-icon>
+            <input matInput formControlName="phoneNumber"
+                   placeholder="+1 234 567 8900" />
+            @if (err('phoneNumber')) {
+              <mat-error>{{ err('phoneNumber') }}</mat-error>
+            }
+            <mat-hint>Include country code</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Website</mat-label>
+            <mat-icon matPrefix>language</mat-icon>
+            <input matInput formControlName="website"
+                   placeholder="https://acmecorp.com" />
+            @if (err('website')) {
+              <mat-error>{{ err('website') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider class="section-divider" />
+
+      <!-- ── Section: Address ───────────────────────────────────── -->
+      <section class="form-section">
+        <div class="section-label">
+          <div class="section-icon" style="background:rgba(237,108,2,.1)">
+            <span class="material-icons" style="color:#ED6C02">location_on</span>
+          </div>
+          <div>
+            <h2>Address</h2>
+            <p>Registered office or principal place of business</p>
+          </div>
+        </div>
+
+        <div class="fields-grid">
+          <mat-form-field appearance="outline" class="field-span-2">
+            <mat-label>Address Line 1</mat-label>
+            <mat-icon matPrefix>location_on</mat-icon>
+            <input matInput formControlName="addressLine1"
+                   placeholder="123 Main Street" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-span-2">
+            <mat-label>Address Line 2</mat-label>
+            <mat-icon matPrefix>add_location_alt</mat-icon>
+            <input matInput formControlName="addressLine2"
+                   placeholder="Suite 400, Floor 3" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <mat-icon matPrefix>location_city</mat-icon>
+            <input matInput formControlName="city" placeholder="Mumbai" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>State / Province</mat-label>
+            <mat-icon matPrefix>map</mat-icon>
+            <input matInput formControlName="state" placeholder="Maharashtra" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <mat-icon matPrefix>flag</mat-icon>
+            <mat-select formControlName="country">
+              <mat-option value="">— Select country —</mat-option>
+              @for (c of countries; track c) {
+                <mat-option [value]="c">{{ c }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Postal Code</mat-label>
+            <mat-icon matPrefix>markunread_mailbox</mat-icon>
+            <input matInput formControlName="postalCode" placeholder="400001" />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider class="section-divider" />
+
+      <!-- ── Section: Tax & Compliance ─────────────────────────── -->
+      <section class="form-section">
+        <div class="section-label">
+          <div class="section-icon" style="background:rgba(103,58,183,.1)">
+            <span class="material-icons" style="color:#673AB7">receipt_long</span>
+          </div>
+          <div>
+            <h2>Tax &amp; Compliance</h2>
+            <p>GST, VAT or other registered tax identifiers</p>
+          </div>
+        </div>
+
+        <div class="fields-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Tax / VAT / GST Number</mat-label>
+            <mat-icon matPrefix>tag</mat-icon>
+            <input matInput formControlName="taxNumber"
+                   placeholder="e.g. 29ABCDE1234F1Z5" />
+            <mat-hint>Leave blank if not applicable</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- ── Sticky bottom action bar ──────────────────────────── -->
+      <div class="bottom-bar">
+        <button mat-button class="cancel-btn" type="button"
+                routerLink="/admin/dashboard">
+          Cancel
+        </button>
+        <div class="bottom-bar__right">
+          @if (saved() && form.pristine) {
+            <span class="save-indicator">
+              <span class="material-icons">check_circle</span> Saved
+            </span>
+          }
+          <button mat-stroked-button class="reset-btn" type="button"
+                  (click)="onReset()" [disabled]="saving()">
+            <span class="material-icons">refresh</span> Discard Changes
+          </button>
+          <button mat-raised-button class="save-btn" type="submit"
+                  [disabled]="saving() || form.pristine">
+            @if (saving()) {
+              <mat-spinner diameter="18" />
+              <span>Saving…</span>
+            } @else {
+            <ng-container>
+              <mat-icon>save</mat-icon>
+              <span>Save Changes</span>
+            </ng-container>
+            }
+          </button>
+        </div>
+      </div>
+
+    </form>
+  }
+
+</div>

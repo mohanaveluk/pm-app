@@ -1,0 +1,43 @@
+<div class="user-dash page-enter">
+  <div class="dash-hero">
+    <div class="container">
+      <h1>My Dashboard</h1>
+      <p>Welcome back, <strong>{{ currentUser()?.firstName || 'User' }}</strong>. Here's your workspace overview.</p>
+    </div>
+  </div>
+
+  <div class="container dash-content">
+    <div class="kpi-grid" [@staggerIn]="cards.length">
+      @for (c of cards; track c.label) {
+        <div class="kpi-card pm-card">
+          <div class="kpi-card__icon" [style.background]="c.color+'18'" [style.color]="c.color">
+            <span class="material-icons">{{ c.icon }}</span>
+          </div>
+          <div class="kpi-card__val">{{ c.value }}</div>
+          <div class="kpi-card__lbl">{{ c.label }}</div>
+        </div>
+      }
+    </div>
+
+    <div class="projects-section">
+      <div class="section-title">
+        <h2>My Projects</h2>
+        <button mat-stroked-button class="view-all-btn">View All</button>
+      </div>
+      <div class="project-list">
+        @for (p of projects; track p.name) {
+          <div class="project-row pm-card">
+            <div class="project-row__dot" [style.background]="p.color"></div>
+            <div class="project-row__name">{{ p.name }}</div>
+            <div class="project-row__progress">
+              <mat-progress-bar mode="determinate" [value]="p.progress" color="primary" />
+              <span>{{ p.progress }}%</span>
+            </div>
+            <div class="project-row__due">Due {{ p.dueDate | date:'mediumDate' }}</div>
+            <span class="status-chip status-chip--{{ statusClass(p.status) }}">{{ p.status }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

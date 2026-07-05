@@ -1,0 +1,243 @@
+<!-- ═══ HERO ═══════════════════════════════════════════════════════════ -->
+<section class="pricing-hero">
+  <div class="pricing-hero__overlay"></div>
+  <div class="container pricing-hero__inner" @fadeUp>
+    <div class="pricing-hero__badge"><mat-icon>attach_money</mat-icon> Transparent Pricing</div>
+    <h1>Flexible Pricing for Every<br>Industrial Organization</h1>
+    <p>Choose the right plan for your project, organization, and operational needs.<br class="d-none-sm">
+       No hidden fees. Cancel anytime.</p>
+    <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+      <mat-icon>support_agent</mat-icon> Contact Sales
+    </a>
+  </div>
+</section>
+
+<!-- ═══ BILLING TOGGLE ════════════════════════════════════════════════ -->
+<div class="billing-toggle-row">
+  <span [class.active]="!yearly()">Monthly</span>
+  <mat-slide-toggle [(ngModel)]="yearly" (change)="yearly.set($event.checked)" color="primary" />
+  <span [class.active]="yearly()">
+    Yearly
+    <span class="save-badge">Save 20%</span>
+  </span>
+</div>
+
+<!-- ═══ PRICING CARDS ════════════════════════════════════════════════ -->
+<section class="section pricing-section">
+  <div class="container">
+    <div class="plans-grid" [@staggerList]="plans.length">
+      @for (plan of plans; track plan.id) {
+        <div class="plan-card" [class.plan-card--highlight]="plan.highlight">
+          @if (plan.badge) {
+            <div class="plan-badge">{{ plan.badge }}</div>
+          }
+          <div class="plan-card__header">
+            <div class="plan-icon" [style.background]="plan.highlight ? 'rgba(255,255,255,.15)' : plan.bg" [style.color]="plan.highlight ? '#fff' : plan.color">
+              <mat-icon>{{ plan.icon }}</mat-icon>
+            </div>
+            <div>
+              <h3>{{ plan.name }}</h3>
+              <p class="plan-tagline">{{ plan.tagline }}</p>
+            </div>
+          </div>
+
+          <div class="plan-price">
+            <span class="plan-price__amount">{{ displayPrice(plan) }}</span>
+            <span class="plan-price__period">{{ pricePeriod(plan) }}</span>
+          </div>
+          @if (plan.monthlyPrice && yearly()) {
+            <p class="plan-saving">Saving ${{ ((plan.monthlyPrice * 12) - (plan.yearlyPrice ?? 0)).toLocaleString() }}/yr vs monthly</p>
+          }
+
+          <mat-divider />
+
+          <ul class="plan-features">
+            @for (f of plan.features; track f) {
+              <li>
+                <mat-icon [style.color]="plan.highlight ? '#81D4FA' : plan.color">check_circle</mat-icon>
+                <span>{{ f }}</span>
+              </li>
+            }
+          </ul>
+
+          <a mat-raised-button [routerLink]="plan.ctaRoute"
+             [style.background]="plan.highlight ? '#fff' : plan.color"
+             [style.color]="plan.highlight ? plan.color : '#fff'"
+             class="plan-cta">
+            {{ plan.cta }} <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE COMPARISON TABLE ════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Compare Plans</span>
+      <h2>Feature Comparison</h2>
+      <p>See exactly what's included in each plan — no surprises</p>
+    </div>
+    <div class="compare-wrap pm-card" @fadeUp>
+      <table mat-table [dataSource]="compareRows" class="compare-table">
+
+        <ng-container matColumnDef="feature">
+          <th mat-header-cell *matHeaderCellDef class="col-feature">Feature</th>
+          <td mat-cell *matCellDef="let row" class="col-feature">{{ row.feature }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="starter">
+          <th mat-header-cell *matHeaderCellDef class="col-plan col-starter">
+            <span class="th-plan">Starter</span>
+          </th>
+          <td mat-cell *matCellDef="let row" class="col-plan col-starter">
+            @if (isBoolean(row.starter)) {
+              <mat-icon [class.check]="row.starter" [class.cross]="!row.starter">
+                {{ row.starter ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+            } @else {
+              <span class="cell-text">{{ row.starter }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="professional">
+          <th mat-header-cell *matHeaderCellDef class="col-plan col-pro">
+            <span class="th-plan th-plan--pro">Professional <mat-chip>Popular</mat-chip></span>
+          </th>
+          <td mat-cell *matCellDef="let row" class="col-plan col-pro">
+            @if (isBoolean(row.professional)) {
+              <mat-icon [class.check]="row.professional" [class.cross]="!row.professional">
+                {{ row.professional ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+            } @else {
+              <span class="cell-text">{{ row.professional }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="enterprise">
+          <th mat-header-cell *matHeaderCellDef class="col-plan col-ent">
+            <span class="th-plan">Enterprise</span>
+          </th>
+          <td mat-cell *matCellDef="let row" class="col-plan col-ent">
+            @if (isBoolean(row.enterprise)) {
+              <mat-icon [class.check]="row.enterprise" [class.cross]="!row.enterprise">
+                {{ row.enterprise ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+            } @else {
+              <span class="cell-text">{{ row.enterprise }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="compareColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: compareColumns;"></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INCLUDED FEATURES ════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">What's Included</span>
+      <h2>Every Plan Includes</h2>
+      <p>Core industrial construction capabilities available across all plans</p>
+    </div>
+    <div class="included-grid" [@staggerList]="includedFeatures.length">
+      @for (f of includedFeatures; track f.title) {
+        <div class="incl-card pm-card">
+          <div class="incl-card__icon" [style.background]="f.color+'14'" [style.color]="f.color">
+            <mat-icon>{{ f.icon }}</mat-icon>
+          </div>
+          <h5>{{ f.title }}</h5>
+          <p>{{ f.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══════════════════════════════════════════════════════════ -->
+<section class="section bg-light">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">FAQ</span>
+      <h2>Frequently Asked Questions</h2>
+      <p>Everything you need to know before getting started</p>
+    </div>
+    <div class="faq-wrap" @fadeUp>
+      <mat-accordion multi>
+        @for (faq of faqs; track faq.question) {
+          <mat-expansion-panel class="faq-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon class="faq-icon">help_outline</mat-icon>
+                {{ faq.question }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <p class="faq-answer">{{ faq.answer }}</p>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SOCIAL PROOF ══════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head" @fadeUp>
+      <span class="section-tag">Trusted By</span>
+      <h2>Trusted by Industrial Leaders Worldwide</h2>
+      <p>Join 100+ organizations that have transformed their industrial construction management</p>
+    </div>
+    <div class="social-proof-grid" [@staggerList]="testimonials.length">
+      @for (t of testimonials; track t.name) {
+        <div class="proof-card pm-card">
+          <div class="proof-card__quote"><mat-icon>format_quote</mat-icon></div>
+          <p>"{{ t.text }}"</p>
+          <div class="proof-author">
+            <div class="proof-avatar" [style.background]="t.color">{{ t.initials }}</div>
+            <div>
+              <strong>{{ t.name }}</strong>
+              <span>{{ t.company }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+    <!-- Client logo placeholders -->
+    <div class="client-logos" @fadeUp>
+      @for (c of ['Chemical Corp','PetroGroup','EPC Masters','SteelWorks','PowerGen','OilField Co']; track c) {
+        <div class="client-logo-chip">{{ c }}</div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL CTA ══════════════════════════════════════════════════════ -->
+<section class="pricing-cta">
+  <div class="pricing-cta__overlay"></div>
+  <div class="container pricing-cta__inner" @fadeUp>
+    <div class="cta-badge"><mat-icon>factory</mat-icon> Start Your Journey</div>
+    <h2>Ready to Transform Your Industrial Operations?</h2>
+    <p>Start a free trial, request a demo, or talk to our sales team — no commitment required</p>
+    <div class="cta-actions">
+      <a mat-raised-button class="btn-white" routerLink="/auth/register-organization">
+        <mat-icon>play_circle</mat-icon> Start Free Trial
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/auth/register-organization">
+        <mat-icon>rocket_launch</mat-icon> Request Demo
+      </a>
+      <a mat-stroked-button class="btn-outline" routerLink="/auth/register-organization">
+        <mat-icon>support_agent</mat-icon> Contact Sales
+      </a>
+    </div>
+    <p class="cta-fine">No credit card required &nbsp;·&nbsp; 30-day free trial &nbsp;·&nbsp; Cancel anytime</p>
+  </div>
+</section>

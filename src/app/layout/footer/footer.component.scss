@@ -1,0 +1,65 @@
+.footer {
+  background: var(--footer);
+  color: rgba(255,255,255,.8);
+  padding: 64px 0 0;
+  margin-top: auto;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    @media(max-width:900px) { grid-template-columns: 1fr 1fr; }
+    @media(max-width:560px) { grid-template-columns: 1fr; }
+  }
+
+  &__brand {}
+  &__logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    mat-icon { color: var(--secondary); font-size: 28px; width:28px; height:28px; }
+    span { font-size: 1.2rem; color: #fff; font-weight: 500;
+      strong { color: var(--secondary); font-weight: 700; } }
+  }
+  &__tagline { font-size: .9rem; line-height: 1.7; max-width: 280px; margin-bottom: 24px; }
+
+  &__social { display: flex; gap: 10px; }
+
+  &__col {
+    h4 { color: #fff; font-size: .9rem; font-weight: 600; margin-bottom: 20px;
+         text-transform: uppercase; letter-spacing: 1px; }
+    ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    li a { color: rgba(255,255,255,.7); text-decoration: none; font-size: .9rem;
+           transition: color var(--ease);
+           &:hover { color: var(--secondary); } }
+  }
+
+  address {
+    font-style: normal;
+    display: flex; flex-direction: column; gap: 12px;
+    p { display: flex; align-items: flex-start; gap: 10px; font-size: .88rem; color: rgba(255,255,255,.7);
+        mat-icon { font-size: 16px; width:16px; height:16px; color: var(--secondary); margin-top: 2px; flex-shrink:0; } }
+  }
+
+  &__bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 0;
+    font-size: .84rem; color: rgba(255,255,255,.5);
+    @media(max-width:600px) { flex-direction: column; gap: 10px; text-align: center; }
+  }
+  &__legal { display: flex; gap: 10px; align-items: center;
+    a { color: rgba(255,255,255,.5); text-decoration: none;
+        &:hover { color: var(--secondary); } }
+    span { opacity: .4; } }
+}
+
+.social-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background var(--ease), transform var(--ease);
+  mat-icon { color: rgba(255,255,255,.8); font-size: 18px; width:18px; height:18px; }
+  &:hover { background: var(--secondary); transform: translateY(-2px);
+    mat-icon { color: #fff; } }
+}
