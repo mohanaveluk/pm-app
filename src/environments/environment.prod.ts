@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.suhana.com/api',
+  apiUrl: 'https://pm-api-990305542645.us-central1.run.app/api',
 };
