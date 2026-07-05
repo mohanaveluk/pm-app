@@ -46,7 +46,7 @@ export interface OrgUser {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, RouterLink,
+    CommonModule,
     MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatChipsModule,
     MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule,
     MatDialogModule, MatDividerModule, MatTableModule,
