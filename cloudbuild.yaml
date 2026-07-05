@@ -1,19 +1,19 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/suhana-app:latest', '-t', 'gcr.io/$PROJECT_ID/suhana-app:$COMMIT_SHA', '-t', 'gcr.io/$PROJECT_ID/suhana-app:$BUILD_ID', '.']
-  id: 'build-image-suhana-app'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/pm-app:latest', '-t', 'gcr.io/$PROJECT_ID/pm-app:$COMMIT_SHA', '-t', 'gcr.io/$PROJECT_ID/pm-app:$BUILD_ID', '.']
+  id: 'build-image-pm-app'
   waitFor: ['-']  # The '-' indicates that this step begins immediately.
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/suhana-app:$COMMIT_SHA']
+  args: ['push', 'gcr.io/$PROJECT_ID/pm-app:$COMMIT_SHA']
   id: 'push-image-to-container-registry'
-  waitFor: ['build-image-suhana-app']
+  waitFor: ['build-image-pm-app']
 - name: 'gcr.io/cloud-builders/gcloud'
   args:
   - 'run'
   - 'deploy'
-  - 'suhana-app'
+  - 'pm-app'
   - '--image'
-  - 'gcr.io/$PROJECT_ID/suhana-app:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/pm-app:$COMMIT_SHA'
   - '--port'
   - '80'
   - '--region'
@@ -38,12 +38,12 @@ steps:
   # args: ['tar', '-czvf', 'artifacts.tar.gz', 'app', 'requirement.txt', '/angularfoxpvolume/buildlog.log']
   waitFor: ['fetch-build-log']
   id: 'create-artifacts-zip'
-logsBucket: 'gs://logs-codebuild-suhana-app-$PROJECT_ID/$BUILD_ID'
+logsBucket: 'gs://logs-codebuild-pm-app-$PROJECT_ID/$BUILD_ID'
 
 
 images:
-- 'gcr.io/$PROJECT_ID/suhana-app:latest'
-- 'gcr.io/$PROJECT_ID/suhana-app:$COMMIT_SHA'
-- 'gcr.io/$PROJECT_ID/suhana-app:$BUILD_ID'
+- 'gcr.io/$PROJECT_ID/pm-app:latest'
+- 'gcr.io/$PROJECT_ID/pm-app:$COMMIT_SHA'
+- 'gcr.io/$PROJECT_ID/pm-app:$BUILD_ID'
 
 timeout: 1800s
