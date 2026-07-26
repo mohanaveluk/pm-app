@@ -1,0 +1,67 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Department Details
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ department.code }}</div>
+      <div class="dlg-name">{{ department.name }}</div>
+    </div>
+    <mat-chip [class]="department.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+      {{ department.isActive ? 'Active' : 'Inactive' }}
+    </mat-chip>
+  </div>
+
+  <mat-divider />
+
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Short Name</dt>
+      <dd>{{ department.shortName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Organization</dt>
+      <dd>{{ department.organization?.name || department.organizationId }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Display Order</dt>
+      <dd>{{ department.displayOrder }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Description</dt>
+      <dd>{{ department.description || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ department.remarks || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ department.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ department.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ department.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ department.updatedAt ? (department.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

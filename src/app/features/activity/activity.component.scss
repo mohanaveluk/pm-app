@@ -1,0 +1,185 @@
+.act-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.act-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.act-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.act-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.act-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 260px;
+    min-width: 200px;
+  }
+
+  &__select {
+    width: 200px;
+  }
+
+  &__status {
+    width: 160px;
+  }
+}
+
+.act-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.act-table-scroll {
+  overflow-x: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.act-row {
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+}
+
+.act-code {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.act-mono {
+  font-family: monospace;
+  font-size: 0.82rem;
+}
+
+.act-row-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 2px;
+  color: #8098b8;
+
+  &--system { color: #5e35b1; }
+  &--default { color: #1976d2; }
+}
+
+.act-chip--clickable {
+  cursor: pointer;
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.act-menu-item--danger {
+  color: var(--error);
+}
+
+.act-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.act-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+// Compact density: shrink cell padding without touching the M3 theme's density tokens.
+.act-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .act-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+@media print {
+  .act-toolbar,
+  .act-filters,
+  .act-paginator,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .act-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

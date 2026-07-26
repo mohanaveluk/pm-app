@@ -17,7 +17,7 @@ import { MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../../services/api.service';
 import { UserDetailDialogComponent } from '../user-detail-dialog/user-detail-dialog.component';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
-import { CommonService } from '../../../../services';
+import { CommonService, AuthService } from '../../../../services';
 
 type ViewMode = 'grid' | 'table';
 
@@ -67,6 +67,7 @@ export interface OrgUser {
 export class UserListComponent implements OnInit {
   private readonly api    = inject(ApiService);
   protected readonly commonService  = inject(CommonService);
+  private readonly auth   = inject(AuthService);
 
   private readonly snack  = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
@@ -82,8 +83,7 @@ export class UserListComponent implements OnInit {
   readonly tableColumns = ['avatar', 'name', 'role', 'location', 'report_to', 'status', 'actions'];
 
   ngOnInit(): void {
-    const stored = localStorage.getItem('pm_user');
-    const me = stored ? JSON.parse(stored) : null;
+    const me = this.auth.user();
     this.organizationId.set(me?.organizationId ?? '');
     this.currentUserId.set(me?.id ?? '');
     this.loadUsers();

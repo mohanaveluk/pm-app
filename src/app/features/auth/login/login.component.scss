@@ -164,6 +164,37 @@ form {
   mat-icon {margin-bottom: -6px;}
 }
 
+.sso-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #8098b8;
+  font-size: .82rem;
+  margin: 20px 0;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+  span { padding: 0 12px; }
+}
+
+.sso-btn {
+  width: 100%;
+  height: 46px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  border-radius: var(--r-sm) !important;
+  border-color: var(--border) !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+
+  &__icon { flex-shrink: 0; }
+}
+
 .register-cta {
   text-align: center;
   color: #5a7a9e;

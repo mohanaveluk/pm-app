@@ -1,7 +1,10 @@
 .user-list-page {
-  padding: 80px 24px;
-  max-width: 1400px;
+  //padding: 80px 24px;
+  //max-width: 1400px;
   margin: 0 auto;
+  flex: 1;
+  overflow-y: auto;
+  //padding: 24px;  
 }
 
 .page-header {
@@ -71,9 +74,11 @@
 // ── Table view ────────────────────────────────────────────────────────────
 
 .table-wrap {
-  border-radius: 12px;
+  //border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
 }
 
 .users-table {

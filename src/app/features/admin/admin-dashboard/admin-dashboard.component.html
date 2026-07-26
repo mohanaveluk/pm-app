@@ -38,17 +38,28 @@
     <!-- Stat Cards -->
     <div class="stat-grid" [@staggerIn]="quickStats.length">
       @for (s of quickStats; track s.label) {
-        <div class="stat-card pm-card">
-          <div class="stat-card__icon" [style.background]="s.color + '18'" [style.color]="s.color">
-            <span class="material-icons">{{ s.icon }}</span>
-          </div>
-          <div class="stat-card__body">
-            <div class="stat-card__value">{{ s.value }}</div>
-            <div class="stat-card__label">{{ s.label }}</div>
-            <div class="stat-card__change">{{ s.change }}</div>
-          </div>
-        </div>
+        <app-kpi-card [label]="s.label" [value]="s.value" [icon]="s.icon" [color]="s.color" [trend]="s.change" />
       }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      @for (action of quickActions(); track action.id) {
+        <a mat-stroked-button class="quick-actions__item" [routerLink]="action.route">
+          <mat-icon>{{ action.icon }}</mat-icon>
+          {{ action.label }}
+        </a>
+      }
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid">
+      <app-chart-card title="Material Status" type="doughnut" [data]="materialStatusChart" />
+      <app-chart-card title="Purchase Trend" type="line" [data]="purchaseTrendChart" />
+      <app-chart-card title="Vendor Performance" type="bar" [data]="vendorPerformanceChart" />
+      <app-chart-card title="Project Progress" type="bar" [data]="projectProgressChart" [options]="{ responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }" />
+      <app-chart-card title="Inventory Level" type="bar" [data]="inventoryLevelChart" />
+      <app-chart-card title="QA Status" type="doughnut" [data]="qaStatusChart" />
     </div>
 
     <div class="dash-grid">

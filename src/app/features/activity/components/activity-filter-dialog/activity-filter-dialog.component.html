@@ -1,0 +1,108 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>tune</mat-icon>
+  Advanced Filters
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <form [formGroup]="form" class="dlg-form" novalidate>
+    <div class="dlg-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Department</mat-label>
+        <mat-select formControlName="departmentId">
+          <mat-option [value]="null">All</mat-option>
+          @for (dept of store.activeDepartments(); track dept.id) {
+            <mat-option [value]="dept.id">{{ dept.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Discipline</mat-label>
+        <mat-select formControlName="disciplineId">
+          <mat-option [value]="null">All</mat-option>
+          @for (disc of store.activeDisciplines(); track disc.id) {
+            <mat-option [value]="disc.id">{{ disc.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="dlg-full-width">
+        <mat-label>Department–Discipline Mapping</mat-label>
+        <mat-select formControlName="departmentDisciplineId">
+          <mat-option [value]="null">All</mat-option>
+          @for (mapping of store.activeMappings(); track mapping.id) {
+            <mat-option [value]="mapping.id">{{ mapping.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Module Group</mat-label>
+        <mat-select formControlName="moduleGroup">
+          <mat-option [value]="null">All</mat-option>
+          @for (group of store.moduleGroups(); track group) {
+            <mat-option [value]="group">{{ group }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="all">All</mat-option>
+          <mat-option value="active">Active</mat-option>
+          <mat-option value="inactive">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Display Order</mat-label>
+        <input matInput type="number" formControlName="displayOrder" min="0" />
+      </mat-form-field>
+    </div>
+
+    <mat-divider />
+
+    <h3 class="dlg-section__title">Created Date</h3>
+    <div class="dlg-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput [matDatepicker]="createdFromPicker" formControlName="createdFrom" />
+        <mat-datepicker-toggle matSuffix [for]="createdFromPicker" />
+        <mat-datepicker #createdFromPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput [matDatepicker]="createdToPicker" formControlName="createdTo" />
+        <mat-datepicker-toggle matSuffix [for]="createdToPicker" />
+        <mat-datepicker #createdToPicker />
+      </mat-form-field>
+    </div>
+
+    <h3 class="dlg-section__title">Updated Date</h3>
+    <div class="dlg-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput [matDatepicker]="updatedFromPicker" formControlName="updatedFrom" />
+        <mat-datepicker-toggle matSuffix [for]="updatedFromPicker" />
+        <mat-datepicker #updatedFromPicker />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput [matDatepicker]="updatedToPicker" formControlName="updatedTo" />
+        <mat-datepicker-toggle matSuffix [for]="updatedToPicker" />
+        <mat-datepicker #updatedToPicker />
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="reset()">
+    <mat-icon>filter_alt_off</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="apply()">
+    <mat-icon>filter_alt</mat-icon> Apply Filters
+  </button>
+</mat-dialog-actions>

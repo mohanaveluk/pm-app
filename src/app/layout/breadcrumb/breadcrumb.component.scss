@@ -1,0 +1,30 @@
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px 24px 0;
+  font-size: 0.85rem;
+}
+
+.breadcrumb__link {
+  color: #5a7a9e;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+}
+
+.breadcrumb__separator {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #a8bdd4;
+}
+
+.breadcrumb__current {
+  color: #0d2137;
+  font-weight: 600;
+}

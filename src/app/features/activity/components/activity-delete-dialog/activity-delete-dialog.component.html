@@ -1,0 +1,26 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon color="warn">warning</mat-icon>
+  Delete Activity
+</h2>
+
+<mat-dialog-content>
+  <p>
+    Are you sure you want to delete <strong>{{ data.activity.name }}</strong>
+    ({{ data.activity.code }})?
+  </p>
+  @if (data.activity.isSystem) {
+    <p class="dlg-warning">
+      <mat-icon>error_outline</mat-icon>
+      This is a system activity. The server will reject this delete.
+    </p>
+  }
+  <p class="dlg-note">This operation performs a soft delete. The activity can be restored later if needed.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="warn" type="button" (click)="confirm()">
+    <mat-icon>delete</mat-icon>
+    Delete
+  </button>
+</mat-dialog-actions>

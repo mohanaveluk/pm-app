@@ -1,0 +1,41 @@
+.coming-soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px;
+
+  &__card {
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    padding: 48px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    color: #5a7a9e;
+    margin-bottom: 16px;
+  }
+
+  a[mat-flat-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}

@@ -1,12 +1,11 @@
-import { Component, ChangeDetectionStrategy, signal, HostListener, inject, computed } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, ChangeDetectionStrategy, signal, HostListener, inject } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-//import { MaterialModule } from '../../shared/modules/material.module';
 import { AuthService } from '../../services';
 
 @Component({
@@ -18,7 +17,6 @@ import { AuthService } from '../../services';
 })
 export class HeaderComponent {
   protected readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   readonly scrolled = signal(false);
   readonly menuOpen = signal(false);
 
@@ -30,22 +28,13 @@ export class HeaderComponent {
     { label: 'Contact Us', path: '/contact' },
   ];
 
-  readonly currentUser = computed(() => {
-    const stored = localStorage.getItem('pm_user');
-    if (!stored) return null;
-    try { return JSON.parse(stored); } catch { return null; }
-  });
-
-  readonly isAuthenticated = computed(() => !!this.currentUser());
+  readonly currentUser = this.auth.user;
+  readonly isAuthenticated = this.auth.authenticated;
 
   @HostListener('window:scroll')
   onScroll() { this.scrolled.set(window.scrollY > 20); }
 
   logout(): void {
-    // localStorage.removeItem('pm_token');
-    // localStorage.removeItem('pm_user');
-    // localStorage.removeItem('refresh_token');
-    // this.router.navigate(['/home']);
     this.auth.logout();
     this.menuOpen.set(false);
   }
@@ -53,7 +42,7 @@ export class HeaderComponent {
   get dashboardRoute(): string {
     const role = this.currentUser()?.role;
     if (role === 'OrganizationAdmin' || role === 'SuperAdmin') return '/admin/dashboard';
-    if (role === 'Manager') return '/manager/dashboard';
+    if (role && role !== 'User') return '/manager/dashboard';
     return '/dashboard';
   }
 }

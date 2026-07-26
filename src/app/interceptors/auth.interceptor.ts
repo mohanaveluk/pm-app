@@ -7,9 +7,8 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take } from 'rxjs/operators';
 import { ApiService } from '../services/api.service';
-
-const TOKEN_KEY   = 'pm_token';
-const REFRESH_KEY = 'pm_refresh_token';
+import { AuthService } from '../services/auth.service';
+import { TokenStorageService } from '../core/auth/token-storage.service';
 
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
@@ -30,13 +29,11 @@ function isTokenExpiredError(error: HttpErrorResponse): boolean {
   return error.status === 401;
 }
 
-function clearSession(router: Router): void {
+function clearSession(router: Router, authService: AuthService): void {
   isRefreshing = false;
   refreshTokenSubject.next(null);
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REFRESH_KEY);
-  localStorage.removeItem('pm_user');
-  router.navigate(['/login']);
+  authService.clearLocalState();
+  router.navigate(['/auth/login']);
 }
 
 function handle401(
@@ -44,6 +41,8 @@ function handle401(
   next: HttpHandlerFn,
   api: ApiService,
   router: Router,
+  tokenStorage: TokenStorageService,
+  authService: AuthService,
 ): Observable<HttpEvent<unknown>> {
   // If a refresh is already in flight, queue this request until the new token arrives
   if (isRefreshing) {
@@ -54,9 +53,9 @@ function handle401(
     );
   }
 
-  const storedRefreshToken = localStorage.getItem(REFRESH_KEY);
+  const storedRefreshToken = tokenStorage.getRefreshToken();
   if (!storedRefreshToken) {
-    clearSession(router);
+    clearSession(router, authService);
     return throwError(() => new Error('Session expired. Please log in again.'));
   }
 
@@ -67,13 +66,13 @@ function handle401(
     switchMap(res => {
       isRefreshing = false;
       const newToken: string = res.access_token;
-      localStorage.setItem(TOKEN_KEY, newToken);
+      tokenStorage.setAccessToken(newToken);
       refreshTokenSubject.next(newToken);
       // Retry the original request with the fresh token
       return next(addAuthHeader(req, newToken));
     }),
     catchError(err => {
-      clearSession(router);
+      clearSession(router, authService);
       return throwError(() => err);
     }),
   );
@@ -82,16 +81,18 @@ function handle401(
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const api    = inject(ApiService);
   const router = inject(Router);
+  const tokenStorage = inject(TokenStorageService);
+  const authService = inject(AuthService);
 
   if (isPublicRoute(req.url)) {
     return next(req);
   }
 
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = tokenStorage.getAccessToken();
   return next(addAuthHeader(req, token)).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error instanceof HttpErrorResponse && isTokenExpiredError(error)) {
-        return handle401(req, next, api, router);
+        return handle401(req, next, api, router, tokenStorage, authService);
       }
       return throwError(() => error);
     }),

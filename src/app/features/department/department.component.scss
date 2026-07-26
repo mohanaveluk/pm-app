@@ -1,0 +1,167 @@
+.dept-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.dept-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.dept-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.dept-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.dept-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 320px;
+    min-width: 220px;
+  }
+
+  &__status {
+    width: 180px;
+  }
+}
+
+.dept-table-card {
+  //background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.dept-table-scroll {
+  overflow-x: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.dept-row {
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+}
+
+.dept-cell--truncate {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dept-chip--clickable {
+  cursor: pointer;
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.dept-menu-item--danger {
+  color: var(--error);
+}
+
+.dept-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.dept-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+// Compact density: shrink cell padding without touching the M3 theme's density tokens.
+.dept-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .dept-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+@media print {
+  .dept-toolbar,
+  .dept-filters,
+  .dept-paginator,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .dept-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

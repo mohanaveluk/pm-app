@@ -14,6 +14,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api.service';
+import { AuthService } from '../../../services';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 interface UserOption { fullName: string; email: string; }
@@ -63,6 +64,7 @@ const PROJECT_OPTIONS = [
 export class EditProfileComponent implements OnInit {
   private readonly fb    = inject(FormBuilder);
   private readonly api   = inject(ApiService);
+  private readonly auth  = inject(AuthService);
   private readonly snack = inject(MatSnackBar);
   private readonly cdr   = inject(ChangeDetectorRef);
 
@@ -207,15 +209,14 @@ export class EditProfileComponent implements OnInit {
 
       await this.api.updateMyProfile(payload).toPromise();
 
-      // Update localStorage display name
-      const stored = localStorage.getItem('pm_user');
-      if (stored) {
-        try {
-          const user = JSON.parse(stored);
-          user.firstName = v.firstName;
-          user.lastName  = v.lastName;
-          localStorage.setItem('pm_user', JSON.stringify(user));
-        } catch { /**/ }
+      // Reflect the new display name in the cached session user
+      const currentUser = this.auth.user();
+      if (currentUser) {
+        this.auth.updateCachedUser({
+          ...currentUser,
+          firstName: v.firstName ?? currentUser.firstName,
+          lastName: v.lastName ?? currentUser.lastName,
+        });
       }
 
       this.form.get('newPassword')?.reset('');

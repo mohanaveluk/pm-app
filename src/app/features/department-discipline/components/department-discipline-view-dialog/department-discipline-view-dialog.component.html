@@ -1,0 +1,69 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Department Disciplines
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ group.department?.code || group.departmentId }}</div>
+      <div class="dlg-name">{{ group.department?.name || group.departmentId }}</div>
+    </div>
+    <div class="dlg-status-summary">
+      <mat-chip class="status-chip status-chip--active">{{ activeCount }} Active</mat-chip>
+      @if (inactiveCount > 0) {
+        <mat-chip class="status-chip status-chip--inactive">{{ inactiveCount }} Inactive</mat-chip>
+      }
+    </div>
+  </div>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Mapped Disciplines ({{ group.assignments.length }})</h3>
+
+  <table mat-table [dataSource]="group.assignments" class="dlg-table">
+    <ng-container matColumnDef="discipline">
+      <th mat-header-cell *matHeaderCellDef>Discipline</th>
+      <td mat-cell *matCellDef="let a">{{ a.discipline?.name || a.disciplineId }} ({{ a.discipline?.code }})</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let a">
+        <mat-chip [class]="a.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+          {{ a.isActive ? 'Active' : 'Inactive' }}
+        </mat-chip>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="remarks">
+      <th mat-header-cell *matHeaderCellDef>Remarks</th>
+      <td mat-cell *matCellDef="let a">{{ a.remarks || '—' }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Organization</dt>
+      <dd>{{ data.organizationName }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ group.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ group.updatedAt ? (group.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

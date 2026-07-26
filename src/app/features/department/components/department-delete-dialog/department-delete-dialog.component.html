@@ -1,0 +1,20 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon color="warn">warning</mat-icon>
+  Delete Department
+</h2>
+
+<mat-dialog-content>
+  <p>
+    Are you sure you want to delete
+    <strong>{{ data.department.name }}</strong>?
+  </p>
+  <p class="dlg-note">This operation performs a soft delete. The department can be restored later if needed.</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="warn" type="button" (click)="confirm()">
+    <mat-icon>delete</mat-icon>
+    Delete
+  </button>
+</mat-dialog-actions>

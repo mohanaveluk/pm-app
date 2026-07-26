@@ -1,0 +1,111 @@
+<mat-toolbar class="admin-header">
+  <div class="admin-header__left">
+    <button
+      type="button"
+      mat-icon-button
+      class="admin-header__hamburger admin-header__hamburger--desktop"
+      matTooltip="Collapse / expand sidebar"
+      (click)="toggleSidenav()"
+    >
+      <mat-icon>{{ collapsed() ? 'menu_open' : 'menu' }}</mat-icon>
+    </button>
+    <button
+      type="button"
+      mat-icon-button
+      class="admin-header__hamburger admin-header__hamburger--mobile"
+      matTooltip="Menu"
+      (click)="toggleMobileSidenav()"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <a routerLink="/dashboard" class="admin-header__brand">
+      <mat-icon class="admin-header__logo">apartment</mat-icon>
+      <span class="admin-header__app-name">PM App</span>
+    </a>
+
+    @if (organizationName()) {
+      <span class="admin-header__org-name">{{ organizationName() }}</span>
+    }
+  </div>
+
+  <div class="admin-header__center">
+    <mat-form-field appearance="outline" class="admin-header__search-field" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        type="text"
+        placeholder="Search materials, vendors, users, POs, RFQs, projects…"
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        [matAutocomplete]="searchAuto"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <mat-autocomplete #searchAuto="matAutocomplete">
+      @for (result of searchResults(); track result.id) {
+        <mat-option [routerLink]="result.route" (click)="clearSearch()">
+          @if (result.icon) { <mat-icon>{{ result.icon }}</mat-icon> }
+          {{ result.label }}
+        </mat-option>
+      } @empty {
+        @if (searchTerm().trim()) {
+          <mat-option disabled>No matches</mat-option>
+        }
+      }
+    </mat-autocomplete>
+  </div>
+
+  <div class="admin-header__right">
+    <button type="button" mat-icon-button matTooltip="Notifications" (click)="notificationService.togglePanel()">
+      <mat-icon [matBadge]="notificationService.unreadCount() || null" matBadgeColor="warn" matBadgeSize="small">
+        notifications
+      </mat-icon>
+    </button>
+    <button type="button" mat-icon-button matTooltip="Task Queue" (click)="showComingSoon('Task Queue')">
+      <mat-icon>checklist</mat-icon>
+    </button>
+    <a mat-icon-button matTooltip="Help Center" routerLink="/support">
+      <mat-icon>help_outline</mat-icon>
+    </a>
+    <button type="button" mat-icon-button matTooltip="Language" (click)="showComingSoon('Language selection')">
+      <mat-icon>translate</mat-icon>
+    </button>
+    <button type="button" mat-icon-button [matTooltip]="themeLabel()" (click)="themeService.cycle()">
+      <mat-icon>{{ themeIcon() }}</mat-icon>
+    </button>
+
+    <span class="admin-header__clock">{{ now() | date: 'shortTime' }}</span>
+
+    <button type="button" mat-icon-button class="admin-header__avatar-btn" [matMenuTriggerFor]="profileMenu">
+      @if (user()?.avatar) {
+        <img class="admin-header__avatar" [src]="user()!.avatar" [alt]="user()?.firstName" />
+      } @else {
+        <mat-icon>account_circle</mat-icon>
+      }
+    </button>
+
+    <mat-menu #profileMenu="matMenu" class="admin-header__profile-menu">
+      <div class="admin-header__profile-header" (click)="$event.stopPropagation()">
+        <div class="admin-header__profile-name">{{ user()?.firstName }} {{ user()?.lastName }}</div>
+        <div class="admin-header__profile-role">{{ organizationName() || user()?.email }}</div>
+      </div>
+      <mat-divider></mat-divider>
+      @for (item of profileMenuItems(); track item.route + item.label) {
+        <a mat-menu-item [routerLink]="item.route">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Sign Out</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>

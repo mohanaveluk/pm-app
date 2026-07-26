@@ -1,0 +1,106 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Activity Details
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ activity.code }}</div>
+      <div class="dlg-name">{{ activity.name }}</div>
+      @if (activity.shortName) { <div class="dlg-short-name">{{ activity.shortName }}</div> }
+    </div>
+    <div class="dlg-chips">
+      @if (activity.isSystem) { <mat-chip class="tag-chip tag-chip--system">System</mat-chip> }
+      @if (activity.isDefault) { <mat-chip class="tag-chip tag-chip--default">Default</mat-chip> }
+      <mat-chip [class]="activity.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+        {{ activity.isActive ? 'Active' : 'Inactive' }}
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Engineering Hierarchy</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Discipline</dt>
+      <dd>{{ activity.disciplineName }} @if (activity.disciplineCode) { ({{ activity.disciplineCode }}) }</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Department</dt>
+      <dd>{{ activity.departmentName }} @if (activity.departmentCode) { ({{ activity.departmentCode }}) }</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Department–Discipline Mapping</dt>
+      <dd class="dlg-mono">{{ activity.departmentDisciplineId }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Activity Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Module Group</dt>
+      <dd>{{ activity.moduleGroup || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Display Order</dt>
+      <dd>{{ activity.displayOrder }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Icon</dt>
+      <dd class="dlg-icon-field">
+        @if (activity.icon) { <mat-icon>{{ activity.icon }}</mat-icon> }
+        {{ activity.icon || '—' }}
+      </dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Route URL</dt>
+      <dd>{{ activity.routeUrl || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Feature Key</dt>
+      <dd>{{ activity.featureKey || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Organization</dt>
+      <dd>{{ activity.organizationId }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Description</dt>
+      <dd>{{ activity.description || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ activity.remarks || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ activity.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ activity.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ activity.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ activity.updatedAt ? (activity.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

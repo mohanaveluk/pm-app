@@ -1,0 +1,29 @@
+<mat-sidenav-container class="admin-layout" autosize>
+  <mat-sidenav
+    #sidenavEl
+    class="admin-layout__sidenav"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="isMobile() ? sidenavState.mobileOpen() : true"
+    (closed)="onSidenavClosed()"
+  >
+    <app-sidenav />
+  </mat-sidenav>
+
+  <mat-sidenav-content class="admin-layout__content">
+    <app-admin-header />
+    <app-breadcrumb />
+    <div class="admin-layout__page">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+
+  <mat-sidenav
+    class="admin-layout__notifications"
+    position="end"
+    mode="over"
+    [opened]="notificationService.panelOpen()"
+    (closed)="notificationService.closePanel()"
+  >
+    <app-notification-drawer />
+  </mat-sidenav>
+</mat-sidenav-container>

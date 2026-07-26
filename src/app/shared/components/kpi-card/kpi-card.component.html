@@ -1,0 +1,12 @@
+<mat-card class="kpi-card">
+  <div class="kpi-card__icon" [style.background]="color + '1a'" [style.color]="color">
+    <mat-icon>{{ icon }}</mat-icon>
+  </div>
+  <div class="kpi-card__body">
+    <div class="kpi-card__value">{{ value }}</div>
+    <div class="kpi-card__label">{{ label }}</div>
+    @if (trend) {
+      <div class="kpi-card__trend">{{ trend }}</div>
+    }
+  </div>
+</mat-card>

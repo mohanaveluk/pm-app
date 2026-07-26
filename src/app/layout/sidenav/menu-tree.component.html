@@ -1,0 +1,43 @@
+<ul class="menu-tree" [class.menu-tree--nested]="depth > 0">
+  @for (item of items; track item.id) {
+    <li class="menu-tree__item" [class.menu-tree__item--disabled]="item.disabled">
+      @if (item.children?.length) {
+        <button
+          type="button"
+          class="menu-tree__link"
+          matRipple
+          [disabled]="item.disabled"
+          [matTooltip]="item.tooltip ?? ''"
+          [matTooltipDisabled]="!item.tooltip"
+          (click)="toggle(item)"
+        >
+          @if (item.icon) { <mat-icon class="menu-tree__icon">{{ item.icon }}</mat-icon> }
+          <span class="menu-tree__label">{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="menu-tree__badge" [class]="'menu-tree__badge--' + (item.badge.color ?? 'primary')">{{ item.badge.text }}</span>
+          }
+          <mat-icon class="menu-tree__chevron" [class.menu-tree__chevron--open]="isExpanded(item.id)">chevron_right</mat-icon>
+        </button>
+        @if (isExpanded(item.id)) {
+          <app-menu-tree [items]="item.children!" [depth]="depth + 1" (itemActivated)="onLeafActivated($event)" />
+        }
+      } @else {
+        <a
+          class="menu-tree__link"
+          matRipple
+          [routerLink]="item.disabled ? null : item.route"
+          routerLinkActive="menu-tree__link--active"
+          [matTooltip]="item.tooltip ?? ''"
+          [matTooltipDisabled]="!item.tooltip"
+          (click)="onLeafActivated(item)"
+        >
+          @if (item.icon) { <mat-icon class="menu-tree__icon">{{ item.icon }}</mat-icon> }
+          <span class="menu-tree__label">{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="menu-tree__badge" [class]="'menu-tree__badge--' + (item.badge.color ?? 'primary')">{{ item.badge.text }}</span>
+          }
+        </a>
+      }
+    </li>
+  }
+</ul>

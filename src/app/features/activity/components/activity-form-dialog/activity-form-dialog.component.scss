@@ -1,0 +1,165 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dlg-content {
+  min-width: 320px;
+  width: 100%;
+  max-width: 820px;
+  padding-top: 8px !important;
+}
+
+.dlg-loading,
+.dlg-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  color: #5a7a9e;
+}
+
+.dlg-error {
+  padding: 12px 16px;
+  flex-direction: row;
+  justify-content: flex-start;
+  color: var(--error);
+}
+
+.dlg-error mat-icon {
+  color: var(--error);
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.dlg-section {
+  padding: 8px 0 16px;
+}
+
+.dlg-section__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #5a7a9e;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 12px;
+}
+
+.dlg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dlg-full-width {
+  width: 100%;
+}
+
+.dlg-options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+
+  mat-icon.dlg-hierarchy-info {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 4px;
+    color: #8098b8;
+  }
+}
+
+.dlg-hierarchy-readonly {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dlg-hierarchy-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(25, 118, 210, 0.08);
+  color: var(--primary);
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.dlg-hierarchy-arrow {
+  color: #8098b8;
+}
+
+.dlg-hierarchy-info {
+  color: #8098b8;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.dlg-bulk-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dlg-bulk-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr 1fr 40px;
+  gap: 8px;
+  align-items: start;
+
+  &--header {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #8098b8;
+    padding: 0 0 4px;
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dlg-bulk-add {
+  margin-top: 8px;
+}
+
+.dlg-actions {
+  padding: 12px 24px 20px;
+  gap: 4px;
+
+  button mat-spinner {
+    display: inline-block;
+    margin-right: 8px;
+  }
+}
+
+// Highlights user-modified fields in Edit mode, per spec ("highlight modified fields").
+// Angular applies .ng-dirty automatically once a control's value changes — no extra bindings needed.
+.dlg-form--edit-mode {
+  ::ng-deep .mat-mdc-form-field.ng-dirty:not(.mat-form-field-invalid) .mat-mdc-form-field-flex {
+    background: rgba(255, 193, 7, 0.08);
+    border-radius: 4px;
+  }
+}

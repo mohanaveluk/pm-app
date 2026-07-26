@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -7,12 +7,20 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
+import { AuthService } from '../../services';
+import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
+import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
+import { NavigationService } from '../../core/navigation/navigation.service';
+import { PROJECT_PROGRESS_CHART } from '../../shared/mock-data/dashboard-mock.data';
 
 interface Project { name: string; progress: number; status: string; dueDate: string; color: string; }
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule, MatProgressBarModule, MatChipsModule],
+  imports: [
+    CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatProgressBarModule, MatChipsModule,
+    KpiCardComponent, ChartCardComponent,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   animations: [
@@ -26,8 +34,17 @@ interface Project { name: string; progress: number; status: string; dueDate: str
     ]),
   ],
 })
-export class DashboardComponent implements OnInit {
-  readonly currentUser = signal<any>(null);
+export class DashboardComponent {
+  private readonly auth = inject(AuthService);
+  private readonly navigationService = inject(NavigationService);
+  readonly currentUser = this.auth.user;
+
+  readonly quickActions = computed(() =>
+    this.navigationService.flatMenu().filter((item) => !!item.route).slice(0, 6),
+  );
+
+  readonly projectProgressChart = PROJECT_PROGRESS_CHART;
+
   readonly cards = [
     { label: 'My Projects',    value: 6,  icon: 'folder',   color: '#1976D2' },
     { label: 'Open Tasks',     value: 23, icon: 'task',     color: '#ED6C02' },
@@ -41,9 +58,4 @@ export class DashboardComponent implements OnInit {
     { name: 'Data Warehouse ETL', progress: 20, status: 'DELAYED',  dueDate: '2026-08-01', color: '#D32F2F' },
   ];
   statusClass = (s: string) => ({ 'ON TRACK': 'active', 'AT RISK': 'warning', 'DELAYED': 'error' }[s] ?? 'info');
-
-  ngOnInit(): void {
-    const s = localStorage.getItem('pm_user') || localStorage.getItem('pm_user');
-    if (s) try { this.currentUser.set(JSON.parse(s)); } catch { /**/ }
-  }
 }

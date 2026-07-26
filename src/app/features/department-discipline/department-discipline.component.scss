@@ -1,0 +1,178 @@
+.map-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.map-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.map-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.map-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.map-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 260px;
+    min-width: 200px;
+  }
+
+  &__select {
+    width: 200px;
+  }
+
+  &__status {
+    width: 160px;
+  }
+}
+
+.map-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.map-table-scroll {
+  overflow-x: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.map-row {
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+}
+
+.map-chip--clickable {
+  cursor: pointer;
+}
+
+.map-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 0;
+  max-width: 420px;
+}
+
+.map-dept-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.map-menu-item--danger {
+  color: var(--error);
+}
+
+.map-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.map-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+// Compact density: shrink cell padding without touching the M3 theme's density tokens.
+.map-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .map-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+@media print {
+  .map-toolbar,
+  .map-filters,
+  .map-paginator,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .map-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

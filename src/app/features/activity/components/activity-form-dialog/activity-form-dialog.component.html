@@ -1,0 +1,236 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : (isBulk ? 'playlist_add' : 'add_circle') }}</mat-icon>
+  {{ isEdit ? 'Edit Activity' : (isBulk ? 'Bulk Create Activities' : 'New Activity') }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading activity…</p>
+    </div>
+  } @else {
+    @if (loadError()) {
+      <div class="dlg-error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ loadError() }}</p>
+      </div>
+    }
+
+    <form [formGroup]="isBulk ? bulkForm : form" class="dlg-form" [class.dlg-form--edit-mode]="isEdit" novalidate>
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Organization: {{organizationName()}} </h3>
+        <!-- <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Organization</mat-label>
+            <input matInput [value]="organizationName()" disabled />
+          </mat-form-field>
+        </div> -->
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Engineering Hierarchy</h3>
+
+        @if (isEdit) {
+          <div class="dlg-hierarchy-readonly">
+            <div class="dlg-hierarchy-chip">
+              <mat-icon>engineering</mat-icon>
+              {{ currentActivityDiscipline() }}
+            </div>
+            <mat-icon class="dlg-hierarchy-arrow">arrow_forward</mat-icon>
+            <div class="dlg-hierarchy-chip">
+              <mat-icon>account_tree</mat-icon>
+              {{ currentActivityDepartment() }}
+            </div>
+            <mat-icon matTooltip="Discipline and Department cannot be changed after creation" class="dlg-hierarchy-info">info_outline</mat-icon>
+          </div>
+        } @else {
+          <div class="dlg-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Discipline</mat-label>
+              <mat-select [formControl]="(isBulk ? bulkForm : form).controls.disciplineId" required>
+                @for (disc of store.activeDisciplines(); track disc.id) {
+                  <mat-option [value]="disc.id">{{ disc.name }} ({{ disc.code }})</mat-option>
+                }
+              </mat-select>
+              @if ((isBulk ? bulkForm : form).controls.disciplineId.touched && (isBulk ? bulkForm : form).controls.disciplineId.hasError('required')) {
+                <mat-error>This field is required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Department</mat-label>
+              <mat-select [formControl]="(isBulk ? bulkForm : form).controls.departmentId" required>
+                @if (loadingDepartments()) {
+                  <mat-option disabled>Loading departments…</mat-option>
+                }
+                @for (dept of mappedDepartments(); track dept.departmentId) {
+                  <mat-option [value]="dept.departmentId">{{ dept.departmentName }} ({{ dept.departmentCode }})</mat-option>
+                }
+                @if (!loadingDepartments() && mappedDepartments().length === 0) {
+                  <mat-option disabled>Select a Discipline first</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Only departments mapped to the selected Discipline are shown</mat-hint>
+              @if ((isBulk ? bulkForm : form).controls.departmentId.touched && (isBulk ? bulkForm : form).controls.departmentId.hasError('required')) {
+                <mat-error>This field is required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Department–Discipline Mapping</mat-label>
+              <input matInput [value]="(isBulk ? bulkForm : form).controls.departmentDisciplineId.value" disabled />
+              <mat-icon matSuffix matTooltip="Auto-populated from the selected Department">info_outline</mat-icon>
+            </mat-form-field>
+          </div>
+        }
+      </section>
+
+      <mat-divider />
+
+      @if (isBulk) {
+        <section class="dlg-section">
+          <h3 class="dlg-section__title">Activities ({{ bulkItems.length }})</h3>
+          <div class="dlg-bulk-grid">
+            <div class="dlg-bulk-row dlg-bulk-row--header">
+              <span>Activity Code</span>
+              <span>Activity Name</span>
+              <span>Short Name</span>
+              <span>Module Group</span>
+              <span></span>
+            </div>
+            @for (row of bulkItems.controls; track row; let i = $index) {
+              <div class="dlg-bulk-row" [formGroup]="row">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="code" (input)="onUppercaseInput(row.controls.code, $event)" maxlength="30" />
+                  @if (bulkErr(row, 'code')) { <mat-error>{{ bulkErr(row, 'code') }}</mat-error> }
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="name" maxlength="255" />
+                  @if (bulkErr(row, 'name')) { <mat-error>{{ bulkErr(row, 'name') }}</mat-error> }
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="shortName" maxlength="80" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="moduleGroup" maxlength="100" />
+                </mat-form-field>
+                <button mat-icon-button type="button" [disabled]="bulkItems.length <= 1" (click)="removeBulkRow(i)" matTooltip="Remove row">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+          <button mat-stroked-button type="button" (click)="addBulkRow()" class="dlg-bulk-add">
+            <mat-icon>add</mat-icon> Add Row
+          </button>
+        </section>
+      } @else {
+        <section class="dlg-section">
+          <h3 class="dlg-section__title">Activity Information</h3>
+          <div class="dlg-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Activity Code</mat-label>
+              <input matInput formControlName="code" (input)="onUppercaseInput(form.controls.code, $event)" maxlength="30" required />
+              @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Activity Name</mat-label>
+              <input matInput formControlName="name" maxlength="255" required />
+              @if (err('name')) { <mat-error>{{ err('name') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Short Name</mat-label>
+              <input matInput formControlName="shortName" maxlength="80" />
+              @if (err('shortName')) { <mat-error>{{ err('shortName') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Module Group</mat-label>
+              <input matInput formControlName="moduleGroup" maxlength="100" [matAutocomplete]="moduleGroupAuto" />
+              <mat-autocomplete #moduleGroupAuto="matAutocomplete">
+                @for (group of store.moduleGroups(); track group) {
+                  <mat-option [value]="group">{{ group }}</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Display Order</mat-label>
+              <input matInput type="number" formControlName="displayOrder" min="0" required />
+              @if (err('displayOrder')) { <mat-error>{{ err('displayOrder') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Icon</mat-label>
+              <input matInput formControlName="icon" maxlength="100" placeholder="e.g. request_quote" />
+              @if (iconPreview()) { <mat-icon matPrefix>{{ iconPreview() }}</mat-icon> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Route URL</mat-label>
+              <input matInput formControlName="routeUrl" maxlength="255" placeholder="/procurement/rfq" />
+              @if (err('routeUrl')) { <mat-error>{{ err('routeUrl') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Feature Key</mat-label>
+              <input matInput formControlName="featureKey" (input)="onUppercaseInput(form.controls.featureKey, $event)" maxlength="100" />
+              @if (err('featureKey')) { <mat-error>{{ err('featureKey') }}</mat-error> }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dlg-full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="2"></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dlg-full-width">
+              <mat-label>Remarks</mat-label>
+              <textarea matInput formControlName="remarks" rows="2"></textarea>
+            </mat-form-field>
+          </div>
+        </section>
+
+        <mat-divider />
+
+        <section class="dlg-section">
+          <h3 class="dlg-section__title">System Options</h3>
+          <div class="dlg-options-row">
+            <mat-slide-toggle formControlName="isSystem" color="primary">
+              System Activity
+              <mat-icon matTooltip="System activities cannot be deleted" class="dlg-hierarchy-info">info_outline</mat-icon>
+            </mat-slide-toggle>
+            <mat-slide-toggle formControlName="isDefault" color="primary">Default Activity</mat-slide-toggle>
+            <mat-slide-toggle formControlName="isActive" color="primary">
+              {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+            </mat-slide-toggle>
+          </div>
+        </section>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="resetForm()" [disabled]="saving() || loading()">
+    <mat-icon>restart_alt</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  @if (!isEdit && !isBulk) {
+    <button mat-stroked-button type="button" color="primary" (click)="save(true)" [disabled]="saving() || loading()">
+      Save &amp; New
+    </button>
+  }
+  <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving() || loading()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>

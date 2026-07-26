@@ -46,6 +46,11 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/v1/auth/login`, data);
   }
 
+  /** Not implemented server-side yet — shaped to return the same {access_token, refresh_token, user} contract as login(). */
+  loginWithEntra(idToken: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/v1/auth/login-entra`, { idToken });
+  }
+
   sendVerificationEmail(email: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/v1/auth/resend-verification`, { email });
   }

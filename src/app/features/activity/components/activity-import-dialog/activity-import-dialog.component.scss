@@ -1,0 +1,43 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dlg-content {
+  min-width: 320px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.dlg-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 24px 8px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+    margin-bottom: 4px;
+  }
+
+  h3 {
+    margin: 0;
+    color: #0d2137;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.dlg-hint {
+  font-size: 0.85rem;
+}

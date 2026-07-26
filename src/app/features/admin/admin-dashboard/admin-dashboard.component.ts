@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +11,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { OrganizationService } from '../../../services/organization.service';
 import { DashboardSummary } from '../../../models/pm.models';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
+import { AuthService } from '../../../services';
+import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { NavigationService } from '../../../core/navigation/navigation.service';
+import {
+  MATERIAL_STATUS_CHART, PURCHASE_TREND_CHART, VENDOR_PERFORMANCE_CHART,
+  PROJECT_PROGRESS_CHART, INVENTORY_LEVEL_CHART, QA_STATUS_CHART,
+} from '../../../shared/mock-data/dashboard-mock.data';
 
 interface Activity { icon: string; text: string; time: string; color: string; }
 interface QuickStat { label: string; value: number; icon: string; color: string; change: string; }
@@ -20,6 +28,7 @@ interface QuickStat { label: string; value: number; icon: string; color: string;
   imports: [
     CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule,
     MatProgressBarModule, MatChipsModule, MatDividerModule, MatTooltipModule,
+    KpiCardComponent, ChartCardComponent,
   ],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.scss',
@@ -36,10 +45,24 @@ interface QuickStat { label: string; value: number; icon: string; color: string;
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly orgSvc = inject(OrganizationService);
+  private readonly auth = inject(AuthService);
+  private readonly navigationService = inject(NavigationService);
 
   readonly loading     = signal(true);
   readonly summary     = signal<DashboardSummary | null>(null);
-  readonly currentUser = signal<any>(null);
+  readonly currentUser = this.auth.user;
+
+  readonly quickActions = computed(() =>
+    this.navigationService.flatMenu().filter((item) => !!item.route).slice(0, 6),
+  );
+
+  readonly materialStatusChart = MATERIAL_STATUS_CHART;
+  readonly purchaseTrendChart = PURCHASE_TREND_CHART;
+  readonly vendorPerformanceChart = VENDOR_PERFORMANCE_CHART;
+  readonly projectProgressChart = PROJECT_PROGRESS_CHART;
+  readonly inventoryLevelChart = INVENTORY_LEVEL_CHART;
+  readonly qaStatusChart = QA_STATUS_CHART;
+  readonly barOptions = { responsive: true, maintainAspectRatio: false };
 
   readonly recentActivity: Activity[] = [
     { icon: 'person_add',  text: 'New user Sarah Johnson added',          time: '2 min ago',  color: '#1976D2' },
@@ -64,8 +87,6 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const stored = localStorage.getItem('pm_user') || localStorage.getItem('pm_user');
-    if (stored) { try { this.currentUser.set(JSON.parse(stored)); } catch { /**/ } }
     this.loadSummary();
   }
 
