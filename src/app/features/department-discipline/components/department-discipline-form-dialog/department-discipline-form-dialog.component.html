@@ -1,0 +1,109 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
+  {{ isEdit ? 'Edit Department Disciplines' : 'New Department-Discipline Mapping' }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading mapping…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="dlg-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="dlg-form" novalidate>
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">General Information</h3>
+
+        <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Organization</mat-label>
+            <input matInput [value]="organizationName()" disabled />
+            <mat-icon matSuffix matTooltip="Mappings are created within your own organization">info_outline</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Department</mat-label>
+            <mat-select formControlName="departmentId" required>
+              @for (dept of store.activeDepartments(); track dept.id) {
+                <mat-option [value]="dept.id">{{ dept.name }} ({{ dept.code }})</mat-option>
+              }
+            </mat-select>
+            @if (err('departmentId')) { <mat-error>{{ err('departmentId') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="dlg-full-width">
+            <mat-label>Disciplines</mat-label>
+            <mat-select formControlName="disciplineIds" multiple required>
+              @for (disc of store.activeDisciplines(); track disc.id) {
+                <mat-option [value]="disc.id">{{ disc.name }} ({{ disc.code }})</mat-option>
+              }
+            </mat-select>
+            <mat-hint>
+              @if (isEdit) {
+                Check or uncheck disciplines to add or remove them from this department.
+              } @else {
+                Select one discipline for a single mapping, or several to bulk-assign them all to this department.
+              }
+            </mat-hint>
+            @if (err('disciplineIds')) { <mat-error>{{ err('disciplineIds') }}</mat-error> }
+          </mat-form-field>
+
+          <div class="dlg-status-toggle">
+            <span class="dlg-status-toggle__label">Status</span>
+            <mat-slide-toggle formControlName="isActive" color="primary">
+              {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="dlg-bulk-note">
+          <mat-icon>info_outline</mat-icon>
+          @if (isEdit) {
+            {{ selectedDisciplineCount() }} discipline(s) selected for this department.
+          } @else {
+            {{ selectedDisciplineCount() }} discipline(s) will be mapped to this department.
+          }
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Additional Information</h3>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput formControlName="remarks" rows="2"></textarea>
+          @if (isEdit) {
+            <mat-hint>Applies only to newly added disciplines; existing ones keep their own remarks.</mat-hint>
+          }
+        </mat-form-field>
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="resetForm()" [disabled]="saving() || loading()">
+    <mat-icon>restart_alt</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  @if (!isEdit) {
+    <button mat-stroked-button type="button" color="primary" (click)="save(true)" [disabled]="saving() || loading()">
+      Save &amp; New
+    </button>
+  }
+  <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving() || loading()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>

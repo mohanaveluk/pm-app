@@ -1,11 +1,11 @@
-export type PmRole = 'SuperAdmin' | 'OrganizationAdmin' | 'Manager' | 'User' | 'Viewer';
+import { AppRole } from './role.model';
 
 export interface PmUser {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: PmRole;
+  role: AppRole;
   organizationId?: string;
   profileImage?: string;
 }

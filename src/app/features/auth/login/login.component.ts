@@ -1,12 +1,11 @@
 import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../../services/api.service';
-import { PmRole } from '../../../models/pm.models';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { AuthService } from '../../../services';
 import { MaterialModule } from '../../../shared/modules/material.module';
+import { EntraAuthService } from '../../../core/auth/entra-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -26,13 +25,13 @@ import { MaterialModule } from '../../../shared/modules/material.module';
 })
 export class LoginComponent {
   private readonly fb     = inject(FormBuilder);
-  private readonly api    = inject(ApiService);
-  private readonly authService    = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  protected readonly entraAuth = inject(EntraAuthService);
 
   readonly loading      = signal(false);
   readonly showPassword = signal(false);
   readonly loginError   = signal('');
+  readonly entraLoading = signal(false);
 
   readonly features = [
     'Real-time project tracking',
@@ -54,15 +53,6 @@ export class LoginComponent {
     try {
       const { email, password } = this.form.value;
       await this.authService.login(email!, password!);
-      /*const res: any = await this.api.login({ email: email!, password: password! }).toPromise();
-      const data = res?.data ?? res;
-      if (data?.access_token) {
-        localStorage.setItem('pm_token',    data.access_token);
-        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
-        const user = data.user ?? {};
-        localStorage.setItem('pm_user',    JSON.stringify(user));
-        this.redirectByRole(user.role as PmRole);
-      }*/
     } catch (err: any) {
       this.loginError.set(err?.error?.message || err?.message || 'Invalid credentials. Please try again.');
     } finally {
@@ -70,13 +60,16 @@ export class LoginComponent {
     }
   }
 
-  private redirectByRole(role: PmRole): void {
-    const map: Record<string, string> = {
-      OrganizationAdmin: '/admin/dashboard',
-      SuperAdmin:        '/admin/dashboard',
-      Manager:           '/manager/dashboard',
-    };
-    this.router.navigate([map[role] ?? '/dashboard']);
+  async onMicrosoftSignIn(): Promise<void> {
+    this.entraLoading.set(true);
+    this.loginError.set('');
+    try {
+      await this.entraAuth.loginWithMicrosoft();
+    } catch (err: any) {
+      this.loginError.set(err?.message || 'Microsoft sign-in failed. Please try again.');
+    } finally {
+      this.entraLoading.set(false);
+    }
   }
 
   get emailErr(): string {

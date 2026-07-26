@@ -1,27 +1,25 @@
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { interval } from 'rxjs';
-import { TokenService } from './token.service';
 import Swal from 'sweetalert2';
 import { ApiService, AuthService } from '../../services';
+import { TokenStorageService } from '../auth/token-storage.service';
 
+const CHECK_INTERVAL_MS = 30000;
+const NOTIFY_THRESHOLD_SECONDS = 60;
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class TokenExpiryService {
-  private checkInterval = 120000; // Check every 30 seconds
+  private readonly api = inject(ApiService);
+  private readonly authService = inject(AuthService);
+  private readonly tokenStorage = inject(TokenStorageService);
+  private readonly ngZone = inject(NgZone);
+
   private isNotifying = false;
 
-  private readonly api = Inject(ApiService);
-  constructor(
-    private tokenService: TokenService,
-    private authService: AuthService,
-    private ngZone: NgZone
-  ) {}
-
   startExpiryCheck(): void {
-    interval(this.checkInterval).subscribe(() => {
-      if (this.tokenService.shouldNotifyTokenExpiry() && !this.isNotifying) {
+    interval(CHECK_INTERVAL_MS).subscribe(() => {
+      if (!this.authService.authenticated() || this.isNotifying) return;
+      if (this.tokenStorage.shouldNotifyExpiry(NOTIFY_THRESHOLD_SECONDS)) {
         this.showExpiryNotification();
       }
     });
@@ -37,22 +35,31 @@ export class TokenExpiryService {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, extend session',
-        cancelButtonText: 'No, logout'
-      }).then((result: { isConfirmed: any; }) => {
+        cancelButtonText: 'No, logout',
+      }).then((result: { isConfirmed: boolean }) => {
         if (result.isConfirmed) {
-          this.api.refreshToken('a').subscribe({
-            next: () => {
+          const refreshToken = this.tokenStorage.getRefreshToken();
+          if (!refreshToken) {
+            this.authService.logout();
+            this.isNotifying = false;
+            return;
+          }
+          this.api.refreshToken(refreshToken).subscribe({
+            next: (res) => {
+              this.tokenStorage.setAccessToken(res.access_token);
               Swal.fire('Session Extended', 'Your session has been extended successfully.', 'success');
+              this.isNotifying = false;
             },
             error: () => {
               this.authService.logout();
               Swal.fire('Session Expired', 'Please log in again.', 'error');
-            }
+              this.isNotifying = false;
+            },
           });
         } else {
           this.authService.logout();
+          this.isNotifying = false;
         }
-        this.isNotifying = false;
       });
     });
   }

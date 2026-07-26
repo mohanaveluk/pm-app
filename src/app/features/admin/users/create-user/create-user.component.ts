@@ -14,6 +14,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../../services/api.service';
+import { AuthService } from '../../../../services';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 interface RoleOption  { guid: string; name: string; }
@@ -64,6 +65,7 @@ const PROJECTS_PLACEHOLDER = [
 export class CreateUserComponent implements OnInit {
   private readonly fb     = inject(FormBuilder);
   private readonly api    = inject(ApiService);
+  private readonly auth   = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snack  = inject(MatSnackBar);
   private readonly cdr    = inject(ChangeDetectorRef);
@@ -116,10 +118,9 @@ export class CreateUserComponent implements OnInit {
         .map(r => ({ guid: r.guid, name: r.name }));
 
       // Get the logged-in user's organizationId to filter users to the same org
-      const stored = localStorage.getItem('pm_user');
-      const me = stored ? JSON.parse(stored) : null;
-      const myOrgId =  me?.organizationId ?? null;
-      this.organizationId.set(me?.organizationId ?? null);
+      const me = this.auth.user();
+      const myOrgId = me?.organizationId ?? null;
+      this.organizationId.set(myOrgId ?? '');
 
       this.orgUsers = (usersRaw ?? [])
         .filter(u => !myOrgId || u.organizationId === myOrgId)

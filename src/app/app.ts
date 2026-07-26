@@ -1,20 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from './layout/header/header.component';
-import { FooterComponent } from './layout/footer/footer.component';
+import { TokenExpiryService } from './core/services/token-expiry.service';
+import { ThemeService } from './core/services/theme.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, FooterComponent],
-  template: `
-    <app-header />
-    <main class="main-content">
-      <router-outlet />
-    </main>
-    <app-footer />
-  `,
-  styles: [`
-    .main-content { min-height: calc(100vh - 64px - 280px); }
-  `],
+  imports: [RouterOutlet],
+  template: `<router-outlet />`,
 })
-export class App {}
+export class App {
+  private readonly tokenExpiryService = inject(TokenExpiryService);
+  // Injected so it initializes at app bootstrap regardless of which layout
+  // (public or admin) the current route renders — otherwise the dark-theme
+  // class would only ever get applied once an admin-shell route loads.
+  private readonly themeService = inject(ThemeService);
+
+  constructor() {
+    this.tokenExpiryService.startExpiryCheck();
+  }
+}

@@ -17,13 +17,20 @@
   @media(max-width:400px) { grid-template-columns: 1fr 1fr; }
 }
 
-.kpi-card {
-  padding: 24px; text-align: center;
-  &__icon { width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;
-    .material-icons{font-size:26px;} }
-  &__val { font-size:2rem;font-weight:700;color:#0d2137;line-height:1; }
-  &__lbl { font-size:.82rem;color:#5a7a9e;margin-top:4px; }
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
+
+app-chart-card { display: block; margin-bottom: 32px; }
 
 .section-title {
   display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;

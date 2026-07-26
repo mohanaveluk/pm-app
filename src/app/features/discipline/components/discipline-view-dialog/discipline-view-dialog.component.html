@@ -1,0 +1,67 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Discipline Details
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ discipline.code }}</div>
+      <div class="dlg-name">{{ discipline.name }}</div>
+    </div>
+    <mat-chip [class]="discipline.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+      {{ discipline.isActive ? 'Active' : 'Inactive' }}
+    </mat-chip>
+  </div>
+
+  <mat-divider />
+
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Short Name</dt>
+      <dd>{{ discipline.shortName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Organization</dt>
+      <dd>{{ discipline.organization?.name || discipline.organizationId }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Display Order</dt>
+      <dd>{{ discipline.displayOrder }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Description</dt>
+      <dd>{{ discipline.description || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ discipline.remarks || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ discipline.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ discipline.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ discipline.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ discipline.updatedAt ? (discipline.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

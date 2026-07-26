@@ -9,15 +9,21 @@
   <div class="container dash-content">
     <div class="kpi-grid" [@staggerIn]="cards.length">
       @for (c of cards; track c.label) {
-        <div class="kpi-card pm-card">
-          <div class="kpi-card__icon" [style.background]="c.color+'18'" [style.color]="c.color">
-            <span class="material-icons">{{ c.icon }}</span>
-          </div>
-          <div class="kpi-card__val">{{ c.value }}</div>
-          <div class="kpi-card__lbl">{{ c.label }}</div>
-        </div>
+        <app-kpi-card [label]="c.label" [value]="c.value" [icon]="c.icon" [color]="c.color" />
       }
     </div>
+
+    <div class="quick-actions">
+      @for (action of quickActions(); track action.id) {
+        <a mat-stroked-button class="quick-actions__item" [routerLink]="action.route">
+          <mat-icon>{{ action.icon }}</mat-icon>
+          {{ action.label }}
+        </a>
+      }
+    </div>
+
+    <app-chart-card title="Project Progress" type="bar" [data]="projectProgressChart"
+      [options]="{ responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }" />
 
     <div class="projects-section">
       <div class="section-title">

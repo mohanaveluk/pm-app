@@ -1,0 +1,120 @@
+<div class="notif-drawer">
+  <div class="notif-drawer__header">
+    <h3>Notifications</h3>
+    <button mat-icon-button (click)="close()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="notif-drawer__toolbar">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="notif-drawer__search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput type="text" placeholder="Search notifications…" (input)="onSearchInput($event)" />
+    </mat-form-field>
+
+    <div class="notif-drawer__tabs">
+      <button
+        type="button"
+        class="notif-drawer__tab"
+        [class.notif-drawer__tab--active]="!notificationService.showArchived()"
+        (click)="notificationService.setShowArchived(false)"
+      >
+        Active
+      </button>
+      <button
+        type="button"
+        class="notif-drawer__tab"
+        [class.notif-drawer__tab--active]="notificationService.showArchived()"
+        (click)="notificationService.setShowArchived(true)"
+      >
+        Archived
+      </button>
+      <span class="notif-drawer__spacer"></span>
+      <button mat-button (click)="notificationService.markAllRead()">Mark all read</button>
+    </div>
+
+    <mat-chip-listbox class="notif-drawer__categories" aria-label="Filter by category">
+      <mat-chip-option [selected]="notificationService.categoryFilter() === null" (click)="selectCategory(null)">
+        All
+      </mat-chip-option>
+      @for (category of notificationService.categories(); track category) {
+        <mat-chip-option [selected]="notificationService.categoryFilter() === category" (click)="selectCategory(category)">
+          {{ category }}
+        </mat-chip-option>
+      }
+    </mat-chip-listbox>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="notif-drawer__list">
+    @for (n of notificationService.pagedNotifications(); track n.id) {
+      <mat-expansion-panel class="notif-item" [class.notif-item--unread]="!n.read">
+        <mat-expansion-panel-header (click)="notificationService.markRead(n.id)">
+          <mat-panel-title>
+            <mat-icon class="notif-item__icon" [class]="'notif-item__icon--' + n.priority">{{ n.icon }}</mat-icon>
+            <span class="notif-item__title">{{ n.title }}</span>
+          </mat-panel-title>
+          <mat-panel-description>
+            <span class="notif-item__category">{{ n.category }}</span>
+            <span class="notif-item__time">{{ n.timestamp | date: 'short' }}</span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <p class="notif-item__body">{{ n.body }}</p>
+
+        <div class="notif-item__actions">
+          @if (n.actionUrl) {
+            <a mat-button [routerLink]="n.actionUrl" (click)="close()">
+              <mat-icon>open_in_new</mat-icon>
+              Open Related Record
+            </a>
+          }
+          @if (n.read) {
+            <button mat-button (click)="notificationService.markUnread(n.id)">
+              <mat-icon>mark_email_unread</mat-icon>
+              Mark Unread
+            </button>
+          } @else {
+            <button mat-button (click)="notificationService.markRead(n.id)">
+              <mat-icon>mark_email_read</mat-icon>
+              Mark Read
+            </button>
+          }
+          @if (n.archived) {
+            <button mat-button (click)="notificationService.unarchive(n.id)">
+              <mat-icon>unarchive</mat-icon>
+              Unarchive
+            </button>
+          } @else {
+            <button mat-button (click)="notificationService.archive(n.id)">
+              <mat-icon>archive</mat-icon>
+              Archive
+            </button>
+          }
+          <button mat-button color="warn" (click)="notificationService.remove(n.id)">
+            <mat-icon>delete</mat-icon>
+            Delete
+          </button>
+        </div>
+      </mat-expansion-panel>
+    } @empty {
+      <div class="notif-drawer__empty">
+        <mat-icon>notifications_off</mat-icon>
+        <p>No notifications here.</p>
+      </div>
+    }
+  </div>
+
+  @if (notificationService.totalPages() > 1) {
+    <div class="notif-drawer__pagination">
+      <button mat-icon-button [disabled]="notificationService.pageIndex() === 0" (click)="prevPage()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span>Page {{ notificationService.pageIndex() + 1 }} of {{ notificationService.totalPages() }}</span>
+      <button mat-icon-button [disabled]="notificationService.pageIndex() >= notificationService.totalPages() - 1" (click)="nextPage()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  }
+</div>

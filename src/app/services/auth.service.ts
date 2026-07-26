@@ -1,31 +1,30 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { User, UserRole, MembershipTier } from '../models/user.models';
+import { User } from '../models/user.models';
+import { AppRole, normalizeRole } from '../models/role.model';
 import { ApiService } from './api.service';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { PmRole } from '../models/pm.models';
+import { TokenStorageService } from '../core/auth/token-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly tokenStorage = inject(TokenStorageService);
   private readonly currentUser = signal<User | null>(null);
   private readonly isAuthenticated = signal(false);
 
   readonly user = this.currentUser.asReadonly();
   readonly authenticated = this.isAuthenticated.asReadonly();
-  readonly userRole = computed<UserRole>(() => this.currentUser()?.role ?? 'guest');
-  readonly isAdmin = computed(() => this.userRole() === 'admin');
-  readonly isTester = computed(() => this.userRole() === 'tester');
+  readonly role = computed<AppRole>(() => this.currentUser()?.role ?? 'User');
+  readonly isSuperAdmin = computed(() => this.role() === 'SuperAdmin');
+  readonly isOrgAdmin = computed(() => this.role() === 'OrganizationAdmin');
 
   constructor() {
-    const stored = localStorage.getItem('pm_user');
-    if (stored) {
-      try {
-        const user = JSON.parse(stored) as User;
-        this.currentUser.set(user);
-        this.isAuthenticated.set(true);
-      } catch { /* ignore */ }
+    const user = this.tokenStorage.getUser();
+    if (user && this.tokenStorage.getAccessToken()) {
+      this.currentUser.set(user);
+      this.isAuthenticated.set(true);
     }
   }
 
@@ -41,7 +40,6 @@ export class AuthService {
   }
 
   async register(data: any): Promise<string> {
-    
     const res = await firstValueFrom(this.api.register(data));
     if (res?.data?.access_token) {
       this.setSession(res.data);
@@ -49,23 +47,21 @@ export class AuthService {
     return res?.data?.userId ?? res?.data?.user?.id ?? res?.user?.id ?? '';
   }
 
-  async loginAsRole(role: UserRole): Promise<void> {
-    try {
-      const res = await firstValueFrom(this.api.loginAsRole(role));
-      this.setSession(res);
-    } catch {
-     
-      this.isAuthenticated.set(true);
-    }
+  logout(): void {
+    this.clearLocalState();
+    this.router.navigate(['/home']);
   }
 
-  logout(): void {
+  /**
+   * Resets in-memory session state without navigating. Used by the auth
+   * interceptor when a refresh-token attempt fails — it clears storage and
+   * redirects itself, but must also invalidate these signals so guards and
+   * the header stop treating the (now token-less) user as authenticated.
+   */
+  clearLocalState(): void {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
-    localStorage.removeItem('pm_token');
-    localStorage.removeItem('pm_user');
-    localStorage.removeItem('pm_refresh_token');
-    this.router.navigate(['/home']);
+    this.tokenStorage.clearSession();
   }
 
   async requestPasswordReset(email: string): Promise<void> {
@@ -92,34 +88,49 @@ export class AuthService {
     return this.api.resendVerificationMail(userGuid);
   }
 
+  /** Updates the cached user (e.g. after an edit-profile save) without touching tokens. */
+  updateCachedUser(user: User): void {
+    this.tokenStorage.setUser(user);
+    this.currentUser.set(user);
+  }
+
+  /** Bridges an externally-obtained session (e.g. Entra ID) into the normal auth/session model. */
+  completeExternalLogin(res: { access_token: string; refresh_token: string; user: Record<string, unknown> }): void {
+    this.setSession(res);
+  }
+
   private setSession(res: { access_token: string; refresh_token: string; user: Record<string, unknown> }): void {
-    localStorage.setItem('pm_token', res.access_token);
-    localStorage.setItem('pm_refresh_token', res.refresh_token);
     const u = res.user;
     const user: User = {
       avatar: u['avatar'] as string,
-      id: u['id'] as string, 
+      id: u['id'] as string,
       email: u['email'] as string,
       firstName: u['firstName'] as string,
       lastName: u['lastName'] as string,
-      role: u['roleName'] as any , 
+      role: normalizeRole(u['roleName'] as string),
       role_guid: u['role_guid'] as string,
       lastActive: new Date(),
       isVerified: u['is_verified'] as boolean,
       createdAt: u['created_at'] ? new Date(u['created_at'] as string) : new Date(),
-      organizationId: u['organizationId'] as string
+      organizationId: u['organizationId'] as string,
     };
-    localStorage.setItem('pm_user', JSON.stringify(user));
+    this.tokenStorage.setSession(res.access_token, res.refresh_token, user);
     this.currentUser.set(user);
     this.isAuthenticated.set(true);
-    this.redirectByRole(user.role as PmRole);
+    this.redirectByRole(user.role);
   }
 
-  private redirectByRole(role: PmRole): void {
-    const map: Record<string, string> = {
-      OrganizationAdmin: '/admin/dashboard',
+  private redirectByRole(role: AppRole): void {
+    const map: Record<AppRole, string> = {
       SuperAdmin: '/admin/dashboard',
-      Manager: '/manager/dashboard',
+      OrganizationAdmin: '/admin/dashboard',
+      DepartmentManager: '/manager/dashboard',
+      DisciplineLead: '/manager/dashboard',
+      ProjectManager: '/manager/dashboard',
+      ProcurementManager: '/manager/dashboard',
+      QAManager: '/manager/dashboard',
+      WarehouseManager: '/manager/dashboard',
+      User: '/dashboard',
     };
     this.router.navigate([map[role] ?? '/dashboard']);
   }

@@ -1,0 +1,87 @@
+<nav class="sidenav" [class.sidenav--collapsed]="collapsed()">
+  @if (!collapsed()) {
+    <div class="sidenav__search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search menu…"
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+      />
+      @if (searchTerm()) {
+        <button type="button" class="sidenav__search-clear" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  }
+
+  @if (!collapsed() && searchTerm().trim()) {
+    <ul class="sidenav__search-results">
+      @for (item of filteredResults(); track item.id) {
+        <li>
+          <a [routerLink]="item.route" (click)="clearSearch()">
+            @if (item.icon) { <mat-icon>{{ item.icon }}</mat-icon> }
+            {{ item.label }}
+          </a>
+        </li>
+      } @empty {
+        <li class="sidenav__empty">No matching menu items</li>
+      }
+    </ul>
+  } @else {
+    @if (!collapsed()) {
+      @if (favorites().length) {
+        <div class="sidenav__section-label">Favorites</div>
+        <app-menu-tree [items]="favorites()" />
+      }
+      @if (recentlyVisited().length) {
+        <div class="sidenav__section-label">Recently Visited</div>
+        <app-menu-tree [items]="recentlyVisited()" />
+      }
+      <div class="sidenav__section-label">Menu</div>
+      <app-menu-tree [items]="menu()" />
+    } @else {
+      <ul class="sidenav-mini">
+        @for (item of menu(); track item.id) {
+          <li
+            class="sidenav-mini__item"
+            cdkOverlayOrigin
+            #trigger="cdkOverlayOrigin"
+            (mouseenter)="item.children?.length ? openFlyout(item.id) : null"
+            (mouseleave)="item.children?.length ? scheduleClose() : null"
+          >
+            @if (item.children?.length) {
+              <button type="button" class="sidenav-mini__btn" [matTooltip]="item.label" matTooltipPosition="right">
+                <mat-icon>{{ item.icon }}</mat-icon>
+              </button>
+            } @else {
+              <a
+                class="sidenav-mini__btn"
+                [routerLink]="item.route"
+                routerLinkActive="sidenav-mini__btn--active"
+                [matTooltip]="item.label"
+                matTooltipPosition="right"
+              >
+                <mat-icon>{{ item.icon }}</mat-icon>
+              </a>
+            }
+
+            <ng-template
+              cdkConnectedOverlay
+              [cdkConnectedOverlayOrigin]="trigger"
+              [cdkConnectedOverlayOpen]="isFlyoutOpen(item.id)"
+              [cdkConnectedOverlayPositions]="flyoutPositions"
+              (overlayOutsideClick)="closeFlyout()"
+            >
+              <div class="sidenav-flyout" (mouseenter)="cancelClose()" (mouseleave)="scheduleClose()">
+                <div class="sidenav-flyout__title">{{ item.label }}</div>
+                <app-menu-tree [items]="item.children!" (itemActivated)="closeFlyout()" />
+              </div>
+            </ng-template>
+          </li>
+        }
+      </ul>
+    }
+  }
+</nav>
