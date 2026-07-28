@@ -1,5 +1,5 @@
 .footer {
-  background: var(--footer);
+  background: #32353b; //var(--footer);
   color: rgba(255,255,255,.8);
   padding: 64px 0 0;
   margin-top: auto;
@@ -18,9 +18,9 @@
   &__logo {
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 16px;
-    mat-icon { color: var(--secondary); font-size: 28px; width:28px; height:28px; }
+    mat-icon { color: var(--partial); font-size: 28px; width:28px; height:28px; }
     span { font-size: 1.2rem; color: #fff; font-weight: 500;
-      strong { color: var(--secondary); font-weight: 700; } }
+      strong { color: var(--partial); font-weight: 700; } }
   }
   &__tagline { font-size: .9rem; line-height: 1.7; max-width: 280px; margin-bottom: 24px; }
 
@@ -32,14 +32,14 @@
     ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     li a { color: rgba(255,255,255,.7); text-decoration: none; font-size: .9rem;
            transition: color var(--ease);
-           &:hover { color: var(--secondary); } }
+           &:hover { color: var(--partial); } }
   }
 
   address {
     font-style: normal;
     display: flex; flex-direction: column; gap: 12px;
     p { display: flex; align-items: flex-start; gap: 10px; font-size: .88rem; color: rgba(255,255,255,.7);
-        mat-icon { font-size: 16px; width:16px; height:16px; color: var(--secondary); margin-top: 2px; flex-shrink:0; } }
+        mat-icon { font-size: 16px; width:16px; height:16px; color: var(--partial); margin-top: 2px; flex-shrink:0; } }
   }
 
   &__bottom {
@@ -60,6 +60,6 @@
   border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background var(--ease), transform var(--ease);
   mat-icon { color: rgba(255,255,255,.8); font-size: 18px; width:18px; height:18px; }
-  &:hover { background: var(--secondary); transform: translateY(-2px);
+  &:hover { background: var(--partial); transform: translateY(-2px);
     mat-icon { color: #fff; } }
 }
