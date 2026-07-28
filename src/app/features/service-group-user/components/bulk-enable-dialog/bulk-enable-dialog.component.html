@@ -1,0 +1,13 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>toggle_on</mat-icon>
+  Bulk Enable Assignments
+</h2>
+
+<mat-dialog-content>
+  <p>Enable <strong>{{ data.count }}</strong> selected assignment(s)? Affected users will regain access to the Activities and Permissions granted by their Service Group(s).</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="confirm()">Enable</button>
+</mat-dialog-actions>

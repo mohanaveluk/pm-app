@@ -1,0 +1,307 @@
+<div class="sgu-page" [class.sgu-page--fullscreen]="isFullscreen()">
+
+  <div class="sgu-header">
+    <div>
+      <h1>Service Group User Assignment</h1>
+      <p>Assign users to Service Groups to grant their inherited Activities and Permissions</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="sgu-toolbar">
+    @if (can(PERMISSIONS.SERVICE_GROUP_USERS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="openAssignDialog()">
+        <mat-icon>person_add</mat-icon> Assign Users
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Refresh">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_ENABLE) || can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_DISABLE)) {
+      <button
+        mat-stroked-button
+        [disabled]="store.selectedCount() === 0"
+        [matBadge]="store.selectedCount() || null"
+        matBadgeSize="small"
+        matBadgeColor="primary"
+        [matMenuTriggerFor]="bulkMenu"
+      >
+        <mat-icon>checklist</mat-icon> Bulk Actions
+      </button>
+      <mat-menu #bulkMenu="matMenu">
+        @if (can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_ENABLE)) {
+          <button mat-menu-item (click)="bulkEnable()"><mat-icon>toggle_on</mat-icon> Bulk Enable ({{ store.selectedCount() }})</button>
+        }
+        @if (can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_DISABLE)) {
+          <button mat-menu-item (click)="bulkDisable()"><mat-icon>toggle_off</mat-icon> Bulk Disable ({{ store.selectedCount() }})</button>
+        }
+        <mat-divider />
+        <button mat-menu-item (click)="store.clearSelection()"><mat-icon>clear</mat-icon> Clear Selection</button>
+      </mat-menu>
+    }
+
+    @if (can(PERMISSIONS.SERVICE_GROUP_USERS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <span class="sgu-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox [checked]="isColumnVisible(col.key)" (click)="$event.stopPropagation()" (change)="toggleColumn(col.key)">
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="sgu-filters">
+    <mat-form-field appearance="outline" class="sgu-filters__search">
+      <mat-label>Search Service Groups or Users…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [value]="searchTerm()" (input)="onSearchInput($event)" (keyup.enter)="onSearchEnter()" />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <button mat-stroked-button (click)="openFilterDialog()">
+      <mat-icon>filter_alt</mat-icon> Filters
+    </button>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Reset Filters
+      </button>
+    }
+  </div>
+
+  <div class="sgu-table-card" [class.sgu-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <div class="sgu-state">
+        <mat-spinner diameter="40" />
+        <p>Loading Service Group Assignments…</p>
+      </div>
+    } @else if (store.error()) {
+      <div class="sgu-state sgu-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      <div class="sgu-state">
+        <mat-icon>group_off</mat-icon>
+        <p>No Service Group Assignments Found</p>
+        @if (can(PERMISSIONS.SERVICE_GROUP_USERS_CREATE)) {
+          <button mat-flat-button color="primary" (click)="openAssignDialog()">
+            <mat-icon>person_add</mat-icon> Assign Users
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="sgu-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.pagedGroups()"
+          matSort
+          multiTemplateDataRows
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByGroupId"
+        >
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-icon-button (click)="toggleExpand(g, $event)" [matTooltip]="store.isExpanded(g.serviceGroupId) ? 'Collapse' : 'Expand'">
+                <mat-icon class="sgu-expand-icon" [class.sgu-expand-icon--open]="store.isExpanded(g.serviceGroupId)">chevron_right</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="serviceGroup">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="serviceGroupName">Service Group</th>
+            <td mat-cell *matCellDef="let g">
+              <div class="sgu-code">{{ g.serviceGroupCode }}</div>
+              <div class="sgu-name">{{ g.serviceGroupName }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let g">{{ g.serviceGroupDescription || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="totalUsers">
+            <th mat-header-cell *matHeaderCellDef>Total Users</th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-button class="sgu-user-toggle" (click)="toggleExpand(g, $event)">
+                <mat-icon>group</mat-icon>
+                {{ g.members.length }}
+              </button>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="activeUsers">
+            <th mat-header-cell *matHeaderCellDef>Active Users</th>
+            <td mat-cell *matCellDef="let g">{{ activeCount(g) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="activities">
+            <th mat-header-cell *matHeaderCellDef>Activities</th>
+            <td mat-cell *matCellDef="let g">{{ g.activityCount }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let g">
+              <mat-chip [class]="g.isServiceGroupActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+                {{ g.isServiceGroupActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="createdAt">Created Date</th>
+            <td mat-cell *matCellDef="let g">{{ g.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="updatedAt">Updated Date</th>
+            <td mat-cell *matCellDef="let g">{{ g.updatedAt ? (g.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-icon-button (click)="openViewDialog(g, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.SERVICE_GROUP_USERS_UPDATE)) {
+                <button mat-icon-button (click)="openManageMembersDialog(g, $event)" matTooltip="Manage Members">
+                  <mat-icon>manage_accounts</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (can(PERMISSIONS.SERVICE_GROUP_USERS_AUDIT_HISTORY)) {
+                  <button mat-menu-item (click)="openAuditHistory(g, $event)">
+                    <mat-icon>history</mat-icon> Audit History
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let g" [attr.colspan]="displayedColumns().length">
+              @if (store.isExpanded(g.serviceGroupId)) {
+                <div class="sgu-detail">
+                  @if (g.members.length === 0) {
+                    <p class="sgu-detail__empty">No users are assigned to this Service Group yet.</p>
+                  } @else {
+                    <div class="member-rows">
+                      @for (m of g.members; track trackByAssignmentId($index, m)) {
+                        <div class="member-row" [class.member-row--inactive]="!m.isActive">
+                          @if (can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_ENABLE) || can(PERMISSIONS.SERVICE_GROUP_USERS_BULK_DISABLE)) {
+                            <mat-checkbox
+                              [checked]="store.isAssignmentSelected(m.id)"
+                              (click)="$event.stopPropagation()"
+                              (change)="toggleAssignmentSelection(m)"
+                            />
+                          }
+
+                          <div class="member-row__identity">
+                            <div class="member-row__name">
+                              {{ m.userFullName }}
+                              @if (m.isPrimary) { <mat-icon class="star-icon" matTooltip="Primary group">star</mat-icon> }
+                            </div>
+                            <div class="member-row__email">{{ m.userEmail }}</div>
+                            @if (m.userPosition) { <div class="member-row__position">{{ m.userPosition }}</div> }
+                          </div>
+
+                          <mat-chip class="type-chip">{{ m.assignmentType }}</mat-chip>
+
+                          <div class="member-row__dates">
+                            <span>{{ m.effectiveFrom ? (m.effectiveFrom | date: 'mediumDate') : '—' }}</span>
+                            <mat-icon>arrow_forward</mat-icon>
+                            <span>{{ m.effectiveTo ? (m.effectiveTo | date: 'mediumDate') : 'Ongoing' }}</span>
+                          </div>
+
+                          @if (m.remarks) { <div class="member-row__remarks" [matTooltip]="m.remarks">{{ m.remarks }}</div> }
+
+                          <mat-chip
+                            [class]="m.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'"
+                            class="sgu-chip--clickable"
+                            (click)="toggleAssignmentActive(m, $event)"
+                          >
+                            {{ m.isActive ? 'Active' : 'Inactive' }}
+                          </mat-chip>
+
+                          @if (can(PERMISSIONS.SERVICE_GROUP_USERS_DELETE)) {
+                            <button mat-icon-button color="warn" matTooltip="Remove" (click)="deleteAssignment(m, $event)">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns();"
+            class="sgu-row"
+            [class.sgu-row--expanded]="store.isExpanded(row.serviceGroupId)"
+            (click)="toggleExpand(row)"
+          ></tr>
+          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="sgu-detail-row"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        class="sgu-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

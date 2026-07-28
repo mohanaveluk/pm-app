@@ -1,0 +1,319 @@
+<div class="sg-page" [class.sg-page--fullscreen]="isFullscreen()">
+
+  <div class="sg-header">
+    <div>
+      <h1>Service Group Management</h1>
+      <p>Manage enterprise permission groups</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="sg-toolbar">
+    @if (can(PERMISSIONS.SERVICE_GROUPS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> New Service Group
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Refresh">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.SERVICE_GROUPS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <span class="sg-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox [checked]="isColumnVisible(col.key)" (click)="$event.stopPropagation()" (change)="toggleColumn(col.key)">
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="sg-filters">
+    <mat-form-field appearance="outline" class="sg-filters__search">
+      <mat-label>Search Service Groups…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [value]="searchTerm()" (input)="onSearchInput($event)" (keyup.enter)="onSearchEnter()" />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="sg-filters__select">
+      <mat-label>Group Type</mat-label>
+      <mat-select [value]="store.filter().groupType" (selectionChange)="onGroupTypeFilterChange($event.value)">
+        <mat-option [value]="null">All</mat-option>
+        <mat-option value="CUSTOM">Custom</mat-option>
+        <mat-option value="SYSTEM">System</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="sg-filters__status">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="store.filter().status" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="inactive">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Reset Filters
+      </button>
+    }
+  </div>
+
+  <div class="sg-table-card" [class.sg-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <div class="sg-state">
+        <mat-spinner diameter="40" />
+        <p>Loading Service Groups…</p>
+      </div>
+    } @else if (store.error()) {
+      <div class="sg-state sg-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      <div class="sg-state">
+        <mat-icon>inbox</mat-icon>
+        <p>No Service Groups Found</p>
+        @if (can(PERMISSIONS.SERVICE_GROUPS_CREATE)) {
+          <button mat-flat-button color="primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon> Create Service Group
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="sg-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.serviceGroups()"
+          matSort
+          multiTemplateDataRows
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByGroupId"
+        >
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-icon-button (click)="toggleExpand(g, $event)" [matTooltip]="store.isExpanded(g.id) ? 'Collapse' : 'Expand'">
+                <mat-icon class="sg-expand-icon" [class.sg-expand-icon--open]="store.isExpanded(g.id)">chevron_right</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Service Group</th>
+            <td mat-cell *matCellDef="let g">
+              <div class="sg-code">{{ g.code }}</div>
+              <div class="sg-name">{{ g.name }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let g">{{ g.description || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="activities">
+            <th mat-header-cell *matHeaderCellDef>Activities</th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-button class="sg-activity-toggle" (click)="toggleExpand(g, $event)">
+                <mat-icon>list_alt</mat-icon>
+                {{ g.activityCount }} {{ g.activityCount === 1 ? 'Activity' : 'Activities' }}
+              </button>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="groupType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="groupType">Group Type</th>
+            <td mat-cell *matCellDef="let g">
+              <mat-chip [class]="g.groupType === 'SYSTEM' ? 'tag-chip tag-chip--system' : 'tag-chip tag-chip--custom'">
+                {{ g.groupType }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="isDefault">
+            <th mat-header-cell *matHeaderCellDef>Default</th>
+            <td mat-cell *matCellDef="let g">
+              @if (g.isDefault) {
+                <mat-icon class="sg-default-icon" matTooltip="Default group for new users">star</mat-icon>
+              } @else {
+                <span class="sg-muted">—</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let g">
+              <mat-chip
+                [class]="g.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'"
+                [class.sg-chip--clickable]="can(PERMISSIONS.SERVICE_GROUPS_ENABLE) || can(PERMISSIONS.SERVICE_GROUPS_DISABLE)"
+                (click)="onStatusChipClick(g, $event)"
+              >
+                {{ g.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="createdAt">Created Date</th>
+            <td mat-cell *matCellDef="let g">{{ g.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Updated Date</th>
+            <td mat-cell *matCellDef="let g">{{ g.updatedAt ? (g.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let g">
+              <button mat-icon-button (click)="openViewDialog(g, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.SERVICE_GROUPS_UPDATE)) {
+                <button mat-icon-button (click)="openEditDialog(g, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (can(PERMISSIONS.SERVICE_GROUPS_CLONE)) {
+                  <button mat-menu-item (click)="openCloneDialog(g, $event)">
+                    <mat-icon>content_copy</mat-icon> Clone
+                  </button>
+                }
+                @if (can(PERMISSIONS.SERVICE_GROUPS_COPY)) {
+                  <button mat-menu-item (click)="openCopyDialog(g, $event)">
+                    <mat-icon>content_paste</mat-icon> Copy Permissions
+                  </button>
+                }
+                @if (can(PERMISSIONS.SERVICE_GROUPS_PERMISSION_MATRIX)) {
+                  <button mat-menu-item (click)="openPermissionMatrix(g, $event)">
+                    <mat-icon>grid_view</mat-icon> Permission Matrix
+                  </button>
+                }
+                @if ((can(PERMISSIONS.SERVICE_GROUPS_ENABLE) || can(PERMISSIONS.SERVICE_GROUPS_DISABLE))) {
+                  <button mat-menu-item (click)="toggleActive(g, $event)">
+                    <mat-icon>{{ g.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                    {{ g.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                }
+                @if (can(PERMISSIONS.SERVICE_GROUPS_AUDIT_HISTORY)) {
+                  <button mat-menu-item (click)="openAuditHistory(g, $event)">
+                    <mat-icon>history</mat-icon> Audit History
+                  </button>
+                }
+                @if (can(PERMISSIONS.SERVICE_GROUPS_DELETE)) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteGroup(g, $event)" class="sg-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let g" [attr.colspan]="displayedColumns().length">
+              @if (store.isExpanded(g.id)) {
+                <div class="sg-detail">
+                  @if (store.isLoadingDetail(g.id)) {
+                    <div class="sg-detail__loading">
+                      <mat-spinner diameter="28" />
+                      <span>Loading activities…</span>
+                    </div>
+                  } @else {
+                    @let detail = store.getDetail(g.id);
+                    @if (detail && detail.activities.length > 0) {
+                      <div class="sg-detail__activities">
+                        @for (activity of detail.activities; track activity.id) {
+                          <div class="sg-activity-block">
+                            <div class="sg-activity-block__title">
+                              @if (activity.icon) { <mat-icon>{{ activity.icon }}</mat-icon> }
+                              {{ activity.activityName }}
+                              @if (activity.moduleGroup) { <span class="sg-activity-block__group">{{ activity.moduleGroup }}</span> }
+                            </div>
+                            <div class="sg-activity-block__perms">
+                              @for (perm of activity.permissions; track perm.id) {
+                                @if (perm.isAllowed) {
+                                  <mat-chip class="perm-chip">{{ perm.permissionType }}</mat-chip>
+                                }
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else if (detail) {
+                      <p class="sg-detail__empty">No activities assigned to this Service Group.</p>
+                    }
+                  }
+                </div>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns();"
+            class="sg-row"
+            [class.sg-row--expanded]="store.isExpanded(row.id)"
+            (click)="toggleExpand(row)"
+          ></tr>
+          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="sg-detail-row"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        class="sg-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

@@ -1,0 +1,86 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Service Group Details
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ group.code }}</div>
+      <div class="dlg-name">{{ group.name }}</div>
+      @if (group.description) { <div class="dlg-description">{{ group.description }}</div> }
+    </div>
+    <div class="dlg-chips">
+      @if (group.isSystem) { <mat-chip class="tag-chip tag-chip--system">System</mat-chip> }
+      @if (group.isDefault) { <mat-chip class="tag-chip tag-chip--default">Default</mat-chip> }
+      <mat-chip [class]="group.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+        {{ group.isActive ? 'Active' : 'Inactive' }}
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Activities &amp; Permissions ({{ group.activities.length }})</h3>
+
+  @if (group.activities.length === 0) {
+    <p class="dlg-empty">No activities assigned to this Service Group yet.</p>
+  } @else {
+    <mat-accordion class="dlg-accordion" multi>
+      @for (activity of group.activities; track activity.id) {
+        <mat-expansion-panel [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              @if (activity.icon) { <mat-icon class="dlg-activity-icon">{{ activity.icon }}</mat-icon> }
+              {{ activity.activityName }}
+            </mat-panel-title>
+            <mat-panel-description>{{ activity.moduleGroup || activity.activityCode }}</mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="dlg-permission-chips">
+            @for (perm of allowedPermissions(activity); track perm.id) {
+              <mat-chip class="perm-chip">
+                <mat-icon class="perm-chip__icon">check_circle</mat-icon>
+                {{ perm.permissionType }}
+              </mat-chip>
+            }
+          </div>
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
+  }
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Group Type</dt>
+      <dd>{{ group.groupType }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ group.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ group.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ group.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ group.updatedAt ? (group.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ group.remarks || '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

@@ -46,7 +46,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'updatedAt', label: 'Updated Date', sortField: 'updatedAt' },
 ];
 
-const DEFAULT_HIDDEN_COLUMNS = new Set(['description']);
+const DEFAULT_HIDDEN_COLUMNS = new Set(['description', 'Organization']);
 
 @Component({
   selector: 'app-discipline',

@@ -202,6 +202,16 @@ export const routes: Routes = [
             data: { breadcrumb: 'Activity', permission: PERMISSIONS.ACTIVITIES_VIEW },
           },
           {
+            path: 'service-groups',
+            loadComponent: () => import('./features/service-group/service-group.component').then(m => m.ServiceGroupComponent),
+            data: { breadcrumb: 'Service Groups', permission: PERMISSIONS.SERVICE_GROUPS_VIEW },
+          },
+          {
+            path: 'service-group-users',
+            loadComponent: () => import('./features/service-group-user/service-group-user.component').then(m => m.ServiceGroupUserComponent),
+            data: { breadcrumb: 'Service Group User Assignment', permission: PERMISSIONS.SERVICE_GROUP_USERS_VIEW },
+          },
+          {
             path: 'api-keys',
             loadComponent: comingSoon,
             data: { breadcrumb: 'API Keys', title: 'API Keys', icon: 'vpn_key', permission: PERMISSIONS.SETTINGS_MANAGE },
@@ -215,7 +225,6 @@ export const routes: Routes = [
             path: 'access',
             data: { breadcrumb: 'Access Management' },
             children: [
-              { path: 'service-groups', loadComponent: comingSoon, data: { breadcrumb: 'Service Groups', title: 'Service Groups', icon: 'groups', permission: PERMISSIONS.PERMISSIONS_MANAGE } },
               { path: 'ad-groups', loadComponent: comingSoon, data: { breadcrumb: 'Active Directory Groups', title: 'Active Directory Groups', icon: 'groups', permission: PERMISSIONS.PERMISSIONS_MANAGE } },
               { path: 'activities', loadComponent: comingSoon, data: { breadcrumb: 'Activities', title: 'Activity Mapping', icon: 'timeline', permission: PERMISSIONS.ACTIVITIES_MANAGE } },
               { path: 'features', loadComponent: comingSoon, data: { breadcrumb: 'Features', title: 'Feature Mapping', icon: 'extension', permission: PERMISSIONS.FEATURES_MANAGE } },

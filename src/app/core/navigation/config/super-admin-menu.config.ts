@@ -22,12 +22,13 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   {
     id: 'access-management', label: 'Access Management', icon: 'security', order: 10, permission: PERMISSIONS.PERMISSIONS_MANAGE,
     children: [
-      { id: 'access-service-groups', label: 'Service Groups', route: '/admin/access/service-groups', order: 1, permission: PERMISSIONS.PERMISSIONS_MANAGE },
-      { id: 'access-ad-groups', label: 'Active Directory Groups', route: '/admin/access/ad-groups', order: 2, permission: PERMISSIONS.PERMISSIONS_MANAGE },
-      { id: 'access-activities', label: 'Activities', route: '/admin/access/activities', order: 3, permission: PERMISSIONS.ACTIVITIES_MANAGE },
-      { id: 'access-features', label: 'Features', route: '/admin/access/features', order: 4, permission: PERMISSIONS.FEATURES_MANAGE },
-      { id: 'access-projects', label: 'Projects', route: '/admin/access/projects', order: 5, permission: PERMISSIONS.PROJECTS_MANAGE },
-      { id: 'access-permission-matrix', label: 'Permission Matrix', route: '/admin/access/permission-matrix', order: 6, permission: PERMISSIONS.PERMISSIONS_MANAGE },
+      { id: 'access-service-groups', label: 'Service Groups', route: '/admin/service-groups', order: 1, permission: PERMISSIONS.SERVICE_GROUPS_VIEW },
+      { id: 'access-service-group-users', label: 'Service Group User Assignment', route: '/admin/service-group-users', order: 2, permission: PERMISSIONS.SERVICE_GROUP_USERS_VIEW },
+      { id: 'access-ad-groups', label: 'Active Directory Groups', route: '/admin/access/ad-groups', order: 3, permission: PERMISSIONS.PERMISSIONS_MANAGE },
+      { id: 'access-activities', label: 'Activities', route: '/admin/access/activities', order: 4, permission: PERMISSIONS.ACTIVITIES_MANAGE },
+      { id: 'access-features', label: 'Features', route: '/admin/access/features', order: 5, permission: PERMISSIONS.FEATURES_MANAGE },
+      { id: 'access-projects', label: 'Projects', route: '/admin/access/projects', order: 6, permission: PERMISSIONS.PROJECTS_MANAGE },
+      { id: 'access-permission-matrix', label: 'Permission Matrix', route: '/admin/access/permission-matrix', order: 7, permission: PERMISSIONS.PERMISSIONS_MANAGE },
     ],
   },
 

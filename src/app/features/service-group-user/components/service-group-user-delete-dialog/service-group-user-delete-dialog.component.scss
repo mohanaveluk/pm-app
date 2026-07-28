@@ -1,0 +1,15 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dlg-title--warn mat-icon {
+  color: var(--error, #d32f2f);
+}
+
+.dlg-hint {
+  color: #8098b8;
+  font-size: 0.82rem;
+}

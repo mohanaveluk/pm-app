@@ -1,0 +1,60 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>grid_view</mat-icon>
+  Permission Matrix — {{ data.serviceGroupName }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading permission matrix…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="dlg-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="retry()">
+        <mat-icon>refresh</mat-icon> Retry
+      </button>
+    </div>
+  } @else if (matrix() && matrix()!.rows.length === 0) {
+    <div class="dlg-empty">
+      <mat-icon>inbox</mat-icon>
+      <p>No activities assigned to this Service Group yet.</p>
+    </div>
+  } @else if (matrix()) {
+    <div class="dlg-matrix-scroll">
+      <table mat-table [dataSource]="matrix()!.rows" class="dlg-matrix-table">
+        <ng-container matColumnDef="activity">
+          <th mat-header-cell *matHeaderCellDef>Activity</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="dlg-activity-cell">
+              <span class="dlg-activity-name">{{ row.activityName }}</span>
+              @if (row.moduleGroup) { <span class="dlg-activity-group">{{ row.moduleGroup }}</span> }
+            </div>
+          </td>
+        </ng-container>
+
+        @for (col of matrix()!.columns; track col) {
+          <ng-container [matColumnDef]="col">
+            <th mat-header-cell *matHeaderCellDef class="dlg-col-header">{{ col }}</th>
+            <td mat-cell *matCellDef="let row" class="dlg-col-cell">
+              @if (row.permissions[col]) {
+                <mat-icon class="dlg-perm-icon dlg-perm-icon--allowed" matTooltip="Allowed">check_circle</mat-icon>
+              } @else {
+                <mat-icon class="dlg-perm-icon dlg-perm-icon--denied" matTooltip="Not granted">radio_button_unchecked</mat-icon>
+              }
+            </td>
+          </ng-container>
+        }
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns();"></tr>
+      </table>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

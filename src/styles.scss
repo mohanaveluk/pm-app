@@ -39,6 +39,8 @@ html.dark-theme {
   --body-bg:  var(--mat-sys-surface);
   --primary:  var(--mat-sys-primary);
   --secondary:var(--mat-sys-secondary);
+  --iconshadow:#c2d7f9;
+  --partial:  #ffb431;
   --footer:   var(--mat-sys-surface-container-highest);
   --card:     var(--mat-sys-surface-container-low);
   --border:   var(--mat-sys-outline-variant);
@@ -69,7 +71,12 @@ h2{font-size:clamp(1.5rem,3vw,2.4rem)}
 h3{font-size:clamp(1.1rem,2.5vw,1.7rem)}
 a{color:var(--primary);text-decoration:none}
 
-.container{width:100%;max-width:1240px;margin:0 auto;padding:0 24px}
+.container{
+  width:100%;
+  //max-width:1240px;
+  margin:0 auto;
+  padding:0 24px
+}
 .section{padding:80px 0}
 .section--alt{background:#edf2f8}
 .section-header{text-align:center;margin-bottom:56px}

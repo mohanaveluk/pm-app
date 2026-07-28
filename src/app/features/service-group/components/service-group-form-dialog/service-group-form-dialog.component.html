@@ -1,0 +1,143 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
+  {{ isEdit ? 'Edit Service Group' : 'New Service Group' }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading Service Group…</p>
+    </div>
+  } @else {
+    @if (loadError()) {
+      <div class="dlg-error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ loadError() }}</p>
+      </div>
+    }
+
+    <form [formGroup]="form" class="dlg-form" novalidate>
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">General Information</h3>
+        <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Service Group Code</mat-label>
+            <input matInput formControlName="code" (input)="onCodeInput($event)" maxlength="50" required />
+            @if (isEdit) { <mat-icon matSuffix matTooltip="Cannot be changed after creation">lock</mat-icon> }
+            @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Service Group Name</mat-label>
+            <input matInput formControlName="name" maxlength="100" required />
+            @if (isEdit) { <mat-icon matSuffix matTooltip="Cannot be changed after creation">lock</mat-icon> }
+            @if (err('name')) { <mat-error>{{ err('name') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="dlg-full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="dlg-full-width">
+            <mat-label>Remarks</mat-label>
+            <textarea matInput formControlName="remarks" rows="2"></textarea>
+          </mat-form-field>
+
+          <div class="dlg-options-row">
+            <mat-slide-toggle formControlName="isDefault" color="primary">Default Group</mat-slide-toggle>
+            <mat-slide-toggle formControlName="isActive" color="primary">
+              {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <div class="dlg-activity-header">
+          <h3 class="dlg-section__title">Activity Assignment</h3>
+          <button mat-stroked-button type="button" (click)="addActivityRow()">
+            <mat-icon>add</mat-icon> Add Activity
+          </button>
+        </div>
+
+        <div class="dlg-activity-rows">
+          @for (row of activityRows.controls; track row; let i = $index) {
+            <div class="dlg-activity-row" [formGroup]="row">
+              <div class="dlg-activity-row__main">
+                <mat-form-field appearance="outline" class="dlg-activity-select">
+                  <mat-label>Activity</mat-label>
+                  <mat-select formControlName="activityId" required>
+                    @for (activity of store.availableActivities(); track activity.id) {
+                      <mat-option [value]="activity.id">
+                        {{ activity.name }} @if (activity.moduleGroup) { <span class="dlg-option-group">({{ activity.moduleGroup }})</span> }
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (row.controls.activityId.touched && row.controls.activityId.hasError('required')) {
+                    <mat-error>Please select an Activity</mat-error>
+                  }
+                  @if (duplicateActivityIds().has(row.controls.activityId.value)) {
+                    <mat-error>Activity already selected.</mat-error>
+                  }
+                </mat-form-field>
+
+                <button mat-icon-button type="button" (click)="removeActivityRow(i)" matTooltip="Remove" class="dlg-activity-remove">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+
+              <div class="dlg-permission-chips">
+                <mat-chip-listbox multiple aria-label="Core permissions">
+                  @for (perm of corePermissions; track perm) {
+                    <mat-chip-option
+                      [selected]="row.controls.permissions.value.includes(perm)"
+                      (click)="togglePermission(row, perm)"
+                    >
+                      {{ perm }}
+                    </mat-chip-option>
+                  }
+                </mat-chip-listbox>
+
+                <details class="dlg-more-permissions">
+                  <summary>More permissions ({{ row.controls.permissions.value.length }} selected)</summary>
+                  <mat-chip-listbox multiple aria-label="Additional permissions">
+                    @for (perm of extraPermissions; track perm) {
+                      <mat-chip-option
+                        [selected]="row.controls.permissions.value.includes(perm)"
+                        (click)="togglePermission(row, perm)"
+                      >
+                        {{ perm }}
+                      </mat-chip-option>
+                    }
+                  </mat-chip-listbox>
+                </details>
+              </div>
+
+              @if (row.controls.permissions.touched && row.controls.permissions.hasError('required')) {
+                <div class="dlg-permission-error">
+                  <mat-icon>error_outline</mat-icon> Select at least one permission
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="save()" [disabled]="saving() || loading()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>
