@@ -1,0 +1,57 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>content_paste</mat-icon>
+  Copy Permissions
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-flow">
+    <div class="dlg-flow__step">
+      <span class="dlg-flow__label">Source Group</span>
+      <form [formGroup]="form" class="dlg-form" novalidate>
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Search Service Groups…</mat-label>
+          <input
+            matInput
+            formControlName="sourceSearch"
+            [matAutocomplete]="sourceAuto"
+            placeholder="Type a Service Group name"
+          />
+          @if (searching()) { <mat-spinner matSuffix diameter="18" /> }
+          <mat-autocomplete #sourceAuto="matAutocomplete" [displayWith]="displaySource" (optionSelected)="onSourceSelected($event.option.value)">
+            @for (option of sourceOptions(); track option.id) {
+              <mat-option [value]="option">
+                {{ option.name }} <span class="dlg-option-code">({{ option.code }})</span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+          <mat-hint>Its activities and permissions will be copied into the target group below</mat-hint>
+        </mat-form-field>
+      </form>
+    </div>
+
+    <mat-icon class="dlg-flow__arrow">arrow_downward</mat-icon>
+
+    <div class="dlg-flow__step">
+      <span class="dlg-flow__label">Target Group</span>
+      <div class="dlg-target-chip">
+        <mat-icon>groups</mat-icon>
+        {{ data.group.name }} <span class="dlg-option-code">({{ data.group.code }})</span>
+      </div>
+      <p class="dlg-hint">
+        This will fully replace the target group's current activities and permissions.
+      </p>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="copy()" [disabled]="saving() || form.invalid || !selectedSource()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>content_paste</mat-icon>
+    }
+    Copy
+  </button>
+</mat-dialog-actions>

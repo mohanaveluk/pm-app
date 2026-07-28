@@ -1,0 +1,143 @@
+.profile-preview__empty {
+  color: #8098b8;
+  font-size: 0.85rem;
+  padding: 12px 14px;
+  background: var(--body-bg);
+  border-radius: var(--r-sm);
+  margin: 0;
+}
+
+.profile-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  background: var(--card);
+}
+
+.profile-preview__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.profile-preview__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+
+  &--initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+}
+
+.profile-preview__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.profile-preview__name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.profile-preview__position {
+  font-size: 0.82rem;
+  color: #5a7a9e;
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.profile-preview__fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 16px;
+  margin: 0 0 12px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-preview__field {
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #8098b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 2px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.88rem;
+  }
+}
+
+.profile-preview__groups {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.profile-preview__groups-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8098b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.profile-preview__groups-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5a7a9e;
+  font-size: 0.82rem;
+}
+
+.profile-preview__no-groups {
+  color: #8098b8;
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.profile-preview__group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.group-chip {
+  background: rgba(25, 118, 210, 0.08);
+  color: var(--primary);
+  font-size: 0.78rem;
+
+  &__icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 2px;
+    color: #f9a825;
+  }
+}

@@ -1,0 +1,171 @@
+<h2 mat-dialog-title>
+  {{ isEdit ? 'Edit Service Group Membership' : 'Assign Users to Service Group' }}
+</h2>
+
+<mat-dialog-content class="form-dialog__content">
+  @if (loading()) {
+    <div class="form-dialog__loading">
+      <mat-spinner diameter="32" />
+      <span>Loading membership…</span>
+    </div>
+  } @else if (loadError()) {
+    <div class="form-dialog__error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError() }}</span>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="form-dialog__form">
+      <!-- Section 1: Service Group -->
+      <section class="form-section">
+        <h3 class="form-section__title"><mat-icon>workspaces</mat-icon> Service Group</h3>
+
+        @if (isEdit) {
+          <div class="locked-group">
+            <mat-icon>lock</mat-icon>
+            <div>
+              <div class="locked-group__name">{{ store.getGroupByServiceGroupId(data.serviceGroupId!)?.serviceGroupName }}</div>
+              <div class="locked-group__code">{{ store.getGroupByServiceGroupId(data.serviceGroupId!)?.serviceGroupCode }}</div>
+            </div>
+          </div>
+        } @else {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Service Group</mat-label>
+            <mat-select formControlName="serviceGroupId">
+              @for (sg of store.availableServiceGroups(); track sg.id) {
+                <mat-option [value]="sg.id" [disabled]="!sg.isActive">
+                  {{ sg.name }} ({{ sg.code }}) @if (!sg.isActive) { — inactive }
+                </mat-option>
+              }
+            </mat-select>
+            @if (err(form.controls.serviceGroupId); as msg) { <mat-error>{{ msg }}</mat-error> }
+          </mat-form-field>
+          <button type="button" mat-button class="new-group-link" (click)="openServiceGroupMaster()">
+            <mat-icon>open_in_new</mat-icon> Create New Service Group
+          </button>
+        }
+      </section>
+
+      <mat-divider />
+
+      <!-- Section 2: Permission Preview (mandatory) -->
+      <section class="form-section">
+        <app-service-group-permission-preview [preview]="permissionPreview()" [loading]="loadingPreview()" />
+      </section>
+
+      <mat-divider />
+
+      <!-- Section 3: User Assignment grid -->
+      <section class="form-section">
+        <div class="form-section__header">
+          <h3 class="form-section__title"><mat-icon>group_add</mat-icon> User Assignment</h3>
+          <button type="button" mat-stroked-button color="primary" (click)="addUserRow()">
+            <mat-icon>add</mat-icon> Add User
+          </button>
+        </div>
+
+        <div formArrayName="users" class="user-rows">
+          @for (row of userRows.controls; track row; let i = $index) {
+            <div [formGroupName]="i" class="user-row">
+              <div class="user-row__grid">
+                <mat-form-field appearance="outline" class="user-row__user">
+                  <mat-label>User</mat-label>
+                  <input
+                    matInput
+                    #trigger="matAutocompleteTrigger"
+                    formControlName="userSearch"
+                    [matAutocomplete]="userAuto"
+                    (focus)="trigger.openPanel(); onUserSearchFocus(row)"
+                    placeholder="Type to search by name…"
+                  />
+                  <mat-autocomplete
+                    #userAuto="matAutocomplete"
+                    [displayWith]="userDisplayFn"
+                    (optionSelected)="onUserSelected(row, $event.option.value)"
+                  >
+                    @if (store.availableUsersLoading() && selectableUsers().length === 0) {
+                      <mat-option disabled>Loading users…</mat-option>
+                    } @else if (filteredUsersForRow(row).length === 0) {
+                      <mat-option disabled>No matching users</mat-option>
+                    } @else {
+                      @for (u of filteredUsersForRow(row); track u.id) {
+                        <mat-option [value]="u">
+                          {{ u.fullName }} · {{ u.email }}
+                          @if (!u.isActive) { <span class="inactive-tag">Inactive</span> }
+                        </mat-option>
+                      }
+                    }
+                  </mat-autocomplete>
+                  @if (err(row.controls.userId); as msg) { <mat-error>{{ msg }}</mat-error> }
+                  @if (duplicateUserIds().has(row.controls.userId.value)) {
+                    <mat-error>This user is already selected in another row</mat-error>
+                  }
+                  @if (isAlreadyMember(row.controls.userId.value) && !isEdit) {
+                    <mat-hint>Already a member of this group — will be skipped</mat-hint>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="user-row__type">
+                  <mat-label>Assignment Type</mat-label>
+                  <mat-select formControlName="assignmentType">
+                    @for (t of assignmentTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="user-row__date">
+                  <mat-label>Effective From</mat-label>
+                  <input matInput [matDatepicker]="fromPicker" formControlName="effectiveFrom" />
+                  <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+                  <mat-datepicker #fromPicker />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="user-row__date">
+                  <mat-label>Effective To</mat-label>
+                  <input matInput [matDatepicker]="toPicker" formControlName="effectiveTo" />
+                  <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+                  <mat-datepicker #toPicker />
+                  @if (row.errors?.['dateRange']) { <mat-error>To date must be after From date</mat-error> }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="user-row__remarks">
+                  <mat-label>Remarks</mat-label>
+                  <input matInput formControlName="remarks" maxlength="200" />
+                </mat-form-field>
+
+                <div class="user-row__primary">
+                  <mat-slide-toggle formControlName="isPrimary">Primary</mat-slide-toggle>
+                </div>
+
+                <button
+                  type="button"
+                  mat-icon-button
+                  color="warn"
+                  matTooltip="Remove"
+                  (click)="removeUserRow(i)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <app-user-profile-preview
+          [user]="previewUser()"
+          [currentGroups]="previewUserGroups()"
+          [loadingGroups]="loadingPreviewUserGroups()"
+        />
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving() || loading()" (click)="save()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      {{ isEdit ? 'Save Membership' : 'Assign Users' }}
+    }
+  </button>
+</mat-dialog-actions>

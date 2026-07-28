@@ -1,0 +1,288 @@
+.sg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.sg-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.sg-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.sg-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.sg-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 260px;
+    min-width: 200px;
+  }
+
+  &__select {
+    width: 200px;
+  }
+
+  &__status {
+    width: 160px;
+  }
+}
+
+.sg-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sg-table-scroll {
+  overflow-x: auto;
+  max-height: 66vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.sg-row {
+  cursor: pointer;
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+  &--expanded { background: rgba(25, 118, 210, 0.04); }
+}
+
+.sg-detail-row {
+  height: 0;
+
+  td {
+    border-bottom-width: 0;
+    padding: 0 !important;
+  }
+}
+
+.sg-expand-icon {
+  transition: transform var(--ease);
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.sg-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.sg-name {
+  font-weight: 500;
+}
+
+.sg-activity-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.tag-chip {
+  &--system { background: #ede7f6; color: #5e35b1; }
+  &--custom { background: #eceff1; color: #607d8b; }
+}
+
+.sg-default-icon {
+  color: #f9a825;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.sg-muted {
+  color: #cfd8e3;
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.sg-chip--clickable {
+  cursor: pointer;
+}
+
+.sg-menu-item--danger {
+  color: var(--error);
+}
+
+.sg-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.sg-detail {
+  padding: 16px 24px;
+  background: var(--body-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.sg-detail__loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #5a7a9e;
+  padding: 8px 0;
+}
+
+.sg-detail__empty {
+  color: #8098b8;
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.sg-detail__activities {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sg-activity-block {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+}
+
+.sg-activity-block__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #8098b8;
+  }
+}
+
+.sg-activity-block__group {
+  color: #8098b8;
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+
+.sg-activity-block__perms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.perm-chip {
+  background: #e8f5e9;
+  color: var(--success);
+  font-size: 0.78rem;
+}
+
+.sg-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+// Compact density: shrink cell padding without touching the M3 theme's density tokens.
+.sg-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .sg-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+@media print {
+  .sg-toolbar,
+  .sg-filters,
+  .sg-paginator,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .sg-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

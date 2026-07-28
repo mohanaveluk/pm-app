@@ -17,7 +17,7 @@
   }
   &__sub { color: rgba(255,255,255,.75); font-size: .92rem;
             display: flex; align-items: center; gap: 8px; }
-  &__actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; color: #ffffff;}
+  &__actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; color: #ffffff; .bgcolor {color: rgba(255,255,255,.75);}}
 }
 
 .dash-body { padding-top: 0; padding-bottom: 48px; }

@@ -1,0 +1,22 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dlg-content {
+  min-width: 320px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.dlg-hint {
+  color: #5a7a9e;
+  font-size: 0.85rem;
+  margin: 0 0 16px;
+}
+
+.dlg-full-width {
+  width: 100%;
+}

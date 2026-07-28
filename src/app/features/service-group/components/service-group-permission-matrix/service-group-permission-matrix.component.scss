@@ -1,0 +1,81 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.dlg-content {
+  min-width: 320px;
+  width: 100%;
+  max-width: 920px;
+  padding-top: 8px !important;
+}
+
+.dlg-loading,
+.dlg-error,
+.dlg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #a8bdd4;
+  }
+}
+
+.dlg-error mat-icon {
+  color: var(--error);
+}
+
+.dlg-matrix-scroll {
+  overflow-x: auto;
+  max-height: 60vh;
+}
+
+.dlg-matrix-table {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.dlg-activity-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.dlg-activity-name {
+  font-weight: 500;
+}
+
+.dlg-activity-group {
+  font-size: 0.75rem;
+  color: #8098b8;
+}
+
+.dlg-col-header {
+  text-align: center !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+}
+
+.dlg-col-cell {
+  text-align: center;
+}
+
+.dlg-perm-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+
+  &--allowed { color: var(--success); }
+  &--denied { color: #cfd8e3; }
+}

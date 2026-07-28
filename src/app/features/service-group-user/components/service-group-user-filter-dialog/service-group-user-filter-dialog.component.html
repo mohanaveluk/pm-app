@@ -1,0 +1,66 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>filter_alt</mat-icon>
+  Advanced Filters
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <form [formGroup]="form" class="filter-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Service Group</mat-label>
+      <mat-select formControlName="serviceGroupId">
+        <mat-option [value]="null">All Service Groups</mat-option>
+        @for (sg of store.availableServiceGroups(); track sg.id) {
+          <mat-option [value]="sg.id">{{ sg.name }} ({{ sg.code }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Assignment Type</mat-label>
+      <mat-select formControlName="assignmentType">
+        <mat-option [value]="null">All Types</mat-option>
+        @for (t of assignmentTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="inactive">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-checkbox formControlName="primaryOnly">Primary assignments only</mat-checkbox>
+
+    <mat-divider />
+
+    <div class="date-range">
+      <mat-form-field appearance="outline">
+        <mat-label>Created From</mat-label>
+        <input matInput [matDatepicker]="fromPicker" formControlName="createdFrom" />
+        <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+        <mat-datepicker #fromPicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Created To</mat-label>
+        <input matInput [matDatepicker]="toPicker" formControlName="createdTo" />
+        <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+        <mat-datepicker #toPicker />
+      </mat-form-field>
+    </div>
+
+    <p class="filter-note">
+      <mat-icon>info_outline</mat-icon>
+      Department and Role filters aren't available yet — the current API doesn't link assignments to that data.
+    </p>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="reset()">Reset</button>
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="apply()">Apply</button>
+</mat-dialog-actions>

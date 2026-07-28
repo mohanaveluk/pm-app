@@ -1,0 +1,64 @@
+@if (!user()) {
+  <p class="profile-preview__empty">Search and select a user to preview their profile.</p>
+} @else {
+  <div class="profile-preview">
+    <div class="profile-preview__header">
+      @if (user()!.profileImage) {
+        <img [src]="user()!.profileImage" [alt]="user()!.fullName" class="profile-preview__avatar" />
+      } @else {
+        <div class="profile-preview__avatar profile-preview__avatar--initials">{{ initials() }}</div>
+      }
+      <div class="profile-preview__identity">
+        <div class="profile-preview__name">{{ user()!.fullName }}</div>
+        @if (user()!.position) { <div class="profile-preview__position">{{ user()!.position }}</div> }
+      </div>
+      <mat-chip [class]="user()!.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+        {{ user()!.isActive ? 'Active' : 'Inactive' }}
+      </mat-chip>
+    </div>
+
+    <dl class="profile-preview__fields">
+      <div class="profile-preview__field">
+        <dt><mat-icon>mail</mat-icon> Email</dt>
+        <dd>{{ user()!.email }}</dd>
+      </div>
+      @if (user()!.mobile) {
+        <div class="profile-preview__field">
+          <dt><mat-icon>call</mat-icon> Mobile</dt>
+          <dd>{{ user()!.mobile }}</dd>
+        </div>
+      }
+      @if (user()!.roleName) {
+        <div class="profile-preview__field">
+          <dt><mat-icon>badge</mat-icon> Role</dt>
+          <dd>{{ user()!.roleName }}</dd>
+        </div>
+      }
+      <div class="profile-preview__field">
+        <dt><mat-icon>verified</mat-icon> Email Verified</dt>
+        <dd>{{ user()!.isEmailVerified ? 'Yes' : 'No' }}</dd>
+      </div>
+    </dl>
+
+    <div class="profile-preview__groups">
+      <div class="profile-preview__groups-label">Current Service Groups</div>
+      @if (loadingGroups()) {
+        <div class="profile-preview__groups-loading">
+          <mat-spinner diameter="18" />
+          <span>Loading…</span>
+        </div>
+      } @else if (currentGroups().length === 0) {
+        <span class="profile-preview__no-groups">Not assigned to any Service Group yet</span>
+      } @else {
+        <div class="profile-preview__group-chips">
+          @for (g of currentGroups(); track g.serviceGroupId) {
+            <mat-chip class="group-chip" [matTooltip]="g.isPrimary ? 'Primary group' : ''">
+              @if (g.isPrimary) { <mat-icon class="group-chip__icon">star</mat-icon> }
+              {{ g.serviceGroupName }}
+            </mat-chip>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

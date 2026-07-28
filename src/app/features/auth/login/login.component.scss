@@ -55,9 +55,9 @@
 .left-logo {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 36px;
-  .material-icons { font-size: 32px; color: var(--secondary); }
+  .material-icons { font-size: 32px;  } //color: var(--secondary);
   span { font-size: 1.4rem; font-weight: 500;
-    strong { color: var(--secondary); font-weight: 700; } }
+    strong { color: var(--partial); font-weight: 700; } }
 }
 
 .left-content h2 {
@@ -94,7 +94,7 @@
   padding: 12px 18px;
   display: flex; align-items: center; gap: 8px;
   color: #fff; font-size: .85rem; font-weight: 500;
-  .material-icons { font-size: 18px; color: var(--secondary); }
+  .material-icons { font-size: 18px; color: var(--iconshadow); }
   animation: floatCard 3s ease-in-out infinite;
 
   &--1 { top: 0; left: 0; animation-delay: 0s; }

@@ -1,0 +1,40 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>history</mat-icon>
+  Audit History — {{ data.group.serviceGroupName }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-coming-soon">
+    <mat-icon>info_outline</mat-icon>
+    <p>
+      A full field-level audit trail (every date/remarks change, by whom) is planned for a future release.
+      This timeline currently reflects only what each assignment record itself tracks.
+    </p>
+  </div>
+
+  @if (events.length === 0) {
+    <p class="dlg-empty">No membership activity recorded yet.</p>
+  } @else {
+    <div class="timeline">
+      @for (event of events; track $index) {
+        <div class="timeline__item">
+          <div class="timeline__marker" [class]="'timeline__marker--' + event.variant">
+            <mat-icon>{{ event.icon }}</mat-icon>
+          </div>
+          @if (!$last) { <div class="timeline__line"></div> }
+          <div class="timeline__content">
+            <div class="timeline__label">{{ event.label }}</div>
+            <div class="timeline__meta">
+              @if (event.by) { <span>{{ event.by }}</span> }
+              <span>{{ event.at | date: 'medium' }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

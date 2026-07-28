@@ -1,0 +1,105 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  {{ data.group.serviceGroupName }}
+  <span class="dlg-title__code">({{ data.group.serviceGroupCode }})</span>
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <section class="dlg-section">
+    <div class="group-summary">
+      @if (data.group.serviceGroupDescription) {
+        <p class="group-summary__desc">{{ data.group.serviceGroupDescription }}</p>
+      }
+      <div class="group-summary__stats">
+        <mat-chip>{{ data.group.members.length }} Total Users</mat-chip>
+        <mat-chip class="stat-chip--active">{{ activeCount }} Active</mat-chip>
+        <mat-chip class="stat-chip--primary">{{ primaryCount }} Primary</mat-chip>
+        <mat-chip>{{ data.group.activityCount }} Activities</mat-chip>
+        <mat-chip [class]="data.group.isServiceGroupActive ? 'stat-chip--active' : 'stat-chip--inactive'">
+          Service Group {{ data.group.isServiceGroupActive ? 'Active' : 'Inactive' }}
+        </mat-chip>
+      </div>
+    </div>
+  </section>
+
+  <section class="dlg-section">
+    <h3 class="dlg-section__title"><mat-icon>shield</mat-icon> Permission Preview</h3>
+    <app-service-group-permission-preview [preview]="permissionPreview()" [loading]="loadingPreview()" />
+  </section>
+
+  <section class="dlg-section">
+    <h3 class="dlg-section__title"><mat-icon>group</mat-icon> Assigned Users</h3>
+
+    @if (data.group.members.length === 0) {
+      <p class="dlg-empty">No users are assigned to this Service Group yet.</p>
+    } @else {
+      <table mat-table [dataSource]="data.group.members" class="members-table">
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>User</th>
+          <td mat-cell *matCellDef="let m">
+            <div class="member-name">{{ m.userFullName }}</div>
+            <div class="member-email">{{ m.userEmail }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="assignmentType">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let m">{{ m.assignmentType }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="primary">
+          <th mat-header-cell *matHeaderCellDef>Primary</th>
+          <td mat-cell *matCellDef="let m">
+            @if (m.isPrimary) { <mat-icon class="star-icon" matTooltip="Primary group">star</mat-icon> }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let m">
+            <mat-chip [class]="m.isActive ? 'stat-chip--active' : 'stat-chip--inactive'">
+              {{ m.isActive ? 'Active' : 'Inactive' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="effective">
+          <th mat-header-cell *matHeaderCellDef>Effective</th>
+          <td mat-cell *matCellDef="let m">
+            {{ m.effectiveFrom ? (m.effectiveFrom | date: 'mediumDate') : '—' }}
+            →
+            {{ m.effectiveTo ? (m.effectiveTo | date: 'mediumDate') : 'Ongoing' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="remarks">
+          <th mat-header-cell *matHeaderCellDef>Remarks</th>
+          <td mat-cell *matCellDef="let m">{{ m.remarks || '—' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="memberColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: memberColumns"></tr>
+      </table>
+    }
+  </section>
+
+  <section class="dlg-section">
+    <h3 class="dlg-section__title"><mat-icon>event</mat-icon> Info</h3>
+    <dl class="info-fields">
+      <div class="info-field">
+        <dt>Created</dt>
+        <dd>{{ data.group.createdAt | date: 'medium' }}</dd>
+      </div>
+      @if (data.group.updatedAt) {
+        <div class="info-field">
+          <dt>Last Updated</dt>
+          <dd>{{ data.group.updatedAt | date: 'medium' }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

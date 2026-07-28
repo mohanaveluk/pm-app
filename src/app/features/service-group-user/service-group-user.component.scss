@@ -1,0 +1,286 @@
+.sgu-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.sgu-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.sgu-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.sgu-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.sgu-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 320px;
+    min-width: 200px;
+  }
+}
+
+.sgu-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sgu-table-scroll {
+  overflow-x: auto;
+  max-height: 66vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.sgu-row {
+  cursor: pointer;
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+  &--expanded { background: rgba(25, 118, 210, 0.04); }
+}
+
+.sgu-detail-row {
+  height: 0;
+
+  td {
+    border-bottom-width: 0;
+    padding: 0 !important;
+  }
+}
+
+.sgu-expand-icon {
+  transition: transform var(--ease);
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.sgu-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.sgu-name {
+  font-weight: 500;
+}
+
+.sgu-user-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.status-chip {
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.sgu-chip--clickable {
+  cursor: pointer;
+}
+
+.sgu-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.sgu-detail {
+  padding: 16px 24px;
+  background: var(--body-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.sgu-detail__empty {
+  color: #8098b8;
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.member-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+
+  &--inactive {
+    opacity: 0.7;
+  }
+}
+
+.member-row__identity {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.member-row__name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.star-icon {
+  color: #f9a825;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.member-row__email {
+  font-size: 0.78rem;
+  color: #8098b8;
+}
+
+.member-row__position {
+  font-size: 0.75rem;
+  color: #5a7a9e;
+}
+
+.type-chip {
+  background: #ede7f6;
+  color: #5e35b1;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.member-row__dates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #5a7a9e;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.member-row__remarks {
+  font-size: 0.78rem;
+  color: #8098b8;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.sgu-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+.sgu-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .sgu-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+@media print {
+  .sgu-toolbar,
+  .sgu-filters,
+  .sgu-paginator,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .sgu-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

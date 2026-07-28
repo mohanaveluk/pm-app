@@ -1,0 +1,41 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>content_copy</mat-icon>
+  Clone {{ data.group.name }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <p class="dlg-hint">
+    Creates a new Service Group with all activities and permissions copied from <strong>{{ data.group.name }}</strong>.
+  </p>
+
+  <form [formGroup]="form" class="dlg-form" novalidate>
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>New Service Group Code</mat-label>
+      <input matInput formControlName="code" (input)="onCodeInput($event)" maxlength="50" required />
+      @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>New Service Group Name</mat-label>
+      <input matInput formControlName="name" maxlength="100" required />
+      @if (err('name')) { <mat-error>{{ err('name') }}</mat-error> }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="clone()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>content_copy</mat-icon>
+    }
+    Clone
+  </button>
+</mat-dialog-actions>

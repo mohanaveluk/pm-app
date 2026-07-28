@@ -1,0 +1,39 @@
+@if (loading()) {
+  <div class="perm-preview__loading">
+    <mat-spinner diameter="28" />
+    <span>Loading permission preview…</span>
+  </div>
+} @else if (!preview()) {
+  <p class="perm-preview__empty">Select a Service Group to preview the Activities and Permissions it grants.</p>
+} @else if (preview()!.activities.length === 0) {
+  <p class="perm-preview__empty">This Service Group has no activities configured yet — no permissions will be granted.</p>
+} @else {
+  <div class="perm-preview">
+    <div class="perm-preview__title">
+      <mat-icon>shield</mat-icon>
+      {{ preview()!.serviceGroupName }}
+    </div>
+
+    <mat-accordion class="perm-preview__accordion" multi>
+      @for (activity of preview()!.activities; track activity.activityName) {
+        <mat-expansion-panel [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ activity.activityName }}</mat-panel-title>
+            @if (activity.moduleGroup) { <mat-panel-description>{{ activity.moduleGroup }}</mat-panel-description> }
+          </mat-expansion-panel-header>
+
+          <div class="perm-preview__chips">
+            @for (perm of activity.permissions; track perm.permissionType) {
+              @if (perm.isAllowed) {
+                <mat-chip class="perm-chip">
+                  <mat-icon class="perm-chip__icon">check_circle</mat-icon>
+                  {{ perm.permissionType }}
+                </mat-chip>
+              }
+            }
+          </div>
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
+  </div>
+}

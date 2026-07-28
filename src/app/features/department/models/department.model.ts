@@ -9,6 +9,7 @@ export interface DepartmentData {
   id: string;
   dguid: string;
   organizationId: string;
+  organizationName?: string;
   organization?: DepartmentOrganization;
   code: string;
   name: string;
