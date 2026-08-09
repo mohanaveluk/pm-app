@@ -71,6 +71,7 @@ export const PERMISSIONS = {
 
   PROJECTS_VIEW: 'projects.view',
   PROJECTS_MANAGE: 'projects.manage',
+  ENGINEERING_VIEW: 'engineering.view',
 
   MATERIALS_VIEW: 'materials.view',
   MATERIALS_MANAGE: 'materials.manage',
