@@ -35,10 +35,10 @@
         <div class="sidenav__section-label">Favorites</div>
         <app-menu-tree [items]="favorites()" />
       }
-      @if (recentlyVisited().length) {
+      <!-- @if (recentlyVisited().length) {
         <div class="sidenav__section-label">Recently Visited</div>
         <app-menu-tree [items]="recentlyVisited()" />
-      }
+      } -->
       <div class="sidenav__section-label">Menu</div>
       <app-menu-tree [items]="menu()" />
     } @else {

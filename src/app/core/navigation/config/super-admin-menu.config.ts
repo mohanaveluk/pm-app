@@ -28,7 +28,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   },
 
   {
-    id: 'user-access', label: 'IAM', tooltip: 'Identity & Access Management', icon: 'manage_accounts', order: 3,
+    id: 'user-access', label: 'Access Management', tooltip: 'Access Management', icon: 'manage_accounts', order: 3,
     children: [
       { id: 'user-accounts', label: 'Users', route: '/admin/users', order: 1, permission: PERMISSIONS.USERS_MANAGE },
       { id: 'user-roles', label: 'Roles', route: '/admin/roles', order: 2, permission: PERMISSIONS.ROLES_MANAGE },
@@ -61,16 +61,29 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   },
 
   {
-    id: 'inventory-quality', label: 'Inventory & Quality', tooltip: 'Inventory & Quality', icon: 'inventory_2', order: 7,
+    id: 'engineering', label: 'Engineering', tooltip: 'Engineering', icon: 'engineering', order: 7,
     children: [
-      { id: 'inventory-materials', label: 'Materials', route: '/materials', order: 1, permission: PERMISSIONS.MATERIALS_VIEW },
-      { id: 'inventory-warehouse', label: 'Warehouse', route: '/warehouse', order: 2, permission: PERMISSIONS.WAREHOUSE_VIEW },
-      { id: 'inventory-qa', label: 'QA / QC', route: '/qa', order: 3, permission: PERMISSIONS.QA_VIEW },
+      { id: 'material-master', label: 'Material Master', route: '/materials', order: 1, permission: PERMISSIONS.ENGINEERING_VIEW },
+      { id: 'material-requisition', label: 'Material Requisition', route: '/warehouse', order: 2, permission: PERMISSIONS.WAREHOUSE_VIEW },
     ],
   },
 
   {
-    id: 'reporting', label: 'Reports & Analytics', tooltip: 'Reports & Analytics', icon: 'insights', order: 8,
+    id: 'inventory-quality', label: 'Materials', tooltip: 'Materials', icon: 'inventory_2', order: 7,
+    children: [
+      { id: 'inventory-materials', label: 'Inventory', route: '/materials', order: 1, permission: PERMISSIONS.MATERIALS_VIEW },
+      { id: 'inventory-warehouse', label: 'Warehouse', route: '/warehouse', order: 2, permission: PERMISSIONS.WAREHOUSE_VIEW },
+    ],
+  },
+
+  {
+    id: 'quality', label: 'Quality', tooltip: 'Quality', icon: 'inventory_2', order: 8,
+    children: [
+      { id: 'inventory-qa', label: 'QA / QC', route: '/qa', order: 3, permission: PERMISSIONS.QA_VIEW },
+    ],
+  },  
+  {
+    id: 'reporting', label: 'Reports & Analytics', tooltip: 'Reports & Analytics', icon: 'insights', order: 9,
     children: [
       { id: 'reporting-reports', label: 'Reports', route: '/reports', order: 1, permission: PERMISSIONS.REPORTS_VIEW },
       { id: 'reporting-analytics', label: 'Analytics', route: '/analytics', order: 2, permission: PERMISSIONS.ANALYTICS_VIEW },
@@ -78,7 +91,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   },
 
   {
-    id: 'system-admin', label: 'System Admin', tooltip: 'System Administration', icon: 'tune', order: 9,
+    id: 'system-admin', label: 'System Admin', tooltip: 'System Administration', icon: 'tune', order: 10,
     children: [
       { id: 'system-app-settings', label: 'Application Settings', route: '/admin/settings/application', order: 1, permission: PERMISSIONS.SETTINGS_MANAGE },
       { id: 'system-notifications', label: 'Notification Settings', route: '/admin/settings/notifications', order: 2, permission: PERMISSIONS.SETTINGS_MANAGE },
@@ -89,7 +102,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   },
 
   {
-    id: 'integration', label: 'Integration & API', tooltip: 'Integration & API', icon: 'api', order: 10,
+    id: 'integration', label: 'Integration & API', tooltip: 'Integration & API', icon: 'api', order: 11,
     children: [
       { id: 'integration-api', label: 'API Management', route: '/admin/security/api', order: 1, permission: PERMISSIONS.SYSTEM_MANAGE },
       { id: 'integration-api-keys', label: 'API Keys', route: '/admin/api-keys', order: 2, permission: PERMISSIONS.SETTINGS_MANAGE },
@@ -97,7 +110,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
     ],
   },
 
-  { id: 'audit-logs', label: 'Audit Logs', tooltip: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', order: 11, permission: PERMISSIONS.AUDIT_VIEW },
+  { id: 'audit-logs', label: 'Audit Logs', tooltip: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', order: 12, permission: PERMISSIONS.AUDIT_VIEW },
 
-  { id: 'support', label: 'Support', tooltip: 'Support', icon: 'support_agent', route: '/support', order: 12 },
+  { id: 'support', label: 'Support', tooltip: 'Support', icon: 'support_agent', route: '/support', order: 13 },
 ];
