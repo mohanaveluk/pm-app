@@ -1,0 +1,46 @@
+@if (data.activate) {
+  <h2 mat-dialog-title class="dlg-title">
+    <mat-icon class="dlg-icon--enable">toggle_on</mat-icon>
+    Activate Unit of Measurement?
+  </h2>
+
+  <mat-dialog-content>
+    <p>
+      Activate <strong>"{{ data.unitOfMeasurement.name }}"</strong>
+      ({{ data.unitOfMeasurement.code }})?
+    </p>
+    <p class="dlg-note">This unit will become available for selection again.</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" type="button" (click)="confirm()">
+      <mat-icon>toggle_on</mat-icon>
+      Activate
+    </button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title class="dlg-title">
+    <mat-icon color="warn">warning</mat-icon>
+    Deactivate Unit of Measurement?
+  </h2>
+
+  <mat-dialog-content>
+    <p>
+      Deactivate <strong>"{{ data.unitOfMeasurement.name }}"</strong>
+      ({{ data.unitOfMeasurement.code }})?
+    </p>
+    <p class="dlg-note">
+      Existing records keep this unit, but it will no longer be offered in Material,
+      Requisition or Purchase Order pickers.
+    </p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="warn" type="button" (click)="confirm()">
+      <mat-icon>toggle_off</mat-icon>
+      Deactivate
+    </button>
+  </mat-dialog-actions>
+}

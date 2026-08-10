@@ -1,0 +1,357 @@
+.mg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  outline: none;
+
+  &--fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--body-bg);
+    padding: 16px;
+    overflow-y: auto;
+  }
+}
+
+.mg-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.mg-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.mg-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.mg-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 320px;
+    min-width: 220px;
+  }
+
+  &__status {
+    width: 180px;
+  }
+}
+
+.mg-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.mg-table-scroll {
+  overflow-x: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.mg-row {
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+}
+
+.mg-code {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.mg-cell--truncate {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-muted {
+  color: #cfd8e3;
+}
+
+.mg-chip--clickable {
+  cursor: pointer;
+}
+
+// Status uses a dot AND text — never colour alone.
+.status-chip {
+  &__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: currentColor;
+  }
+
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.system-chip {
+  background: #ede7f6;
+  color: #5e35b1;
+  font-size: 0.75rem;
+
+  &__icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 2px;
+  }
+}
+
+.mg-menu-item--danger {
+  color: var(--error);
+}
+
+.mg-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 4px 0 0;
+    color: #0d2137;
+  }
+
+  &__hint {
+    margin: 0 0 8px;
+    font-size: 0.88rem;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Skeleton loading ─────────────────────────────────────────────────
+
+.mg-skeleton {
+  padding: 12px 16px;
+}
+
+.mg-skeleton__row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.mg-skeleton__cell {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eceff1 25%, #f5f7f9 37%, #eceff1 63%);
+  background-size: 400% 100%;
+  animation: mg-shimmer 1.4s ease-in-out infinite;
+
+  &--sm { width: 12%; }
+  &--md { width: 22%; }
+  &--lg { width: 34%; }
+}
+
+@keyframes mg-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-skeleton__cell { animation: none; }
+}
+
+// ── Mobile card layout ───────────────────────────────────────────────
+
+.mg-cards {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.mg-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  padding: 12px 14px;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  &__name {
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  &__details {
+    margin-top: 10px;
+
+    summary {
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: var(--primary);
+    }
+  }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 16px;
+    margin: 10px 0 0;
+
+    dt {
+      font-size: 0.7rem;
+      color: #8098b8;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    dd {
+      margin: 0;
+      font-size: 0.86rem;
+    }
+  }
+
+  &__field--full {
+    grid-column: 1 / -1;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+}
+
+.mg-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+// Compact density: shrink cell padding without touching the M3 theme's density tokens.
+.mg-table-card--compact {
+  ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .mg-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}
+
+// Below 720px the table would need horizontal scrolling to stay readable,
+// so swap it for the card list instead.
+@media (max-width: 720px) {
+  .mg-table-scroll { display: none; }
+  .mg-cards { display: flex; }
+}
+
+@media print {
+  .mg-toolbar,
+  .mg-filters,
+  .mg-paginator,
+  .mg-cards,
+  th.mat-column-actions,
+  td.mat-column-actions {
+    display: none !important;
+  }
+
+  .mg-table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+// ── Parent category presentation ─────────────────────────────────────
+
+.mg-parent {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+
+  &__name {
+    font-size: 0.88rem;
+  }
+
+  &__code {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #8098b8;
+  }
+}
+
+.mg-filters__category {
+  width: 220px;
+}
+
+.mg-card__parent {
+  font-size: 0.75rem;
+  color: #8098b8;
+  margin-top: 2px;
+}

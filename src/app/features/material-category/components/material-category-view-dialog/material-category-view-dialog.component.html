@@ -1,0 +1,95 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Material Category
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ category.code }}</div>
+      <div class="dlg-name">{{ category.name }}</div>
+    </div>
+    <div class="dlg-header__chips">
+      @if (category.isSystem) {
+        <mat-chip class="system-chip" matTooltip="Platform-seeded category — cannot be deleted">
+          <mat-icon class="system-chip__icon">lock</mat-icon> System
+        </mat-chip>
+      }
+      <mat-chip [class]="category.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+        {{ category.isActive ? 'Active' : 'Inactive' }}
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-divider />
+
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Short Name</dt>
+      <dd>{{ category.shortName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Display Order</dt>
+      <dd>{{ category.displayOrder }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Description</dt>
+      <dd>{{ category.description || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ category.remarks || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Used By</h3>
+  @if (usage(); as u) {
+    <dl class="dlg-fields">
+      <div class="dlg-field">
+        <dt>Material Master</dt>
+        <dd>{{ u.materialMaster }}</dd>
+      </div>
+      <div class="dlg-field">
+        <dt>Purchase Requisitions</dt>
+        <dd>{{ u.purchaseRequisitions }}</dd>
+      </div>
+      <div class="dlg-field">
+        <dt>Inventory Items</dt>
+        <dd>{{ u.inventoryItems }}</dd>
+      </div>
+    </dl>
+  } @else {
+    <p class="dlg-usage-pending">
+      <mat-icon>info_outline</mat-icon>
+      Dependency counts become available once the Material Master module is in place.
+    </p>
+  }
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ category.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ category.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ category.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ category.updatedAt ? (category.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

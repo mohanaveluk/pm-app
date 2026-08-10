@@ -1,0 +1,24 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon color="warn">warning</mat-icon>
+  Delete Unit of Measurement?
+</h2>
+
+<mat-dialog-content>
+  <p>
+    Are you sure you want to delete
+    <strong>"{{ data.unitOfMeasurement.name }}"</strong>
+    ({{ data.unitOfMeasurement.code }})?
+  </p>
+  <p class="dlg-note">
+    This record will be soft-deleted and will no longer be available for normal selection.
+    Units already referenced by material, requisition or inventory records cannot be deleted.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="warn" type="button" (click)="confirm()">
+    <mat-icon>delete</mat-icon>
+    Delete
+  </button>
+</mat-dialog-actions>

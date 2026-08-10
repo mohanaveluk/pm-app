@@ -1,0 +1,109 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  Unit of Measurement
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">
+        {{ uom.code }}
+        @if (uom.symbol) { <span class="dlg-symbol">{{ uom.symbol }}</span> }
+      </div>
+      <div class="dlg-name">{{ uom.name }}</div>
+    </div>
+    <div class="dlg-header__chips">
+      <mat-chip [class]="'uom-type-chip uom-type-chip--' + meta.tone" [matTooltip]="meta.examples">
+        <mat-icon class="uom-type-chip__icon">{{ meta.icon }}</mat-icon>
+        {{ meta.label }}
+      </mat-chip>
+      <mat-chip [class]="uom.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+        {{ uom.isActive ? 'Active' : 'Inactive' }}
+      </mat-chip>
+    </div>
+  </div>
+
+  <mat-divider />
+
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Symbol</dt>
+      <dd>{{ uom.symbol || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Short Name</dt>
+      <dd>{{ uom.shortName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Measurement Family</dt>
+      <dd>{{ meta.label }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Display Order</dt>
+      <dd>{{ uom.displayOrder }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Description</dt>
+      <dd>{{ uom.description || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Remarks</dt>
+      <dd>{{ uom.remarks || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Used By</h3>
+  @if (usage(); as u) {
+    <dl class="dlg-fields">
+      <div class="dlg-field">
+        <dt>Material Master</dt>
+        <dd>{{ u.materialMaster }}</dd>
+      </div>
+      <div class="dlg-field">
+        <dt>Purchase Requisitions</dt>
+        <dd>{{ u.purchaseRequisitions }}</dd>
+      </div>
+      <div class="dlg-field">
+        <dt>Purchase Orders</dt>
+        <dd>{{ u.purchaseOrders }}</dd>
+      </div>
+      <div class="dlg-field">
+        <dt>Inventory Items</dt>
+        <dd>{{ u.inventoryItems }}</dd>
+      </div>
+    </dl>
+  } @else {
+    <p class="dlg-usage-pending">
+      <mat-icon>info_outline</mat-icon>
+      Dependency counts become available once the Material Master and Procurement modules are in place.
+    </p>
+  }
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ uom.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ uom.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ uom.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ uom.updatedAt ? (uom.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

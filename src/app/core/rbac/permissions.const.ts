@@ -57,6 +57,28 @@ export const PERMISSIONS = {
   DEPARTMENT_DISCIPLINES_DELETE: 'department-disciplines.delete',
   DEPARTMENT_DISCIPLINES_EXPORT: 'department-disciplines.export',
 
+  MATERIAL_CATEGORIES_VIEW: 'material-categories.view',
+  MATERIAL_CATEGORIES_CREATE: 'material-categories.create',
+  MATERIAL_CATEGORIES_UPDATE: 'material-categories.update',
+  MATERIAL_CATEGORIES_DELETE: 'material-categories.delete',
+  MATERIAL_CATEGORIES_ENABLE: 'material-categories.enable',
+  MATERIAL_CATEGORIES_DISABLE: 'material-categories.disable',
+  MATERIAL_CATEGORIES_EXPORT: 'material-categories.export',
+
+  MATERIAL_GROUPS_VIEW: 'material-groups.view',
+  MATERIAL_GROUPS_CREATE: 'material-groups.create',
+  MATERIAL_GROUPS_UPDATE: 'material-groups.update',
+  MATERIAL_GROUPS_DELETE: 'material-groups.delete',
+  MATERIAL_GROUPS_ENABLE: 'material-groups.enable',
+  MATERIAL_GROUPS_DISABLE: 'material-groups.disable',
+  MATERIAL_GROUPS_EXPORT: 'material-groups.export',
+
+  UOM_VIEW: 'unit-of-measurements.view',
+  UOM_CREATE: 'unit-of-measurements.create',
+  UOM_UPDATE: 'unit-of-measurements.update',
+  UOM_DELETE: 'unit-of-measurements.delete',
+  UOM_EXPORT: 'unit-of-measurements.export',
+
   ACTIVITIES_MANAGE: 'activities.manage',
 
   ACTIVITIES_VIEW: 'activities.view',

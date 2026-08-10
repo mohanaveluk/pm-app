@@ -1,0 +1,381 @@
+<div
+  class="uom-page"
+  [class.uom-page--fullscreen]="isFullscreen()"
+  (keydown.escape)="onEscape()"
+  tabindex="-1"
+>
+
+  <div class="uom-header">
+    <div>
+      <h1>Unit of Measurement Master</h1>
+      <p>Manage the units used across materials, requisitions and inventory.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="uom-toolbar">
+    @if (can(PERMISSIONS.UOM_CREATE)) {
+      <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> New Unit
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.UOM_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <span class="uom-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="uom-filters">
+    <mat-form-field appearance="outline" class="uom-filters__search">
+      <mat-label>Search by code, name, symbol or short name…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search units of measurement"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="uom-filters__type">
+      <mat-label>Measurement Family</mat-label>
+      <mat-select [value]="store.filter().uomType" (selectionChange)="onTypeFilterChange($event.value)">
+        <mat-option [value]="null">All Families</mat-option>
+        @for (t of uomTypes; track t.value) {
+          <mat-option [value]="t.value">{{ t.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="uom-filters__status">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="store.filter().status" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="inactive">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Reset Filters
+      </button>
+    }
+  </div>
+
+  <!-- One-click family shortcuts: faster than opening the select for a common pivot. -->
+  <div class="uom-quickchips" role="group" aria-label="Filter by measurement family">
+    @for (t of uomTypes; track t.value) {
+      <button
+        type="button"
+        class="uom-quickchip"
+        [class.uom-quickchip--active]="store.filter().uomType === t.value"
+        [class]="'uom-quickchip uom-type-chip--' + t.tone"
+        [attr.aria-pressed]="store.filter().uomType === t.value"
+        [matTooltip]="t.examples"
+        (click)="toggleTypeChip(t.value)"
+      >
+        <mat-icon>{{ t.icon }}</mat-icon>
+        {{ t.label }}
+      </button>
+    }
+  </div>
+
+  <div class="uom-table-card" [class.uom-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <!-- Skeleton rows keep the layout stable instead of collapsing to a blank page. -->
+      <div class="uom-skeleton" aria-busy="true" aria-label="Loading units of measurement">
+        @for (row of skeletonRows; track $index) {
+          <div class="uom-skeleton__row">
+            <span class="uom-skeleton__cell uom-skeleton__cell--sm"></span>
+            <span class="uom-skeleton__cell uom-skeleton__cell--lg"></span>
+            <span class="uom-skeleton__cell uom-skeleton__cell--md"></span>
+            <span class="uom-skeleton__cell uom-skeleton__cell--sm"></span>
+          </div>
+        }
+      </div>
+    } @else if (store.error()) {
+      <div class="uom-state uom-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      @if (store.hasActiveFilters()) {
+        <div class="uom-state">
+          <mat-icon>search_off</mat-icon>
+          <p class="uom-state__title">No matching Units of Measurement</p>
+          <p class="uom-state__hint">Try changing your search or filters.</p>
+          <button mat-stroked-button (click)="resetFilters()">
+            <mat-icon>filter_alt_off</mat-icon> Clear Filters
+          </button>
+        </div>
+      } @else {
+        <div class="uom-state">
+          <mat-icon>straighten</mat-icon>
+          <p class="uom-state__title">No Units of Measurement Found</p>
+          <p class="uom-state__hint">There are currently no units matching your criteria.</p>
+          @if (can(PERMISSIONS.UOM_CREATE)) {
+            <button mat-flat-button color="primary" (click)="openCreateDialog()">
+              <mat-icon>add</mat-icon> Create Unit of Measurement
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="uom-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.unitsOfMeasurement()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByUomId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+            <td mat-cell *matCellDef="let u"><span class="uom-code">{{ u.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <td mat-cell *matCellDef="let u">{{ u.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="symbol">
+            <th mat-header-cell *matHeaderCellDef>Symbol</th>
+            <td mat-cell *matCellDef="let u">
+              @if (u.symbol) {
+                <span class="uom-symbol">{{ u.symbol }}</span>
+              } @else {
+                <span class="uom-muted">—</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="uomType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+            <td mat-cell *matCellDef="let u">
+              @let m = typeMeta(u.uomType);
+              <mat-chip [class]="'uom-type-chip uom-type-chip--' + m.tone" [matTooltip]="m.examples">
+                <mat-icon class="uom-type-chip__icon">{{ m.icon }}</mat-icon>
+                {{ m.label }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="shortName">
+            <th mat-header-cell *matHeaderCellDef>Short Name</th>
+            <td mat-cell *matCellDef="let u">{{ u.shortName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let u" class="uom-cell--truncate" [matTooltip]="u.description || ''">
+              {{ u.description || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="displayOrder">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Order</th>
+            <td mat-cell *matCellDef="let u">{{ u.displayOrder }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip
+                [class]="u.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'"
+                [class.uom-chip--clickable]="can(PERMISSIONS.UOM_UPDATE)"
+                [matTooltip]="can(PERMISSIONS.UOM_UPDATE) ? 'Click to change status' : ''"
+                (click)="onStatusChipClick(u, $event)"
+              >
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ u.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdBy">
+            <th mat-header-cell *matHeaderCellDef>Created By</th>
+            <td mat-cell *matCellDef="let u">{{ u.createdBy || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
+            <td mat-cell *matCellDef="let u">{{ u.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Updated Date</th>
+            <td mat-cell *matCellDef="let u">{{ u.updatedAt ? (u.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let u">
+              <button mat-icon-button (click)="openViewDialog(u, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.UOM_UPDATE)) {
+                <button mat-icon-button (click)="openEditDialog(u, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (can(PERMISSIONS.UOM_CREATE)) {
+                  <button mat-menu-item (click)="openDuplicateDialog(u, $event)">
+                    <mat-icon>content_copy</mat-icon> Duplicate
+                  </button>
+                }
+                <button mat-menu-item (click)="copyUomCode(u, $event)">
+                  <mat-icon>content_paste</mat-icon> Copy UOM Code
+                </button>
+                @if (can(PERMISSIONS.UOM_UPDATE)) {
+                  <button mat-menu-item (click)="setActive(u, !u.isActive, $event)">
+                    <mat-icon>{{ u.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                    {{ u.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                }
+                @if (can(PERMISSIONS.UOM_DELETE)) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteUom(u, $event)" class="uom-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="uom-row"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile: the table is replaced by cards so nothing scrolls off-screen. -->
+      <div class="uom-cards">
+        @for (u of store.unitsOfMeasurement(); track trackByUomId($index, u)) {
+          @let m = typeMeta(u.uomType);
+          <div class="uom-card">
+            <div class="uom-card__head">
+              <div>
+                <div class="uom-code">
+                  {{ u.code }}
+                  @if (u.symbol) { <span class="uom-symbol">{{ u.symbol }}</span> }
+                </div>
+                <div class="uom-card__name">{{ u.name }}</div>
+              </div>
+              <mat-chip [class]="u.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ u.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </div>
+
+            <mat-chip [class]="'uom-type-chip uom-type-chip--' + m.tone">
+              <mat-icon class="uom-type-chip__icon">{{ m.icon }}</mat-icon>
+              {{ m.label }}
+            </mat-chip>
+
+            <details class="uom-card__details">
+              <summary>Details</summary>
+              <dl class="uom-card__fields">
+                <div><dt>Short Name</dt><dd>{{ u.shortName || '—' }}</dd></div>
+                <div><dt>Display Order</dt><dd>{{ u.displayOrder }}</dd></div>
+                <div><dt>Created</dt><dd>{{ u.createdAt | date: 'mediumDate' }}</dd></div>
+                <div class="uom-card__field--full"><dt>Description</dt><dd>{{ u.description || '—' }}</dd></div>
+              </dl>
+            </details>
+
+            <div class="uom-card__actions">
+              <button mat-icon-button (click)="openViewDialog(u, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.UOM_UPDATE)) {
+                <button mat-icon-button (click)="openEditDialog(u, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="setActive(u, !u.isActive, $event)"
+                  [matTooltip]="u.isActive ? 'Deactivate' : 'Activate'"
+                >
+                  <mat-icon>{{ u.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                </button>
+              }
+              @if (can(PERMISSIONS.UOM_DELETE)) {
+                <button mat-icon-button color="warn" (click)="deleteUom(u, $event)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="uom-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

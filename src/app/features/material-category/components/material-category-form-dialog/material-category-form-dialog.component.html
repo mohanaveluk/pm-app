@@ -1,0 +1,131 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
+  {{ isEdit ? 'Edit Material Category' : 'New Material Category' }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading material category…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="dlg-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="dlg-form" novalidate>
+      @if (isSystemCategory()) {
+        <div class="dlg-system-note">
+          <mat-icon>lock</mat-icon>
+          <span>This is a system category. It cannot be deleted, and its code cannot be changed.</span>
+        </div>
+      }
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">General Information</h3>
+
+        <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Category Code</mat-label>
+            <input
+              matInput
+              formControlName="code"
+              maxlength="30"
+              placeholder="e.g. RM"
+              required
+              [attr.aria-describedby]="'code-hint'"
+            />
+            @if (isEdit) {
+              <mat-icon matSuffix matTooltip="Code is immutable — downstream Material, PR, PO and ERP records reference it">lock</mat-icon>
+            }
+            <mat-hint id="code-hint" align="end">{{ form.controls.code.value.length }}/30</mat-hint>
+            @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Category Name</mat-label>
+            <input matInput formControlName="name" maxlength="255" placeholder="e.g. Raw Material" required />
+            <mat-hint align="end">{{ form.controls.name.value.length }}/255</mat-hint>
+            @if (err('name')) { <mat-error>{{ err('name') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Short Name</mat-label>
+            <input matInput formControlName="shortName" maxlength="100" placeholder="e.g. RM" />
+            <mat-hint align="end">{{ form.controls.shortName.value.length }}/100</mat-hint>
+            @if (err('shortName')) { <mat-error>{{ err('shortName') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Display Order</mat-label>
+            <input matInput type="number" formControlName="displayOrder" min="0" required />
+            <mat-icon matSuffix matTooltip="Controls the order this category appears in dropdowns and lists">info_outline</mat-icon>
+            @if (err('displayOrder')) { <mat-error>{{ err('displayOrder') }}</mat-error> }
+          </mat-form-field>
+
+          <div class="dlg-status-toggle">
+            <span class="dlg-status-toggle__label">Status</span>
+            <mat-slide-toggle formControlName="isActive" color="primary">
+              {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Additional Information</h3>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="3"
+            placeholder="e.g. Primary materials used for industrial construction and project execution"
+          ></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput formControlName="remarks" rows="2"></textarea>
+        </mat-form-field>
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="resetForm()" [disabled]="saving() || loading()">
+    <mat-icon>restart_alt</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  @if (!isEdit) {
+    <button
+      mat-stroked-button
+      type="button"
+      color="primary"
+      (click)="save(true)"
+      [disabled]="saving() || loading() || form.invalid"
+    >
+      Save &amp; New
+    </button>
+  }
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    (click)="save(false)"
+    [disabled]="saving() || loading() || form.invalid"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>
