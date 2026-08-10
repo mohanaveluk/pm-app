@@ -24,6 +24,9 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
       { id: 'org-disciplines', label: 'Disciplines', route: '/admin/disciplines', order: 3, permission: PERMISSIONS.DISCIPLINES_VIEW },
       { id: 'org-department-disciplines', label: 'Department-Discipline Mapping', route: '/admin/department-disciplines', order: 4, permission: PERMISSIONS.DEPARTMENT_DISCIPLINES_VIEW },
       { id: 'org-activities', label: 'Activity Master', route: '/admin/activity', order: 5, permission: PERMISSIONS.ACTIVITIES_VIEW },
+      { id: 'org-material-categories', label: 'Material Categories', route: '/admin/material-categories', order: 6, permission: PERMISSIONS.MATERIAL_CATEGORIES_VIEW },
+      { id: 'org-material-groups', label: 'Material Groups', route: '/admin/material-group', order: 7, permission: PERMISSIONS.MATERIAL_GROUPS_VIEW },
+      { id: 'org-uom', label: 'Unit of Measurements', route: '/admin/unit-of-measurements', order: 8, permission: PERMISSIONS.UOM_VIEW },
     ],
   },
 

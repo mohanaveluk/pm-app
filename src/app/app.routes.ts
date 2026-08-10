@@ -202,6 +202,21 @@ export const routes: Routes = [
             data: { breadcrumb: 'Activity', permission: PERMISSIONS.ACTIVITIES_VIEW },
           },
           {
+            path: 'material-categories',
+            loadComponent: () => import('./features/material-category/material-category.component').then(m => m.MaterialCategoryComponent),
+            data: { breadcrumb: 'Material Categories', permission: PERMISSIONS.MATERIAL_CATEGORIES_VIEW },
+          },
+          {
+            path: 'material-group',
+            loadComponent: () => import('./features/material-group/material-group.component').then(m => m.MaterialGroupComponent),
+            data: { breadcrumb: 'Material Groups', permission: PERMISSIONS.MATERIAL_GROUPS_VIEW },
+          },
+          {
+            path: 'unit-of-measurements',
+            loadComponent: () => import('./features/unit-of-measurement/unit-of-measurement.component').then(m => m.UnitOfMeasurementComponent),
+            data: { breadcrumb: 'Unit of Measurements', permission: PERMISSIONS.UOM_VIEW },
+          },
+          {
             path: 'service-groups',
             loadComponent: () => import('./features/service-group/service-group.component').then(m => m.ServiceGroupComponent),
             data: { breadcrumb: 'Service Groups', permission: PERMISSIONS.SERVICE_GROUPS_VIEW },

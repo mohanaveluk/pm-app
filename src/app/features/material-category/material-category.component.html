@@ -1,0 +1,358 @@
+<div
+  class="mc-page"
+  [class.mc-page--fullscreen]="isFullscreen()"
+  (keydown.escape)="onEscape()"
+  tabindex="-1"
+>
+
+  <div class="mc-header">
+    <div>
+      <h1>Material Category Master</h1>
+      <p>Manage material categories used across the organization.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="mc-toolbar">
+    @if (can(PERMISSIONS.MATERIAL_CATEGORIES_CREATE)) {
+      <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon> New Material Category
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.MATERIAL_CATEGORIES_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <span class="mc-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="mc-filters">
+    <mat-form-field appearance="outline" class="mc-filters__search">
+      <mat-label>Search by code, name or short name…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search material categories"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="mc-filters__status">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="store.filter().status" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="inactive">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="mc-filters__status">
+      <mat-label>Category Type</mat-label>
+      <mat-select [value]="store.filter().isSystem" (selectionChange)="onSystemFilterChange($event.value)">
+        <mat-option [value]="null">All</mat-option>
+        <mat-option [value]="true">System</mat-option>
+        <mat-option [value]="false">User Defined</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Reset Filters
+      </button>
+    }
+  </div>
+
+  <div class="mc-table-card" [class.mc-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <!-- Skeleton rows keep the layout stable instead of collapsing to a blank page. -->
+      <div class="mc-skeleton" aria-busy="true" aria-label="Loading material categories">
+        @for (row of skeletonRows; track $index) {
+          <div class="mc-skeleton__row">
+            <span class="mc-skeleton__cell mc-skeleton__cell--sm"></span>
+            <span class="mc-skeleton__cell mc-skeleton__cell--lg"></span>
+            <span class="mc-skeleton__cell mc-skeleton__cell--md"></span>
+            <span class="mc-skeleton__cell mc-skeleton__cell--sm"></span>
+          </div>
+        }
+      </div>
+    } @else if (store.error()) {
+      <div class="mc-state mc-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      @if (store.hasActiveFilters()) {
+        <div class="mc-state">
+          <mat-icon>search_off</mat-icon>
+          <p class="mc-state__title">No matching Material Categories</p>
+          <p class="mc-state__hint">Try changing your search or filters.</p>
+          <button mat-stroked-button (click)="resetFilters()">
+            <mat-icon>filter_alt_off</mat-icon> Clear Filters
+          </button>
+        </div>
+      } @else {
+        <div class="mc-state">
+          <mat-icon>category</mat-icon>
+          <p class="mc-state__title">No Material Categories Found</p>
+          <p class="mc-state__hint">There are currently no material categories matching your criteria.</p>
+          @if (can(PERMISSIONS.MATERIAL_CATEGORIES_CREATE)) {
+            <button mat-flat-button color="primary" (click)="openCreateDialog()">
+              <mat-icon>add</mat-icon> Create Material Category
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="mc-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.materialCategories()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByCategoryId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+            <td mat-cell *matCellDef="let c"><span class="mc-code">{{ c.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+            <td mat-cell *matCellDef="let c">{{ c.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="shortName">
+            <th mat-header-cell *matHeaderCellDef>Short Name</th>
+            <td mat-cell *matCellDef="let c">{{ c.shortName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let c" class="mc-cell--truncate" [matTooltip]="c.description || ''">
+              {{ c.description || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="displayOrder">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Order</th>
+            <td mat-cell *matCellDef="let c">{{ c.displayOrder }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="isSystem">
+            <th mat-header-cell *matHeaderCellDef>System</th>
+            <td mat-cell *matCellDef="let c">
+              @if (c.isSystem) {
+                <mat-chip class="system-chip" matTooltip="Platform-seeded category — cannot be deleted">
+                  <mat-icon class="system-chip__icon">lock</mat-icon> System
+                </mat-chip>
+              } @else {
+                <span class="mc-muted">—</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let c">
+              <mat-chip
+                [class]="c.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'"
+                [class.mc-chip--clickable]="canToggle(c)"
+                [matTooltip]="canToggle(c) ? 'Click to change status' : ''"
+                (click)="onStatusChipClick(c, $event)"
+              >
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ c.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdBy">
+            <th mat-header-cell *matHeaderCellDef>Created By</th>
+            <td mat-cell *matCellDef="let c">{{ c.createdBy || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
+            <td mat-cell *matCellDef="let c">{{ c.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Updated Date</th>
+            <td mat-cell *matCellDef="let c">{{ c.updatedAt ? (c.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let c">
+              <button mat-icon-button (click)="openViewDialog(c, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.MATERIAL_CATEGORIES_UPDATE)) {
+                <button mat-icon-button (click)="openEditDialog(c, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (can(PERMISSIONS.MATERIAL_CATEGORIES_CREATE)) {
+                  <button mat-menu-item (click)="openDuplicateDialog(c, $event)">
+                    <mat-icon>content_copy</mat-icon> Duplicate
+                  </button>
+                }
+                <button mat-menu-item (click)="copyCategoryCode(c, $event)">
+                  <mat-icon>content_paste</mat-icon> Copy Category Code
+                </button>
+                @if (c.isActive) {
+                  @if (can(PERMISSIONS.MATERIAL_CATEGORIES_DISABLE)) {
+                    <button mat-menu-item (click)="setActive(c, false, $event)">
+                      <mat-icon>toggle_off</mat-icon> Disable
+                    </button>
+                  }
+                } @else {
+                  @if (can(PERMISSIONS.MATERIAL_CATEGORIES_ENABLE)) {
+                    <button mat-menu-item (click)="setActive(c, true, $event)">
+                      <mat-icon>toggle_on</mat-icon> Enable
+                    </button>
+                  }
+                }
+                @if (can(PERMISSIONS.MATERIAL_CATEGORIES_DELETE) && !c.isSystem) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteCategory(c, $event)" class="mc-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="mc-row"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile: the table is replaced by cards so nothing scrolls off-screen. -->
+      <div class="mc-cards">
+        @for (c of store.materialCategories(); track trackByCategoryId($index, c)) {
+          <div class="mc-card">
+            <div class="mc-card__head">
+              <div>
+                <div class="mc-code">{{ c.code }}</div>
+                <div class="mc-card__name">{{ c.name }}</div>
+              </div>
+              <mat-chip [class]="c.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ c.isActive ? 'Active' : 'Inactive' }}
+              </mat-chip>
+            </div>
+
+            <details class="mc-card__details">
+              <summary>Details</summary>
+              <dl class="mc-card__fields">
+                <div><dt>Short Name</dt><dd>{{ c.shortName || '—' }}</dd></div>
+                <div><dt>Display Order</dt><dd>{{ c.displayOrder }}</dd></div>
+                <div><dt>System</dt><dd>{{ c.isSystem ? 'Yes' : 'No' }}</dd></div>
+                <div><dt>Created</dt><dd>{{ c.createdAt | date: 'mediumDate' }}</dd></div>
+                <div class="mc-card__field--full"><dt>Description</dt><dd>{{ c.description || '—' }}</dd></div>
+              </dl>
+            </details>
+
+            <div class="mc-card__actions">
+              <button mat-icon-button (click)="openViewDialog(c, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.MATERIAL_CATEGORIES_UPDATE)) {
+                <button mat-icon-button (click)="openEditDialog(c, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (c.isActive) {
+                @if (can(PERMISSIONS.MATERIAL_CATEGORIES_DISABLE)) {
+                  <button mat-icon-button (click)="setActive(c, false, $event)" matTooltip="Disable">
+                    <mat-icon>toggle_off</mat-icon>
+                  </button>
+                }
+              } @else {
+                @if (can(PERMISSIONS.MATERIAL_CATEGORIES_ENABLE)) {
+                  <button mat-icon-button (click)="setActive(c, true, $event)" matTooltip="Enable">
+                    <mat-icon>toggle_on</mat-icon>
+                  </button>
+                }
+              }
+              @if (can(PERMISSIONS.MATERIAL_CATEGORIES_DELETE) && !c.isSystem) {
+                <button mat-icon-button color="warn" (click)="deleteCategory(c, $event)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="mc-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

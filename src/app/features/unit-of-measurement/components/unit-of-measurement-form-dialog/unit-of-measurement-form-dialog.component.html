@@ -1,0 +1,141 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
+  {{ isEdit ? 'Edit Unit of Measurement' : 'New Unit of Measurement' }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading unit of measurement…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="dlg-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="dlg-form" novalidate>
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">General Information</h3>
+
+        <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>UOM Code</mat-label>
+            <input matInput formControlName="code" maxlength="20" placeholder="e.g. KG" required />
+            @if (isEdit) {
+              <mat-icon matSuffix matTooltip="Code is immutable — Material Master, PR, PO and Inventory records reference it">lock</mat-icon>
+            }
+            <mat-hint align="end">{{ form.controls.code.value.length }}/20</mat-hint>
+            @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>UOM Name</mat-label>
+            <input matInput formControlName="name" maxlength="255" placeholder="e.g. Kilogram" required />
+            <mat-hint align="end">{{ form.controls.name.value.length }}/255</mat-hint>
+            @if (err('name')) { <mat-error>{{ err('name') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Symbol</mat-label>
+            <input matInput formControlName="symbol" maxlength="20" placeholder="e.g. kg" />
+            <mat-icon matSuffix matTooltip="Printed notation shown on documents. Special characters are allowed: °C, m², ft³">info_outline</mat-icon>
+            <mat-hint align="end">{{ form.controls.symbol.value.length }}/20</mat-hint>
+            @if (err('symbol')) { <mat-error>{{ err('symbol') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Short Name</mat-label>
+            <input matInput formControlName="shortName" maxlength="50" placeholder="e.g. Kg" />
+            <mat-hint align="end">{{ form.controls.shortName.value.length }}/50</mat-hint>
+            @if (err('shortName')) { <mat-error>{{ err('shortName') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Measurement Family</mat-label>
+            <mat-select formControlName="uomType" required>
+              @for (t of uomTypes; track t.value) {
+                <mat-option [value]="t.value">
+                  <mat-icon class="dlg-type-icon">{{ t.icon }}</mat-icon>
+                  {{ t.label }}
+                </mat-option>
+              }
+            </mat-select>
+            @if (selectedTypeExamples()) {
+              <mat-hint>Typical: {{ selectedTypeExamples() }}</mat-hint>
+            }
+            @if (err('uomType')) { <mat-error>{{ err('uomType') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Display Order</mat-label>
+            <input matInput type="number" formControlName="displayOrder" min="0" required />
+            <mat-icon matSuffix matTooltip="Controls the order this unit appears in dropdowns and lists">info_outline</mat-icon>
+            @if (err('displayOrder')) { <mat-error>{{ err('displayOrder') }}</mat-error> }
+          </mat-form-field>
+
+          <div class="dlg-status-toggle">
+            <span class="dlg-status-toggle__label">Status</span>
+            <mat-slide-toggle formControlName="isActive" color="primary">
+              {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Additional Information</h3>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="3"
+            placeholder="e.g. Standard SI unit of mass used for bulk material procurement"
+          ></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput formControlName="remarks" rows="2" placeholder="e.g. Standard SI unit per ISO 80000-1"></textarea>
+        </mat-form-field>
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="resetForm()" [disabled]="saving() || loading()">
+    <mat-icon>restart_alt</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  @if (!isEdit) {
+    <button
+      mat-stroked-button
+      type="button"
+      color="primary"
+      (click)="save(true)"
+      [disabled]="saving() || loading() || form.invalid"
+    >
+      Save &amp; New
+    </button>
+  }
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    (click)="save(false)"
+    [disabled]="saving() || loading() || form.invalid"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>
