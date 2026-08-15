@@ -1,0 +1,53 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>add_circle</mat-icon>
+  Create Material Group
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-readonly">
+    <mat-icon>lock</mat-icon>
+    <div>
+      <div class="dlg-readonly__label">Material Category</div>
+      <div class="dlg-readonly__value">{{ data.materialCategoryLabel }}</div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" novalidate (ngSubmit)="create()">
+    <mat-form-field appearance="outline" class="dlg-full">
+      <mat-label>Group Name</mat-label>
+      <input matInput formControlName="name" maxlength="255" placeholder="e.g. Pipe Fittings" required cdkFocusInitial />
+      @if (err()) { <mat-error>{{ err() }}</mat-error> }
+    </mat-form-field>
+  </form>
+
+  <div class="dlg-preview">
+    <div class="dlg-preview__title">
+      <mat-icon>visibility</mat-icon> Preview
+    </div>
+    <dl class="dlg-preview__fields">
+      <div>
+        <dt>Code</dt>
+        <dd><code>{{ preview().code || '—' }}</code></dd>
+      </div>
+      <div>
+        <dt>Short Name</dt>
+        <dd>{{ preview().shortName || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Description</dt>
+        <dd>{{ preview().description || '—' }}</dd>
+      </div>
+    </dl>
+    <p class="dlg-preview__hint">
+      Group codes are unique within a category, and cannot be changed after creation.
+    </p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="create()" [disabled]="saving() || form.invalid">
+    @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>add</mat-icon> }
+    Create Group
+  </button>
+</mat-dialog-actions>

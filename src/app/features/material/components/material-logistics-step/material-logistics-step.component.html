@@ -1,0 +1,70 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>inventory_2</mat-icon> Packaging</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Packaging Type</mat-label>
+        <mat-select formControlName="packagingType" [disabled]="readonly()">
+          <mat-option [value]="null">Not specified</mat-option>
+          @for (p of packagingOptions; track p.value) {
+            <mat-option [value]="p.value">{{ p.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Packaging Dimensions</mat-label>
+        <input matInput formControlName="packagingDimensions" maxlength="255" placeholder="e.g. 2000mm × 800mm × 800mm" [readonly]="readonly()" />
+        @if (err('packagingDimensions')) { <mat-error>{{ err('packagingDimensions') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Packaging Weight</mat-label>
+        <input matInput formControlName="packagingWeight" maxlength="100" placeholder="e.g. 850 kg per bundle" [readonly]="readonly()" />
+        @if (err('packagingWeight')) { <mat-error>{{ err('packagingWeight') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Units per Package</mat-label>
+        <input matInput type="number" formControlName="unitsPerPackage" min="1" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="How many stocking units are contained in one package">info_outline</mat-icon>
+        @if (err('unitsPerPackage')) { <mat-error>{{ err('unitsPerPackage') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>local_shipping</mat-icon> Transportation</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Transportation Mode</mat-label>
+        <mat-select formControlName="transportationMode" [disabled]="readonly()">
+          <mat-option [value]="null">Not specified</mat-option>
+          @for (t of transportOptions; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="step-toggle" style="justify-content:center">
+        <span class="step-toggle__label">Barcode / QR Code Required</span>
+        <mat-slide-toggle formControlName="barcodeQrCodeRequired" color="primary">
+          {{ group.get('barcodeQrCodeRequired')?.value ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Label printed at goods receipt</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Special Transport Requirements</mat-label>
+        <textarea
+          matInput
+          formControlName="specialTransportRequirements"
+          rows="2"
+          placeholder="e.g. Flatbed trailer; total length restriction 20m"
+          [readonly]="readonly()"
+        ></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+</div>

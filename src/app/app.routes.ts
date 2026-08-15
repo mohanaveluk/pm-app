@@ -217,6 +217,11 @@ export const routes: Routes = [
             data: { breadcrumb: 'Unit of Measurements', permission: PERMISSIONS.UOM_VIEW },
           },
           {
+            path: 'materials',
+            loadChildren: () => import('./features/material/material.routes').then(m => m.MATERIAL_ROUTES),
+            data: { breadcrumb: 'Material Master', permission: PERMISSIONS.MATERIALS_VIEW },
+          },
+          {
             path: 'service-groups',
             loadComponent: () => import('./features/service-group/service-group.component').then(m => m.ServiceGroupComponent),
             data: { breadcrumb: 'Service Groups', permission: PERMISSIONS.SERVICE_GROUPS_VIEW },

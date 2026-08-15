@@ -1,0 +1,63 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>health_and_safety</mat-icon> Hazard Classification</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Hazard Classification</mat-label>
+        <mat-select formControlName="hazardClassification" [disabled]="readonly()">
+          <mat-option [value]="null">Not specified</mat-option>
+          @for (h of hazardOptions; track h.value) {
+            <mat-option [value]="h.value">{{ h.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>MSDS Reference No.</mat-label>
+        <input matInput formControlName="msdsReferenceNo" maxlength="100" placeholder="e.g. MSDS-2024-0042" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Material Safety Data Sheet reference held by the HSE team">info_outline</mat-icon>
+        @if (err('msdsReferenceNo')) { <mat-error>{{ err('msdsReferenceNo') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    @if (isHazardous()) {
+      <div class="step-caution" role="status">
+        <mat-icon>warning_amber</mat-icon>
+        <span>
+          This material is classified as hazardous. Record the MSDS reference, PPE requirements
+          and handling instructions so warehouse and site teams receive the correct guidance.
+        </span>
+      </div>
+    }
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>engineering</mat-icon> Handling</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>PPE Requirements</mat-label>
+        <textarea matInput formControlName="ppeRequirements" rows="2" placeholder="e.g. Safety gloves, goggles, hard hat" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Handling Instructions</mat-label>
+        <textarea matInput formControlName="handlingInstructions" rows="2" placeholder="e.g. Handle with rigging slings; no direct contact with bare hands" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Disposal Instructions</mat-label>
+        <textarea matInput formControlName="disposalInstructions" rows="2" placeholder="e.g. Scrap to licensed steel recycler; no landfill" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>gavel</mat-icon> Regulatory Compliance</h3>
+    <mat-form-field appearance="outline" class="step-full">
+      <mat-label>Regulatory Compliance</mat-label>
+      <textarea matInput formControlName="regulatoryCompliance" rows="2" placeholder="e.g. RoHS compliant; CE marked; REACH registered" [readonly]="readonly()"></textarea>
+    </mat-form-field>
+  </section>
+</div>

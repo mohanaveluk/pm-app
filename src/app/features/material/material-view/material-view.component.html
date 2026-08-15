@@ -1,0 +1,176 @@
+<div class="mv-page">
+
+  @if (loading()) {
+    <div class="mv-state">
+      <mat-spinner diameter="40" />
+      <p>Loading material…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="mv-state mv-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Material Master
+      </button>
+    </div>
+  } @else if (material(); as m) {
+
+    <!-- Summary header -->
+    <header class="mv-header">
+      <div class="mv-header__main">
+        <button mat-icon-button matTooltip="Back to Material Master" (click)="backToList()" aria-label="Back to Material Master">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="mv-header__eyebrow">Material Master</div>
+          <h1 class="mv-header__title">
+            <span class="mv-code">{{ m.code }}</span>
+            <span class="mv-header__desc">{{ m.shortDescription }}</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="mv-header__right">
+        <dl class="mv-header__facts">
+          <div>
+            <dt>Category</dt>
+            <dd>{{ m.materialCategory?.name || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Group</dt>
+            <dd>{{ m.materialGroup?.name || '—' }}</dd>
+          </div>
+          <div>
+            <dt>UOM</dt>
+            <dd>{{ m.unitOfMeasurement?.name || m.unitOfMeasurement?.symbol || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Criticality</dt>
+            <dd>{{ m.criticalityLevel }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd><mat-chip [class]="statusClass(m.status)">{{ m.status }}</mat-chip></dd>
+          </div>
+        </dl>
+
+        @if (can(PERMISSIONS.MATERIALS_UPDATE)) {
+          <button mat-raised-button color="primary" (click)="edit()">
+            <mat-icon>edit</mat-icon> Edit
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (isHazardous()) {
+      <div class="mv-caution" role="status">
+        <mat-icon>warning_amber</mat-icon>
+        <span>
+          Classified as <strong>{{ m.hazardClassification }}</strong>. Review the Safety &amp; Compliance
+          section before handling, storing or shipping this material.
+        </span>
+      </div>
+    }
+
+    <!-- General -->
+    <section class="mv-card">
+      <h2 class="mv-card__title"><mat-icon>description</mat-icon> General Information</h2>
+      <dl class="mv-fields">
+        <div class="mv-field mv-field--full">
+          <dt>Long Description</dt>
+          <dd>{{ m.longDescription || '—' }}</dd>
+        </div>
+        <div class="mv-field"><dt>Stock Item</dt><dd>{{ m.isStockItem ? 'Yes' : 'No' }}</dd></div>
+        <div class="mv-field"><dt>Serialized</dt><dd>{{ m.isSerialized ? 'Yes' : 'No' }}</dd></div>
+        <div class="mv-field"><dt>Batch Managed</dt><dd>{{ m.isBatchManaged ? 'Yes' : 'No' }}</dd></div>
+        <div class="mv-field"><dt>System Material</dt><dd>{{ m.isSystem ? 'Yes' : 'No' }}</dd></div>
+        <div class="mv-field mv-field--full"><dt>Remarks</dt><dd>{{ m.remarks || '—' }}</dd></div>
+      </dl>
+    </section>
+
+    <!-- Sections 2–8, empty fields already filtered out -->
+    @for (section of sections(); track section.key) {
+      <section class="mv-card">
+        <h2 class="mv-card__title"><mat-icon>{{ section.icon }}</mat-icon> {{ section.title }}</h2>
+        @if (section.fields.length) {
+          <dl class="mv-fields">
+            @for (field of section.fields; track field.label) {
+              <div class="mv-field" [class.mv-field--full]="field.full">
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field.value }}</dd>
+              </div>
+            }
+          </dl>
+        } @else {
+          <p class="mv-empty">No information recorded for this section.</p>
+        }
+      </section>
+    }
+
+    <!-- Documents -->
+    <section class="mv-card">
+      <h2 class="mv-card__title"><mat-icon>folder_open</mat-icon> Document Attachments</h2>
+
+      @if (documentLinks().length) {
+        <div class="mv-doclist">
+          @for (doc of documentLinks(); track doc.label) {
+            <button type="button" class="mv-doc" (click)="openUrl(doc.url)">
+              <mat-icon>{{ doc.icon }}</mat-icon>
+              <span class="mv-doc__label">{{ doc.label }}</span>
+              <mat-icon class="mv-doc__open">open_in_new</mat-icon>
+            </button>
+          }
+        </div>
+      } @else {
+        <p class="mv-empty">No documents attached.</p>
+      }
+
+      @if (m.photos?.length) {
+        <div class="mv-photos">
+          @for (photo of m.photos; track photo; let i = $index) {
+            <button type="button" class="mv-photo" (click)="openUrl(photo)" [attr.aria-label]="'Open photo ' + (i + 1)">
+              <img [src]="photo" [alt]="'Material photo ' + (i + 1)" loading="lazy" />
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Audit -->
+    <section class="mv-card">
+      <h2 class="mv-card__title"><mat-icon>history</mat-icon> Audit History</h2>
+
+      @if (audit().length) {
+        <table class="mv-audit">
+          <thead>
+            <tr><th>Date</th><th>User</th><th>Action</th><th>Field</th><th>Old Value</th><th>New Value</th></tr>
+          </thead>
+          <tbody>
+            @for (entry of audit(); track $index) {
+              <tr>
+                <td>{{ entry.at | date: 'medium' }}</td>
+                <td>{{ entry.by }}</td>
+                <td>{{ entry.action }}</td>
+                <td>{{ entry.field || '—' }}</td>
+                <td>{{ entry.oldValue || '—' }}</td>
+                <td>{{ entry.newValue || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="mv-usage-pending">
+          <mat-icon>info_outline</mat-icon>
+          A field-level audit trail is planned for a future release. Only the record's own
+          creation and last-update stamps are available today.
+        </p>
+        <dl class="mv-fields">
+          <div class="mv-field"><dt>Created By</dt><dd>{{ m.createdBy || '—' }}</dd></div>
+          <div class="mv-field"><dt>Created Date</dt><dd>{{ m.createdAt | date: 'medium' }}</dd></div>
+          <div class="mv-field"><dt>Updated By</dt><dd>{{ m.updatedBy || '—' }}</dd></div>
+          <div class="mv-field"><dt>Updated Date</dt><dd>{{ m.updatedAt ? (m.updatedAt | date: 'medium') : '—' }}</dd></div>
+        </dl>
+      }
+    </section>
+  }
+</div>

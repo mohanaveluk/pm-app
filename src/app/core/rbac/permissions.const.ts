@@ -79,6 +79,14 @@ export const PERMISSIONS = {
   UOM_DELETE: 'unit-of-measurements.delete',
   UOM_EXPORT: 'unit-of-measurements.export',
 
+  MATERIALS_CREATE: 'materials.create',
+  MATERIALS_UPDATE: 'materials.update',
+  MATERIALS_DELETE: 'materials.delete',
+  MATERIALS_ENABLE: 'materials.enable',
+  MATERIALS_DISABLE: 'materials.disable',
+  MATERIALS_OBSOLETE: 'materials.obsolete',
+  MATERIALS_EXPORT: 'materials.export',
+
   ACTIVITIES_MANAGE: 'activities.manage',
 
   ACTIVITIES_VIEW: 'activities.view',

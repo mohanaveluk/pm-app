@@ -1,0 +1,72 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>warehouse</mat-icon> Storage</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Storage Location</mat-label>
+        <input matInput formControlName="storageLocation" maxlength="255" placeholder="e.g. WH-A-RACK-04-B" [readonly]="readonly()" />
+        @if (err('storageLocation')) { <mat-error>{{ err('storageLocation') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Warehouse Bin / Rack No.</mat-label>
+        <input matInput formControlName="warehouseBinRack" maxlength="100" placeholder="e.g. R04-B-12" [readonly]="readonly()" />
+        @if (err('warehouseBinRack')) { <mat-error>{{ err('warehouseBinRack') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Storage Conditions</mat-label>
+        <textarea
+          matInput
+          formControlName="storageConditions"
+          rows="2"
+          placeholder="e.g. Store in dry covered area; avoid direct sunlight"
+          [readonly]="readonly()"
+        ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Shelf Life (days)</mat-label>
+        <input matInput type="number" formControlName="shelfLifeDays" min="0" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Leave blank for materials that do not expire">info_outline</mat-icon>
+        @if (err('shelfLifeDays')) { <mat-error>{{ err('shelfLifeDays') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>inventory_2</mat-icon> Stocking Policy</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Stocking Strategy</mat-label>
+        <mat-select formControlName="stockingStrategy" [disabled]="readonly()">
+          <mat-option [value]="null">Not specified</mat-option>
+          @for (s of stockingOptions; track s.value) {
+            <mat-option [value]="s.value" [matTooltip]="s.hint ?? ''">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Safety Stock</mat-label>
+        <input matInput type="number" formControlName="safetyStock" min="0" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Buffer quantity held to absorb demand and lead-time variability">info_outline</mat-icon>
+        @if (err('safetyStock')) { <mat-error>{{ err('safetyStock') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Maximum Stock Level</mat-label>
+        <input matInput type="number" formControlName="maximumStockLevel" min="0" [readonly]="readonly()" />
+        @if (err('maximumStockLevel')) { <mat-error>{{ err('maximumStockLevel') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    @if (stockRangeInvalid) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>Safety Stock cannot be greater than the Maximum Stock Level.</span>
+      </div>
+    }
+  </section>
+</div>

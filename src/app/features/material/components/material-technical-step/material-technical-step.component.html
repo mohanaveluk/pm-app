@@ -1,0 +1,122 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>description</mat-icon> Identification</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Technical Description</mat-label>
+        <textarea
+          matInput
+          formControlName="technicalDescription"
+          rows="3"
+          placeholder="e.g. Seamless carbon steel pipe ASTM A106 Gr B"
+          [readonly]="readonly()"
+        ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Model / Part Number</mat-label>
+        <input matInput formControlName="modelPartNumber" maxlength="255" placeholder="e.g. SCH-40-6IN" [readonly]="readonly()" />
+        @if (err('modelPartNumber')) { <mat-error>{{ err('modelPartNumber') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Material Composition</mat-label>
+        <input matInput formControlName="materialComposition" maxlength="500" placeholder="e.g. ASTM A106 Grade B Carbon Steel" [readonly]="readonly()" />
+        @if (err('materialComposition')) { <mat-error>{{ err('materialComposition') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>factory</mat-icon> Manufacturer</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Manufacturer Name</mat-label>
+        <input matInput formControlName="manufacturerName" maxlength="255" placeholder="e.g. Tenaris" [readonly]="readonly()" />
+        @if (err('manufacturerName')) { <mat-error>{{ err('manufacturerName') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Manufacturer Part Number</mat-label>
+        <input matInput formControlName="manufacturerPartNumber" maxlength="255" placeholder="e.g. T90-1234-SCH40" [readonly]="readonly()" />
+        @if (err('manufacturerPartNumber')) { <mat-error>{{ err('manufacturerPartNumber') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Brand</mat-label>
+        <input matInput formControlName="brand" maxlength="255" placeholder="e.g. Tenaris" [readonly]="readonly()" />
+        @if (err('brand')) { <mat-error>{{ err('brand') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>straighten</mat-icon> Physical Properties</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Dimensions (L × W × H)</mat-label>
+        <input matInput formControlName="dimensions" maxlength="500" placeholder='e.g. 6" NB × 6000mm, SCH 40' [readonly]="readonly()" />
+        @if (err('dimensions')) { <mat-error>{{ err('dimensions') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Weight</mat-label>
+        <input matInput formControlName="weight" maxlength="100" placeholder="e.g. 28.26 kg/m" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Free text so you can record per-metre, per-piece or total weight">info_outline</mat-icon>
+        @if (err('weight')) { <mat-error>{{ err('weight') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color / Finish</mat-label>
+        <input matInput formControlName="colorFinish" maxlength="100" placeholder="e.g. Black / Mill Finish" [readonly]="readonly()" />
+        @if (err('colorFinish')) { <mat-error>{{ err('colorFinish') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>thermostat</mat-icon> Operating Properties</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Operating Temperature Range</mat-label>
+        <input matInput formControlName="operatingTemperatureRange" maxlength="255" placeholder="e.g. -29°C to 427°C" [readonly]="readonly()" />
+        @if (err('operatingTemperatureRange')) { <mat-error>{{ err('operatingTemperatureRange') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Pressure Rating</mat-label>
+        <input matInput formControlName="pressureRating" maxlength="100" placeholder="e.g. 600 psig (41.4 bar)" [readonly]="readonly()" />
+        @if (err('pressureRating')) { <mat-error>{{ err('pressureRating') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Voltage / Current Rating</mat-label>
+        <input matInput formControlName="voltageCurrentRating" maxlength="100" placeholder="e.g. 415V / 50Hz / 3-Phase" [readonly]="readonly()" />
+        @if (err('voltageCurrentRating')) { <mat-error>{{ err('voltageCurrentRating') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>verified</mat-icon> Certification</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Certifications</mat-label>
+        <textarea
+          matInput
+          formControlName="certifications"
+          rows="2"
+          placeholder="e.g. ASTM A106, ISO 3183, PED 2014/68/EU"
+          [readonly]="readonly()"
+        ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Datasheet Reference / Document No.</mat-label>
+        <input matInput formControlName="datasheetReference" maxlength="500" placeholder="e.g. DS-2024-001" [readonly]="readonly()" />
+        @if (err('datasheetReference')) { <mat-error>{{ err('datasheetReference') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+</div>
