@@ -1,0 +1,404 @@
+<div class="ml-page" [class.ml-page--fullscreen]="isFullscreen()" (keydown.escape)="onEscape()" tabindex="-1">
+
+  <div class="ml-header">
+    <div>
+      <h1>Material Master</h1>
+      <p>Engineering, procurement and inventory master data for every material.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="ml-toolbar">
+    @if (can(PERMISSIONS.MATERIALS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="createMaterial()">
+        <mat-icon>add</mat-icon> New Material
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.MATERIALS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <button
+      mat-stroked-button
+      (click)="toggleFilters()"
+      [matBadge]="store.hasActiveFilters() ? '!' : null"
+      matBadgeSize="small"
+      matBadgeColor="primary"
+    >
+      <mat-icon>filter_alt</mat-icon> Filters
+    </button>
+
+    <span class="ml-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Search sits outside the collapsible panel — it's the most-used control. -->
+  <div class="ml-search">
+    <mat-form-field appearance="outline" class="ml-search__field">
+      <mat-label>Search by code, description or manufacturer…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search materials"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Clear Filters
+      </button>
+    }
+  </div>
+
+  <!-- Collapsible advanced filters -->
+  @if (filtersOpen()) {
+    <div class="ml-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select
+          [value]="store.filter().materialCategoryId"
+          (selectionChange)="store.setFilter({ materialCategoryId: $event.value })"
+        >
+          <mat-option [value]="null">All Categories</mat-option>
+          @for (c of store.categories(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }} ({{ c.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Material Group</mat-label>
+        <mat-select
+          [value]="store.filter().materialGroupId"
+          (selectionChange)="store.setFilter({ materialGroupId: $event.value })"
+        >
+          <mat-option [value]="null">All Groups</mat-option>
+          @for (g of store.filteredGroups(); track g.id) {
+            <mat-option [value]="g.id">{{ g.name }} ({{ g.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>UOM</mat-label>
+        <mat-select
+          [value]="store.filter().unitOfMeasurementId"
+          (selectionChange)="store.setFilter({ unitOfMeasurementId: $event.value })"
+        >
+          <mat-option [value]="null">All Units</mat-option>
+          @for (u of store.uoms(); track u.id) {
+            <mat-option [value]="u.id">{{ u.name }}@if (u.symbol) { — {{ u.symbol }} }</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="store.filter().status" (selectionChange)="store.setFilter({ status: $event.value })">
+          <mat-option [value]="null">All</mat-option>
+          @for (s of statusOptions; track s.value) {
+            <mat-option [value]="s.value" [matTooltip]="s.hint ?? ''">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Criticality</mat-label>
+        <mat-select [value]="store.filter().criticalityLevel" (selectionChange)="store.setFilter({ criticalityLevel: $event.value })">
+          <mat-option [value]="null">All</mat-option>
+          @for (c of criticalityOptions; track c.value) {
+            <mat-option [value]="c.value" [matTooltip]="c.hint ?? ''">{{ c.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Manufacturer</mat-label>
+        <input
+          matInput
+          [value]="store.filter().manufacturerName"
+          (change)="store.setFilter({ manufacturerName: $any($event.target).value })"
+          placeholder="e.g. Tenaris"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Stock Item</mat-label>
+        <mat-select [value]="store.filter().isStockItem" (selectionChange)="store.setFilter({ isStockItem: $event.value })">
+          <mat-option [value]="null">All</mat-option>
+          <mat-option [value]="true">Stock items</mat-option>
+          <mat-option [value]="false">Direct charge</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="ml-filters__actions">
+        <button mat-button (click)="resetFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Clear
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="ml-table-card" [class.ml-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <div class="ml-skeleton" aria-busy="true" aria-label="Loading materials">
+        @for (row of skeletonRows; track $index) {
+          <div class="ml-skeleton__row">
+            <span class="ml-skeleton__cell ml-skeleton__cell--sm"></span>
+            <span class="ml-skeleton__cell ml-skeleton__cell--lg"></span>
+            <span class="ml-skeleton__cell ml-skeleton__cell--md"></span>
+            <span class="ml-skeleton__cell ml-skeleton__cell--sm"></span>
+          </div>
+        }
+      </div>
+    } @else if (store.error()) {
+      <div class="ml-state ml-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      @if (store.hasActiveFilters()) {
+        <div class="ml-state">
+          <mat-icon>search_off</mat-icon>
+          <p class="ml-state__title">No matching Materials</p>
+          <p class="ml-state__hint">Try changing your search or filters.</p>
+          <button mat-stroked-button (click)="resetFilters()">
+            <mat-icon>filter_alt_off</mat-icon> Clear Filters
+          </button>
+        </div>
+      } @else {
+        <div class="ml-state">
+          <mat-icon>inventory_2</mat-icon>
+          <p class="ml-state__title">No Materials Found</p>
+          <p class="ml-state__hint">Create the first material to start building the master.</p>
+          @if (can(PERMISSIONS.MATERIALS_CREATE)) {
+            <button mat-flat-button color="primary" (click)="createMaterial()">
+              <mat-icon>add</mat-icon> Create Material
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="ml-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.materials()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByMaterialId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Material Code</th>
+            <td mat-cell *matCellDef="let m"><span class="ml-code">{{ m.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="shortDescription">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Short Description</th>
+            <td mat-cell *matCellDef="let m" class="ml-cell--truncate" [matTooltip]="m.shortDescription">
+              {{ m.shortDescription }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Category</th>
+            <td mat-cell *matCellDef="let m">{{ m.materialCategoryName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="group">
+            <th mat-header-cell *matHeaderCellDef>Material Group</th>
+            <td mat-cell *matCellDef="let m">{{ m.materialGroupName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="uom">
+            <th mat-header-cell *matHeaderCellDef>UOM</th>
+            <td mat-cell *matCellDef="let m">{{ m.uomSymbol || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let m">
+              <mat-chip [class]="statusClass(m.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ m.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="criticality">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="criticalityLevel">Criticality</th>
+            <td mat-cell *matCellDef="let m">
+              <mat-chip [class]="criticalityClass(m.criticalityLevel)">{{ m.criticalityLevel }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="manufacturer">
+            <th mat-header-cell *matHeaderCellDef>Manufacturer</th>
+            <td mat-cell *matCellDef="let m">{{ m.manufacturerName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated At</th>
+            <td mat-cell *matCellDef="let m">{{ m.updatedAt ? (m.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let m">
+              <button mat-icon-button (click)="viewMaterial(m, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.MATERIALS_UPDATE)) {
+                <button mat-icon-button (click)="editMaterial(m, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="copyCode(m, $event)">
+                  <mat-icon>content_paste</mat-icon> Copy Material Code
+                </button>
+
+                @if (m.status !== MaterialStatus.ACTIVE && m.status !== MaterialStatus.OBSOLETE && can(PERMISSIONS.MATERIALS_ENABLE)) {
+                  <button mat-menu-item (click)="setStatus(m, MaterialStatus.ACTIVE, $event)">
+                    <mat-icon>toggle_on</mat-icon> Enable
+                  </button>
+                }
+                @if (m.status === MaterialStatus.ACTIVE && can(PERMISSIONS.MATERIALS_DISABLE)) {
+                  <button mat-menu-item (click)="setStatus(m, MaterialStatus.INACTIVE, $event)">
+                    <mat-icon>toggle_off</mat-icon> Disable
+                  </button>
+                }
+                @if (m.status !== MaterialStatus.OBSOLETE && can(PERMISSIONS.MATERIALS_OBSOLETE)) {
+                  <button mat-menu-item (click)="setStatus(m, MaterialStatus.OBSOLETE, $event)">
+                    <mat-icon>block</mat-icon> Mark Obsolete
+                  </button>
+                }
+
+                @if (can(PERMISSIONS.MATERIALS_DELETE) && !m.isSystem) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteMaterial(m, $event)" class="ml-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="ml-row" (click)="viewMaterial(row)"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile: cards keep Code / Description / Status / Actions visible. -->
+      <div class="ml-cards">
+        @for (m of store.materials(); track trackByMaterialId($index, m)) {
+          <div class="ml-card">
+            <div class="ml-card__head">
+              <div>
+                <div class="ml-code">{{ m.code }}</div>
+                <div class="ml-card__desc">{{ m.shortDescription }}</div>
+              </div>
+              <mat-chip [class]="statusClass(m.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ m.status }}
+              </mat-chip>
+            </div>
+
+            <details class="ml-card__details">
+              <summary>Details</summary>
+              <dl class="ml-card__fields">
+                <div><dt>Category</dt><dd>{{ m.materialCategoryName || '—' }}</dd></div>
+                <div><dt>Group</dt><dd>{{ m.materialGroupName || '—' }}</dd></div>
+                <div><dt>UOM</dt><dd>{{ m.uomSymbol || '—' }}</dd></div>
+                <div><dt>Criticality</dt><dd>{{ m.criticalityLevel }}</dd></div>
+                <div><dt>Manufacturer</dt><dd>{{ m.manufacturerName || '—' }}</dd></div>
+              </dl>
+            </details>
+
+            <div class="ml-card__actions">
+              <button mat-icon-button (click)="viewMaterial(m, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.MATERIALS_UPDATE)) {
+                <button mat-icon-button (click)="editMaterial(m, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (can(PERMISSIONS.MATERIALS_DELETE) && !m.isSystem) {
+                <button mat-icon-button color="warn" (click)="deleteMaterial(m, $event)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="ml-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

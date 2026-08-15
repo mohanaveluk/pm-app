@@ -66,7 +66,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   {
     id: 'engineering', label: 'Engineering', tooltip: 'Engineering', icon: 'engineering', order: 7,
     children: [
-      { id: 'material-master', label: 'Material Master', route: '/materials', order: 1, permission: PERMISSIONS.ENGINEERING_VIEW },
+      { id: 'material-master', label: 'Material Master', route: '/admin/materials', order: 1, permission: PERMISSIONS.MATERIALS_VIEW },
       { id: 'material-requisition', label: 'Material Requisition', route: '/warehouse', order: 2, permission: PERMISSIONS.WAREHOUSE_VIEW },
     ],
   },
@@ -80,7 +80,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   },
 
   {
-    id: 'quality', label: 'Quality', tooltip: 'Quality', icon: 'inventory_2', order: 8,
+    id: 'quality', label: 'Quality', tooltip: 'Quality', icon: 'spa', order: 8,
     children: [
       { id: 'inventory-qa', label: 'QA / QC', route: '/qa', order: 3, permission: PERMISSIONS.QA_VIEW },
     ],

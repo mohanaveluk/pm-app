@@ -1,0 +1,223 @@
+<div class="mw-page">
+
+  @if (loading()) {
+    <div class="mw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading material…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="mw-state mw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Material Master
+      </button>
+    </div>
+  } @else if (created(); as done) {
+
+    <!-- ── Success screen ─────────────────────────────────────────── -->
+    <div class="mw-success">
+      <mat-icon class="mw-success__icon">check_circle</mat-icon>
+      <h1>Material Created Successfully</h1>
+
+      <dl class="mw-success__facts">
+        <div>
+          <dt>Material Code</dt>
+          <dd><span class="mw-code">{{ done.code }}</span></dd>
+        </div>
+        <div>
+          <dt>Material</dt>
+          <dd>{{ done.shortDescription }}</dd>
+        </div>
+        <div>
+          <dt>Category</dt>
+          <dd>{{ formService.categoryLabel(done.materialCategoryId) }}</dd>
+        </div>
+        <div>
+          <dt>Group</dt>
+          <dd>{{ formService.groupLabel(done.materialGroupId) }}</dd>
+        </div>
+        <div>
+          <dt>Unit of Measurement</dt>
+          <dd>{{ formService.uomLabel(done.unitOfMeasurementId) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><mat-chip [class]="statusClass(done.status)">{{ done.status }}</mat-chip></dd>
+        </div>
+      </dl>
+
+      <div class="mw-success__actions">
+        <button mat-raised-button color="primary" (click)="viewCreated()">
+          <mat-icon>visibility</mat-icon> View Material
+        </button>
+        <button mat-stroked-button (click)="createAnother()">
+          <mat-icon>add</mat-icon> Create Another
+        </button>
+        <button mat-button (click)="backToList()">Back to Material Master</button>
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- ── Persistent summary header ──────────────────────────────── -->
+    <header class="mw-header">
+      <div class="mw-header__main">
+        <button mat-icon-button matTooltip="Back to Material Master" (click)="backToList()" aria-label="Back to Material Master">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="mw-header__eyebrow">Material Master</div>
+          @if (isEdit() && material(); as m) {
+            <h1 class="mw-header__title">
+              <span class="mw-code">{{ m.code }}</span>
+              <span class="mw-header__desc">{{ m.shortDescription }}</span>
+            </h1>
+          } @else {
+            <h1 class="mw-header__title">
+              <span class="mw-code mw-code--new">NEW MATERIAL</span>
+              <span class="mw-header__desc">Code will be generated after creation</span>
+            </h1>
+          }
+        </div>
+      </div>
+
+      <dl class="mw-header__facts">
+        <div>
+          <dt>Category</dt>
+          <dd>{{ formService.categoryLabel(formService.form.get('general.materialCategoryId')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Group</dt>
+          <dd>{{ formService.groupLabel(formService.form.get('general.materialGroupId')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>UOM</dt>
+          <dd>{{ formService.uomLabel(formService.form.get('general.unitOfMeasurementId')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Criticality</dt>
+          <dd>{{ formService.form.get('general.criticalityLevel')?.value || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            <mat-chip [class]="statusClass(statusValue)">{{ statusValue ?? 'NEW' }}</mat-chip>
+          </dd>
+        </div>
+      </dl>
+    </header>
+
+    <p class="mw-progress" aria-live="polite">
+      Step {{ selectedIndex() + 1 }} of {{ steps.length }} — {{ currentStepTitle() }}
+    </p>
+
+    <!-- ── Stepper ────────────────────────────────────────────────── -->
+    <mat-stepper
+      #stepper
+      class="mw-stepper"
+      [linear]="!isEdit()"
+      [selectedIndex]="selectedIndex()"
+      (selectionChange)="onStepChange($event.selectedIndex)"
+      labelPosition="bottom"
+      headerPosition="top"
+    >
+      <mat-step
+        [stepControl]="formService.group('general')"
+        [state]="stepState('general', 0)"
+        [hasError]="isStepInvalid('general')"
+        errorMessage="Required information missing"
+      >
+        <ng-template matStepLabel>General</ng-template>
+        <app-material-general-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('technical')" [state]="stepState('technical', 1)">
+        <ng-template matStepLabel>Technical</ng-template>
+        <app-material-technical-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('procurement')" [state]="stepState('procurement', 2)">
+        <ng-template matStepLabel>Procurement</ng-template>
+        <app-material-procurement-step />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('inventory')"
+        [state]="stepState('inventory', 3)"
+        [hasError]="isStepInvalid('inventory')"
+        errorMessage="Check stock levels"
+      >
+        <ng-template matStepLabel>Inventory</ng-template>
+        <app-material-inventory-step />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('quality')"
+        [state]="stepState('quality', 4)"
+        [hasError]="isStepInvalid('quality')"
+        errorMessage="Check calibration"
+      >
+        <ng-template matStepLabel>Quality</ng-template>
+        <app-material-quality-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('accounting')" [state]="stepState('accounting', 5)">
+        <ng-template matStepLabel>Accounting</ng-template>
+        <app-material-accounting-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('safety')" [state]="stepState('safety', 6)">
+        <ng-template matStepLabel>Safety</ng-template>
+        <app-material-safety-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('logistics')" [state]="stepState('logistics', 7)">
+        <ng-template matStepLabel>Logistics</ng-template>
+        <app-material-logistics-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('documents')" [state]="stepState('documents', 8)">
+        <ng-template matStepLabel>Documents</ng-template>
+        <app-material-documents-step />
+      </mat-step>
+    </mat-stepper>
+
+    <!-- ── Navigation footer ──────────────────────────────────────── -->
+    <footer class="mw-footer">
+      <button mat-stroked-button type="button" (click)="back()" [disabled]="selectedIndex() === 0 || saving()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+
+      <span class="mw-footer__spacer"></span>
+
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+
+      @if (isEdit()) {
+        <button mat-stroked-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+          Save
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          Save &amp; Close
+        </button>
+      } @else if (selectedIndex() < steps.length - 1) {
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          (click)="next()"
+          [disabled]="saving() || !canAdvance()"
+          [matTooltip]="canAdvance() ? '' : 'Complete the required fields on this step first'"
+        >
+          Next <mat-icon>arrow_forward</mat-icon>
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
+          Create Material
+        </button>
+      }
+    </footer>
+  }
+</div>

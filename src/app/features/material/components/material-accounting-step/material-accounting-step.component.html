@@ -1,0 +1,69 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>account_balance</mat-icon> Valuation</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Valuation Class</mat-label>
+        <input matInput formControlName="valuationClass" maxlength="50" placeholder="e.g. 3000" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Groups materials that post to the same set of GL accounts">info_outline</mat-icon>
+        @if (err('valuationClass')) { <mat-error>{{ err('valuationClass') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Valuation Type</mat-label>
+        <mat-select formControlName="valuationType" [disabled]="readonly()">
+          <mat-option [value]="''">Not specified</mat-option>
+          @for (t of valuationTypes; track t) {
+            <mat-option [value]="t">{{ t }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix matTooltip="How stock value is calculated as receipts and issues are posted">info_outline</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Standard Price@if (currency) { ({{ currency }}) }</mat-label>
+        <input matInput type="number" formControlName="standardPrice" min="0" step="0.0001" [readonly]="readonly()" />
+        <mat-hint>Stored to 4 decimal places</mat-hint>
+        @if (err('standardPrice')) { <mat-error>{{ err('standardPrice') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Moving Average Price@if (currency) { ({{ currency }}) }</mat-label>
+        <input matInput type="number" formControlName="movingAveragePrice" min="0" step="0.0001" [readonly]="readonly()" />
+        <mat-hint>
+          <span class="step-derived-badge"><mat-icon>storage</mat-icon> Normally recalculated on receipt</span>
+        </mat-hint>
+        @if (err('movingAveragePrice')) { <mat-error>{{ err('movingAveragePrice') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>receipt_long</mat-icon> Account Assignment</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Cost Center</mat-label>
+        <input matInput formControlName="costCenter" maxlength="100" placeholder="e.g. CC-PROJ-001" [readonly]="readonly()" />
+        @if (err('costCenter')) { <mat-error>{{ err('costCenter') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>GL Account Mapping</mat-label>
+        <input matInput formControlName="glAccountMapping" maxlength="50" placeholder="e.g. 1404000" [readonly]="readonly()" />
+        @if (err('glAccountMapping')) { <mat-error>{{ err('glAccountMapping') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tax Code</mat-label>
+        <input matInput formControlName="taxCode" maxlength="20" placeholder="e.g. TX18" [readonly]="readonly()" />
+        @if (err('taxCode')) { <mat-error>{{ err('taxCode') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    <p class="step-section__hint" style="margin:12px 0 0">
+      Depreciation method and asset class apply to capitalised assets and are handled by the
+      Fixed Asset module; they are not stored on the Material Master.
+    </p>
+  </section>
+</div>

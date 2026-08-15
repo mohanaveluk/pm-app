@@ -1,0 +1,45 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>add_circle</mat-icon>
+  Create Material Category
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <form [formGroup]="form" novalidate (ngSubmit)="create()">
+    <mat-form-field appearance="outline" class="dlg-full">
+      <mat-label>Category Name</mat-label>
+      <input matInput formControlName="name" maxlength="255" placeholder="e.g. Raw Material" required cdkFocusInitial />
+      @if (err()) { <mat-error>{{ err() }}</mat-error> }
+    </mat-form-field>
+  </form>
+
+  <div class="dlg-preview">
+    <div class="dlg-preview__title">
+      <mat-icon>visibility</mat-icon> Preview
+    </div>
+    <dl class="dlg-preview__fields">
+      <div>
+        <dt>Code</dt>
+        <dd><code>{{ preview().code || '—' }}</code></dd>
+      </div>
+      <div>
+        <dt>Short Name</dt>
+        <dd>{{ preview().shortName || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Description</dt>
+        <dd>{{ preview().description || '—' }}</dd>
+      </div>
+    </dl>
+    <p class="dlg-preview__hint">
+      The code is generated from the name and cannot be changed after the category is created.
+    </p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="create()" [disabled]="saving() || form.invalid">
+    @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>add</mat-icon> }
+    Create Category
+  </button>
+</mat-dialog-actions>

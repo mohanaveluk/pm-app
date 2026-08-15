@@ -1,0 +1,220 @@
+<div class="step" [formGroup]="group">
+
+  <!-- Identification -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>badge</mat-icon> Identification</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Short Description</mat-label>
+        <input
+          matInput
+          formControlName="shortDescription"
+          [maxlength]="shortDescriptionMax"
+          placeholder="e.g. Carbon Steel Seamless Pipe"
+          required
+          [readonly]="readonly()"
+        />
+        <mat-hint align="end">{{ remainingChars() }} characters remaining</mat-hint>
+        @if (err('shortDescription')) { <mat-error>{{ err('shortDescription') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Long Description</mat-label>
+        <textarea
+          matInput
+          formControlName="longDescription"
+          rows="3"
+          maxlength="4000"
+          placeholder="e.g. Carbon steel seamless pipe ASTM A106 Grade B, 6 inch NB, Schedule 40, 6000mm length"
+          [readonly]="readonly()"
+        ></textarea>
+        @if (err('longDescription')) { <mat-error>{{ err('longDescription') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- Classification -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>account_tree</mat-icon> Classification</h3>
+
+    @if (formService.referenceLoading()) {
+      <p class="step-section__hint">
+        <mat-spinner diameter="16" style="display:inline-block;vertical-align:middle;margin-right:6px" />
+        Loading categories, groups and units…
+      </p>
+    } @else if (formService.referenceError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ formService.referenceError() }}</span>
+        <button mat-button type="button" (click)="formService.loadReferenceData()">Retry</button>
+      </div>
+    }
+
+    <div class="step-grid">
+      <!-- Category -->
+      <mat-form-field appearance="outline">
+        <mat-label>Material Category</mat-label>
+        <mat-select formControlName="materialCategoryId" required [disabled]="readonly()">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search categories…"
+              aria-label="Search categories"
+              [ngModel]="categorySearch()"
+              (ngModelChange)="categorySearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (c of visibleCategories(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }} ({{ c.code }})</mat-option>
+          }
+          @if (visibleCategories().length === 0) {
+            <mat-option disabled>No matching categories</mat-option>
+          }
+        </mat-select>
+        @if (err('materialCategoryId')) { <mat-error>{{ err('materialCategoryId') }}</mat-error> }
+      </mat-form-field>
+
+      <!-- Group (cascaded off Category) -->
+      <mat-form-field appearance="outline">
+        <mat-label>Material Group</mat-label>
+        <mat-select
+          formControlName="materialGroupId"
+          required
+          [disabled]="readonly() || !group.get('materialCategoryId')?.value"
+        >
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search groups…"
+              aria-label="Search material groups"
+              [ngModel]="groupSearch()"
+              (ngModelChange)="groupSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (g of visibleGroups(); track g.id) {
+            <mat-option [value]="g.id">{{ g.name }} ({{ g.code }})</mat-option>
+          }
+          @if (visibleGroups().length === 0) {
+            <mat-option disabled>No matching groups</mat-option>
+          }
+        </mat-select>
+        @if (!group.get('materialCategoryId')?.value) {
+          <mat-hint>Select a category first</mat-hint>
+        }
+        @if (err('materialGroupId')) { <mat-error>{{ err('materialGroupId') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    @if (!readonly()) {
+      <div class="step-toggles">
+        <button mat-button type="button" class="step-inline-action" (click)="openCreateCategory()">
+          <mat-icon>add</mat-icon> Create New Category
+        </button>
+        <button
+          mat-button
+          type="button"
+          class="step-inline-action"
+          [disabled]="!group.get('materialCategoryId')?.value"
+          [matTooltip]="!group.get('materialCategoryId')?.value ? 'Select a category first' : ''"
+          (click)="openCreateGroup()"
+        >
+          <mat-icon>add</mat-icon> Create New Group
+        </button>
+      </div>
+
+      @if (formService.categoryHasNoGroups()) {
+        <div class="step-caution">
+          <mat-icon>info</mat-icon>
+          <span>No material groups exist for this category yet. Create one to continue.</span>
+        </div>
+      }
+    }
+
+    <div class="step-grid" style="margin-top:12px">
+      <!-- UOM -->
+      <mat-form-field appearance="outline">
+        <mat-label>Unit of Measurement</mat-label>
+        <mat-select formControlName="unitOfMeasurementId" required [disabled]="readonly()">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search units…"
+              aria-label="Search units of measurement"
+              [ngModel]="uomSearch()"
+              (ngModelChange)="uomSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (u of visibleUoms(); track u.id) {
+            <mat-option [value]="u.id">
+              {{ u.name }}@if (u.symbol) { — {{ u.symbol }} }
+            </mat-option>
+          }
+          @if (visibleUoms().length === 0) {
+            <mat-option disabled>No matching units</mat-option>
+          }
+        </mat-select>
+        @if (err('unitOfMeasurementId')) { <mat-error>{{ err('unitOfMeasurementId') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Criticality</mat-label>
+        <mat-select formControlName="criticalityLevel" required [disabled]="readonly()">
+          @for (c of criticalityOptions; track c.value) {
+            <mat-option [value]="c.value" [matTooltip]="c.hint ?? ''">{{ c.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix matTooltip="How severely a shortage of this material affects plant or project operations">info_outline</mat-icon>
+        @if (err('criticalityLevel')) { <mat-error>{{ err('criticalityLevel') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- Handling flags -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>tune</mat-icon> Handling</h3>
+
+    <div class="step-toggles">
+      <div class="step-toggle">
+        <span class="step-toggle__label">Stock Item</span>
+        <mat-slide-toggle formControlName="isStockItem" color="primary">
+          {{ group.get('isStockItem')?.value ? 'Warehouse managed' : 'Direct charge' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Off for services and direct-charge items</span>
+      </div>
+
+      <div class="step-toggle">
+        <span class="step-toggle__label">Serialized</span>
+        <mat-slide-toggle formControlName="isSerialized" color="primary">
+          {{ group.get('isSerialized')?.value ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Each unit carries a unique serial number</span>
+      </div>
+
+      <div class="step-toggle">
+        <span class="step-toggle__label">Batch Managed</span>
+        <mat-slide-toggle formControlName="isBatchManaged" color="primary">
+          {{ group.get('isBatchManaged')?.value ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Tracked in batches or lots</span>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="step-full" style="margin-top:14px">
+      <mat-label>Remarks</mat-label>
+      <textarea matInput formControlName="remarks" rows="2" [readonly]="readonly()"></textarea>
+    </mat-form-field>
+  </section>
+</div>

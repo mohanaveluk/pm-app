@@ -1,0 +1,79 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>fact_check</mat-icon> Inspection</h3>
+    <div class="step-grid step-grid--three">
+      <mat-form-field appearance="outline">
+        <mat-label>Inspection Type</mat-label>
+        <mat-select formControlName="inspectionType" [disabled]="readonly()">
+          <mat-option [value]="null">Not specified</mat-option>
+          @for (i of inspectionOptions; track i.value) {
+            <mat-option [value]="i.value" [matTooltip]="i.hint ?? ''">{{ i.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Quality Spec Document No.</mat-label>
+        <input matInput formControlName="qualitySpecDocumentNo" maxlength="255" placeholder="e.g. QS-PIPE-001" [readonly]="readonly()" />
+        @if (err('qualitySpecDocumentNo')) { <mat-error>{{ err('qualitySpecDocumentNo') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Inspection Lot Size</mat-label>
+        <input matInput type="number" formControlName="inspectionLotSize" min="1" [readonly]="readonly()" />
+        <mat-icon matSuffix matTooltip="Number of units treated as one lot when sampling">info_outline</mat-icon>
+        @if (err('inspectionLotSize')) { <mat-error>{{ err('inspectionLotSize') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>science</mat-icon> Acceptance</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Sampling Procedure</mat-label>
+        <textarea matInput formControlName="samplingProcedure" rows="2" placeholder="e.g. AQL 2.5 per ISO 2859-1" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Test Parameters</mat-label>
+        <textarea matInput formControlName="testParameters" rows="2" placeholder="e.g. Wall thickness, OD, straightness, hydro test" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Acceptance Criteria</mat-label>
+        <textarea matInput formControlName="acceptanceCriteria" rows="2" placeholder="e.g. Dimensional tolerance per ASME B36.10M" [readonly]="readonly()"></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>timer</mat-icon> Calibration</h3>
+
+    <div class="step-toggles">
+      <div class="step-toggle">
+        <span class="step-toggle__label">Calibration Required</span>
+        <mat-slide-toggle formControlName="calibrationRequired" color="primary">
+          {{ calibrationRequired ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Applies to instruments and measuring equipment</span>
+      </div>
+
+      @if (calibrationRequired) {
+        <mat-form-field appearance="outline" style="min-width:220px">
+          <mat-label>Calibration Interval (days)</mat-label>
+          <input matInput type="number" formControlName="calibrationIntervalDays" min="1" required [readonly]="readonly()" />
+          @if (err('calibrationIntervalDays')) { <mat-error>{{ err('calibrationIntervalDays') }}</mat-error> }
+        </mat-form-field>
+      }
+    </div>
+
+    @if (calibrationIntervalMissing) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>Provide a calibration interval, or turn off Calibration Required.</span>
+      </div>
+    }
+  </section>
+</div>
