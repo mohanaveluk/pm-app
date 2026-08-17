@@ -68,7 +68,7 @@
         </button>
         <div>
           <div class="mw-header__eyebrow">Material Master</div>
-          @if (isEdit() && material(); as m) {
+          @if (material(); as m) {
             <h1 class="mw-header__title">
               <span class="mw-code">{{ m.code }}</span>
               <span class="mw-header__desc">{{ m.shortDescription }}</span>
@@ -76,7 +76,7 @@
           } @else {
             <h1 class="mw-header__title">
               <span class="mw-code mw-code--new">NEW MATERIAL</span>
-              <span class="mw-header__desc">Code will be generated after creation</span>
+              <span class="mw-header__desc">Code is generated once General Information is saved</span>
             </h1>
           }
         </div>
@@ -108,9 +108,23 @@
       </dl>
     </header>
 
-    <p class="mw-progress" aria-live="polite">
-      Step {{ selectedIndex() + 1 }} of {{ steps.length }} — {{ currentStepTitle() }}
-    </p>
+    <div class="mw-progressbar">
+      <p class="mw-progress" aria-live="polite">
+        Step {{ selectedIndex() + 1 }} of {{ steps.length }} — {{ currentStepTitle() }}
+      </p>
+
+      @if (lastSavedAt(); as saved) {
+        <span class="mw-saved" aria-live="polite">
+          <mat-icon>cloud_done</mat-icon>
+          Saved {{ saved | date: 'shortTime' }}
+        </span>
+      } @else if (!isEdit()) {
+        <span class="mw-saved mw-saved--pending">
+          <mat-icon>cloud_off</mat-icon>
+          Not saved yet
+        </span>
+      }
+    </div>
 
     <!-- ── Stepper ────────────────────────────────────────────────── -->
     <mat-stepper
@@ -208,14 +222,16 @@
           type="button"
           (click)="next()"
           [disabled]="saving() || !canAdvance()"
-          [matTooltip]="canAdvance() ? '' : 'Complete the required fields on this step first'"
+          [matTooltip]="nextTooltip()"
         >
-          Next <mat-icon>arrow_forward</mat-icon>
+          @if (saving()) { <mat-spinner diameter="18" /> }
+          {{ materialId() ? 'Save & Next' : 'Create & Continue' }}
+          <mat-icon>arrow_forward</mat-icon>
         </button>
       } @else {
         <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
           @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
-          Create Material
+          Finish
         </button>
       }
     </footer>
