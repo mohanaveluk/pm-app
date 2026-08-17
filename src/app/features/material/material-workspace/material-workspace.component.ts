@@ -17,7 +17,7 @@ import { PERMISSIONS } from '../../../core/rbac/permissions.const';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MaterialService } from '../services/material.service';
 import { MaterialFormService, MaterialStepKey } from '../services/material-form.service';
-import { toMaterialFormValue, toMaterialRequest } from '../services/material.mapper';
+import { pickMaterialSection, toMaterialFormValue, toMaterialRequest } from '../services/material.mapper';
 import { Material, MaterialStatus } from '../models/material.model';
 import { HasUnsavedChanges } from '../guards/unsaved-material.guard';
 import { MaterialGeneralStepComponent } from '../components/material-general-step/material-general-step.component';
@@ -74,10 +74,22 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
   protected readonly saving = signal(false);
   protected readonly selectedIndex = signal(0);
 
-  /** Populated in edit mode, and after a successful create. */
+  /** Populated in edit mode, and as soon as step 1 is persisted during creation. */
   protected readonly material = signal<Material | null>(null);
 
-  /** Shown instead of the stepper once a material has been created. */
+  /**
+   * Set the moment the material is persisted (end of step 1 in create mode).
+   * From then on every step issues a PUT against this id rather than a POST.
+   */
+  protected readonly materialId = signal<string | null>(null);
+
+  /** Timestamp of the last successful incremental save, for the "Saved" indicator. */
+  protected readonly lastSavedAt = signal<Date | null>(null);
+
+  /** Steps already persisted to the server — drives the ✓ marks in create mode. */
+  private readonly savedSteps = signal<ReadonlySet<MaterialStepKey>>(new Set());
+
+  /** Shown instead of the stepper once the wizard is finished. */
   protected readonly created = signal<Material | null>(null);
 
   /** Set immediately before a deliberate navigation so the guard stays quiet. */
@@ -101,6 +113,7 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
     try {
       const res = await lastValueFrom(this.materialService.getMaterialById(id));
       this.material.set(res.data);
+      this.materialId.set(res.data.id);
       this.formService.patch(toMaterialFormValue(res.data));
     } catch (err) {
       const httpErr = err as HttpErrorResponse;
@@ -129,8 +142,14 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
     const group = this.formService.group(key);
     if (index === this.selectedIndex()) return 'edit';
     if (group.invalid && group.touched) return 'error';
-    if (group.valid && (group.dirty || this.isEdit())) return 'done';
+    // In create mode a step is complete once it has been persisted; in edit mode
+    // every valid step is already on the server.
+    if (group.valid && (this.isEdit() || this.savedSteps().has(key))) return 'done';
     return 'number';
+  }
+
+  private markStepSaved(key: MaterialStepKey): void {
+    this.savedSteps.update((s) => new Set(s).add(key));
   }
 
   isStepInvalid(key: MaterialStepKey): boolean {
@@ -144,9 +163,25 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
     return this.formService.group(this.steps[this.selectedIndex()].key).valid;
   }
 
-  next(): void {
+  /** Explains what the primary button will do, and why it may be disabled. */
+  nextTooltip(): string {
+    if (!this.canAdvance()) return 'Complete the required fields on this step first';
+    return this.materialId()
+      ? 'Saves this section, then moves to the next step'
+      : 'Creates the material and generates its code, then moves to the next step';
+  }
+
+  /**
+   * Validates the current step, persists it, and only then advances.
+   *
+   * Step 1 issues the POST that brings the material into existence; every later
+   * step issues a PUT carrying just its own section. Advancing is blocked if the
+   * save fails, so the wizard never runs ahead of what the server holds.
+   */
+  async next(): Promise<void> {
     const key = this.steps[this.selectedIndex()].key;
-    if (!this.isEdit() && this.formService.group(key).invalid) {
+
+    if (this.formService.group(key).invalid) {
       this.formService.markStepTouched(key);
       this.snack.open(
         `Please complete the required information in ${this.steps[this.selectedIndex()].title}.`,
@@ -155,7 +190,58 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
       );
       return;
     }
+
+    const saved = await this.persistStep(key);
+    if (!saved) return;
+
     this.stepper?.next();
+  }
+
+  /**
+   * Persists one step. Returns false when the call failed so the caller can hold
+   * position. In edit mode this is a no-op: the user saves explicitly there, and
+   * silently rewriting a live record on every step change would be surprising.
+   */
+  private async persistStep(key: MaterialStepKey): Promise<boolean> {
+    if (this.isEdit()) return true;
+
+    const group = this.formService.group(key);
+    const id = this.materialId();
+
+    // Nothing typed on an optional step — skip the round trip, but still mark it
+    // visited so the stepper shows it as handled.
+    if (id && group.pristine) {
+      this.markStepSaved(key);
+      return true;
+    }
+
+    const request = toMaterialRequest(this.formService.value());
+    this.saving.set(true);
+    try {
+      const res = id
+        ? await lastValueFrom(this.materialService.updateMaterial(id, pickMaterialSection(request, key)))
+        : await lastValueFrom(this.materialService.createMaterial(request));
+
+      this.material.set(res.data);
+      this.materialId.set(res.data.id);
+      this.lastSavedAt.set(new Date());
+      group.markAsPristine();
+      this.markStepSaved(key);
+
+      if (!id) {
+        this.snack.open(`Material ${res.data.code} created — continue completing the remaining sections.`, 'OK', {
+          duration: 4000,
+        });
+      }
+      return true;
+    } catch (err) {
+      this.snack.open(this.messageFor(err as HttpErrorResponse), 'Close', {
+        duration: 6000, panelClass: ['error-snackbar'],
+      });
+      return false;
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   back(): void {
@@ -163,11 +249,20 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
   }
 
   goToStep(index: number): void {
+    // `selectedIndex` is the bound source of truth, so it has to move even when
+    // the stepper isn't in the view yet (e.g. jumping back to step 1 from the
+    // success screen, where the stepper is still swapped out).
+    this.selectedIndex.set(index);
     if (this.stepper) this.stepper.selectedIndex = index;
   }
 
   // ── Save ────────────────────────────────────────────────────────────
 
+  /**
+   * Edit mode: one PUT carrying the whole record.
+   * Create mode: the material already exists (persisted at step 1), so this saves
+   * the last step and moves to the success screen.
+   */
   async save(closeAfter: boolean): Promise<void> {
     if (this.saving()) return;
 
@@ -183,28 +278,35 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
       return;
     }
 
-    const payload = toMaterialRequest(this.formService.value());
-    this.saving.set(true);
-    try {
-      if (this.isEdit()) {
-        const id = this.material()!.id;
-        const res = await lastValueFrom(this.materialService.updateMaterial(id, payload));
+    if (this.isEdit()) {
+      const payload = toMaterialRequest(this.formService.value());
+      this.saving.set(true);
+      try {
+        const res = await lastValueFrom(this.materialService.updateMaterial(this.materialId()!, payload));
         this.material.set(res.data);
+        this.lastSavedAt.set(new Date());
         this.formService.form.markAsPristine();
         this.snack.open('Material updated successfully', 'OK', { duration: 3000 });
         if (closeAfter) this.leaveTo(['/admin/materials']);
-      } else {
-        const res = await lastValueFrom(this.materialService.createMaterial(payload));
-        this.formService.form.markAsPristine();
-        this.created.set(res.data);
-        this.material.set(res.data);
+      } catch (err) {
+        this.snack.open(this.messageFor(err as HttpErrorResponse), 'Close', {
+          duration: 6000, panelClass: ['error-snackbar'],
+        });
+      } finally {
+        this.saving.set(false);
       }
-    } catch (err) {
-      this.snack.open(this.messageFor(err as HttpErrorResponse), 'Close', {
-        duration: 6000, panelClass: ['error-snackbar'],
-      });
-    } finally {
-      this.saving.set(false);
+      return;
+    }
+
+    // Create mode, final step: persist Documents, then hand off to the summary.
+    const finalKey = this.steps[this.steps.length - 1].key;
+    const saved = await this.persistStep(finalKey);
+    if (!saved) return;
+
+    const finished = this.material();
+    if (finished) {
+      this.formService.form.markAsPristine();
+      this.created.set(finished);
     }
   }
 
@@ -230,7 +332,12 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
   }
 
   createAnother(): void {
+    // Clear the persisted identity so the next Next() issues a fresh POST.
     this.created.set(null);
+    this.material.set(null);
+    this.materialId.set(null);
+    this.lastSavedAt.set(null);
+    this.savedSteps.set(new Set());
     this.formService.form.reset();
     this.formService.patch(toMaterialFormValue({
       // A blank slate that still satisfies the form's non-null shape.
@@ -273,11 +380,18 @@ export class MaterialWorkspaceComponent implements OnInit, HasUnsavedChanges {
   async canDeactivate(): Promise<boolean> {
     if (!this.hasUnsavedChanges()) return true;
 
+    // Once step 1 has been persisted the material exists regardless of leaving,
+    // so the prompt says what is actually at risk: only this step's edits.
+    const persisted = !!this.materialId() && !this.isEdit();
+    const message = persisted
+      ? `${this.material()?.code} has already been created. Changes on this step have not been saved yet — leave without saving them?`
+      : 'You have unsaved changes to this Material. Leave without saving?';
+
     const ref = this.dialog.open(ConfirmDialogComponent, {
-      width: '440px',
+      width: '460px',
       data: {
         title: 'Unsaved Changes',
-        message: 'You have unsaved changes to this Material. Leave without saving?',
+        message,
         confirmText: 'Leave',
         cancelText: 'Stay',
         color: 'warn',

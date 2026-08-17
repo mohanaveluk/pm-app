@@ -2,7 +2,7 @@ import {
   CriticalityLevel, HazardClassification, InspectionType, Material,
   PackagingType, StockingStrategy, TransportationMode,
 } from '../models/material.model';
-import { CreateMaterialRequest } from '../models/material-request.model';
+import { CreateMaterialRequest, UpdateMaterialRequest } from '../models/material-request.model';
 
 /**
  * The Material API is asymmetric: `GET /materials/:id` returns every section
@@ -218,6 +218,48 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
     }),
   };
 }
+
+/**
+ * Narrows a full request down to a single step's slice, for the incremental
+ * save the workspace performs as the user advances through the wizard.
+ *
+ * `general` maps to the DTO's core (un-nested) fields; every other step maps to
+ * its one nested section key. UpdateMaterialDto is a PartialType, so sending a
+ * lone section is valid and leaves the rest of the record untouched.
+ */
+export function pickMaterialSection(
+  request: CreateMaterialRequest,
+  step: MaterialSectionKey,
+): UpdateMaterialRequest {
+  switch (step) {
+    case 'general':
+      return {
+        shortDescription: request.shortDescription,
+        materialCategoryId: request.materialCategoryId,
+        materialGroupId: request.materialGroupId,
+        unitOfMeasurementId: request.unitOfMeasurementId,
+        criticalityLevel: request.criticalityLevel,
+        longDescription: request.longDescription,
+        isStockItem: request.isStockItem,
+        isSerialized: request.isSerialized,
+        isBatchManaged: request.isBatchManaged,
+        remarks: request.remarks,
+      };
+    case 'technical':   return { technicalSpec: request.technicalSpec ?? {} };
+    case 'procurement': return { procurement:   request.procurement   ?? {} };
+    case 'inventory':   return { inventory:     request.inventory     ?? {} };
+    case 'quality':     return { quality:       request.quality       ?? {} };
+    case 'accounting':  return { accounting:    request.accounting    ?? {} };
+    case 'safety':      return { safety:        request.safety        ?? {} };
+    case 'logistics':   return { logistics:     request.logistics     ?? {} };
+    case 'documents':   return { documents:     request.documents     ?? {} };
+  }
+}
+
+/** Keys of the nine workspace steps, mirrored here to keep the mapper self-contained. */
+export type MaterialSectionKey =
+  | 'general' | 'technical' | 'procurement' | 'inventory' | 'quality'
+  | 'accounting' | 'safety' | 'logistics' | 'documents';
 
 // ── API → Form ────────────────────────────────────────────────────────────
 
