@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface UploadedDocument {
   url: string;
@@ -9,33 +11,38 @@ export interface UploadedDocument {
   uploadedAt: string;
 }
 
+interface MaterialSpecificationDocumentResponse {
+  message: string;
+  url: string;
+}
+
 /**
- * Extension point for document/photo uploads.
- *
- * The Material API stores **URLs** (`datasheetUrl`, `photos[]`, …) and the
- * application currently exposes only one upload endpoint — the profile-avatar
- * route — which is not a general document store. Rather than route engineering
- * datasheets through an avatar endpoint or fabricate a storage URL, this service
- * reports itself unconfigured and the Documents step falls back to URL entry,
- * which the backend genuinely supports.
- *
- * When a document service lands, override this provider (or replace the body of
- * `upload`) and the drag-and-drop area in the Documents step becomes live with
- * no template changes.
+ * POST /v1/materials/specification/document — multipart upload backed by
+ * MaterialController.uploadMaterialSpecificationDocument. The endpoint only
+ * returns { message, url }; the rest of UploadedDocument is filled in from
+ * the File object the caller already has.
  */
 @Injectable({ providedIn: 'root' })
 export class MaterialDocumentUploadService {
-  /** Whether a real upload endpoint is wired up. */
-  readonly isConfigured = false;
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/v1/materials`;
 
-  /** Human-readable reason shown in the UI while uploads are unavailable. */
-  readonly unavailableReason =
-    'Direct file upload needs the shared Document Service, which is not available yet. ' +
-    'Paste a document URL from your existing storage in the meantime.';
+  readonly isConfigured = true;
 
-  upload(_file: File): Observable<UploadedDocument> {
-    return new Observable<UploadedDocument>((subscriber) => {
-      subscriber.error(new Error(this.unavailableReason));
-    });
+  upload(file: File): Observable<UploadedDocument> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http
+      .post<MaterialSpecificationDocumentResponse>(`${this.baseUrl}/specification/document`, formData)
+      .pipe(
+        map((res) => ({
+          url: res.url,
+          fileName: file.name,
+          sizeBytes: file.size,
+          contentType: file.type,
+          uploadedAt: new Date().toISOString(),
+        })),
+      );
   }
 }

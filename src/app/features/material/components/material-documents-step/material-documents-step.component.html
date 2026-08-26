@@ -1,112 +1,138 @@
 <div class="step" [formGroup]="group">
 
-  <!-- Upload area -->
-  @if (!readonly()) {
-    <section class="step-section">
-      <h3 class="step-section__title"><mat-icon>cloud_upload</mat-icon> Upload</h3>
-
-      @if (!uploadService.isConfigured) {
-        <div class="step-derived">
-          <mat-icon>info</mat-icon>
-          <span>{{ uploadService.unavailableReason }}</span>
-        </div>
-      }
-
-      <div
-        class="doc-dropzone"
-        [class.doc-dropzone--active]="dragActive()"
-        role="button"
-        tabindex="0"
-        [attr.aria-disabled]="!uploadService.isConfigured"
-        aria-label="Drag and drop documents, or browse to select files"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event)"
-        (click)="fileInput.click()"
-        (keydown.enter)="fileInput.click()"
-        (keydown.space)="fileInput.click(); $event.preventDefault()"
-      >
-        <mat-icon>upload_file</mat-icon>
-        <p class="doc-dropzone__title">Drag &amp; drop documents here</p>
-        <p class="doc-dropzone__hint">or click to browse — PDF, images and office documents</p>
-      </div>
-      <input
-        #fileInput
-        type="file"
-        multiple
-        hidden
-        aria-hidden="true"
-        (change)="onBrowse($event)"
-      />
-    </section>
-  }
-
-  <!-- Typed document slots -->
+  <!-- Typed document slots — one card, one file input, one destination control -->
   <section class="step-section">
     <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Documents</h3>
     <p class="step-section__hint">
-      Each slot holds a link to the stored document. Paste a URL from your document
-      repository, or upload once the Document Service is available.
+      Each card uploads into its own document type. Drop a file on the card you want,
+      or paste a link to a document already stored elsewhere.
+      Max {{ maxFileSizeMb }} MB per file.
     </p>
 
-    <div class="step-grid">
-      @for (slot of slots; track slot.control) {
-        <mat-form-field appearance="outline">
-          <mat-label>{{ slot.label }}</mat-label>
-          <input
-            matInput
-            [formControlName]="slot.control"
-            maxlength="1000"
-            placeholder="https://…"
-            [readonly]="readonly()"
-          />
-          <mat-icon matPrefix class="doc-row__icon">{{ slot.icon }}</mat-icon>
-          @if (slotValue(slot.control)) {
-            <button
-              matSuffix
-              mat-icon-button
-              type="button"
-              matTooltip="Open in a new tab"
-              (click)="openUrl(slotValue(slot.control)); $event.stopPropagation()"
-            >
-              <mat-icon>open_in_new</mat-icon>
-            </button>
-          }
-          <mat-hint>{{ slot.hint }}</mat-hint>
-        </mat-form-field>
-      }
-    </div>
-
-    <!-- Attached documents summary -->
-    <div class="doc-list">
-      @for (slot of slots; track slot.control) {
-        @if (slotValue(slot.control)) {
-          <div class="doc-row">
-            <mat-icon class="doc-row__icon">{{ slot.icon }}</mat-icon>
-            <div class="doc-row__meta">
-              <div class="doc-row__name">{{ fileNameFromUrl(slotValue(slot.control)) }}</div>
-              <div class="doc-row__sub">{{ slot.label }}</div>
+    <div class="doc-slot-grid">
+      @for (slot of slots; track slot.key) {
+        <div class="doc-slot">
+          <div class="doc-slot__head">
+            <mat-icon class="doc-slot__icon">{{ slot.icon }}</mat-icon>
+            <div class="doc-slot__meta">
+              <div class="doc-slot__label">{{ slot.label }}</div>
+              <div class="doc-slot__hint">{{ slot.hint }}</div>
             </div>
-            <button mat-icon-button type="button" matTooltip="Open" (click)="openUrl(slotValue(slot.control))">
-              <mat-icon>visibility</mat-icon>
-            </button>
-            @if (!readonly()) {
-              <button mat-icon-button type="button" color="warn" matTooltip="Remove link" (click)="clearSlot(slot.control)">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
           </div>
-        }
+
+          <input
+            #slotInput
+            type="file"
+            hidden
+            aria-hidden="true"
+            [accept]="slot.accept"
+            (change)="onFilesSelected($event, slot)"
+          />
+
+          @if (isUploading(slot)) {
+            <div class="doc-slot__uploading">
+              <mat-spinner diameter="22" />
+              <span>Uploading…</span>
+            </div>
+          } @else if (slotValue(slot); as url) {
+            <div class="doc-row">
+              <mat-icon class="doc-row__icon">check_circle</mat-icon>
+              <div class="doc-row__meta">
+                <div class="doc-row__name" [matTooltip]="url">{{ fileNameFromUrl(url) }}</div>
+                <div class="doc-row__sub">Uploaded</div>
+              </div>
+              <button mat-icon-button type="button" matTooltip="View" (click)="openUrl(url)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (!readonly()) {
+                <button mat-icon-button type="button" matTooltip="Replace" (click)="slotInput.click()">
+                  <mat-icon>swap_horiz</mat-icon>
+                </button>
+                <button mat-icon-button type="button" color="warn" matTooltip="Remove" (click)="clearSlot(slot)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          } @else if (!readonly()) {
+            <div
+              class="doc-dropzone doc-dropzone--compact"
+              [class.doc-dropzone--active]="dragSlot() === slot.key"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="'Upload ' + slot.label"
+              (dragover)="onDragOver($event, slot)"
+              (dragleave)="onDragLeave()"
+              (drop)="onDrop($event, slot)"
+              (click)="slotInput.click()"
+              (keydown.enter)="slotInput.click()"
+              (keydown.space)="slotInput.click(); $event.preventDefault()"
+            >
+              <mat-icon>upload_file</mat-icon>
+              <p class="doc-dropzone__title">Drop file or choose</p>
+              <p class="doc-dropzone__hint">{{ slot.accept }}</p>
+            </div>
+          } @else {
+            <p class="doc-empty">Not attached.</p>
+          }
+
+          <mat-form-field appearance="outline" class="doc-slot__url">
+            <mat-label>Link</mat-label>
+            <input
+              matInput
+              [formControlName]="slot.control"
+              maxlength="1000"
+              placeholder="https://…"
+              [readonly]="readonly()"
+            />
+          </mat-form-field>
+        </div>
       }
     </div>
   </section>
 
-  <!-- Photos -->
+  <!-- Photos — the one multi-file slot -->
   <section class="step-section">
-    <h3 class="step-section__title"><mat-icon>photo_library</mat-icon> Photos</h3>
-    <p class="step-section__hint">Up to {{ maxPhotos }} reference photos of the material as received or installed.</p>
+    <h3 class="step-section__title"><mat-icon>{{ photoSlot.icon }}</mat-icon> {{ photoSlot.label }}</h3>
+    <p class="step-section__hint">
+      {{ photoSlot.hint }}. Up to {{ maxPhotos }} photos ({{ photos.length }} attached).
+    </p>
+
+    <input
+      #photoInput
+      type="file"
+      multiple
+      hidden
+      aria-hidden="true"
+      [accept]="photoSlot.accept"
+      (change)="onFilesSelected($event, photoSlot)"
+    />
 
     @if (!readonly()) {
+      @if (isUploading(photoSlot)) {
+        <div class="doc-slot__uploading">
+          <mat-spinner diameter="22" />
+          <span>Uploading photos…</span>
+        </div>
+      } @else {
+        <div
+          class="doc-dropzone"
+          [class.doc-dropzone--active]="dragSlot() === photoSlot.key"
+          role="button"
+          tabindex="0"
+          aria-label="Upload photos"
+          (dragover)="onDragOver($event, photoSlot)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event, photoSlot)"
+          (click)="photoInput.click()"
+          (keydown.enter)="photoInput.click()"
+          (keydown.space)="photoInput.click(); $event.preventDefault()"
+        >
+          <mat-icon>add_photo_alternate</mat-icon>
+          <p class="doc-dropzone__title">Drop photos here or choose files</p>
+          <p class="doc-dropzone__hint">{{ photoSlot.accept }} — max {{ maxFileSizeMb }} MB each</p>
+        </div>
+      }
+
       <div class="step-grid">
         <mat-form-field appearance="outline" class="step-full">
           <mat-label>Add photo URL</mat-label>
@@ -117,10 +143,10 @@
             [ngModel]="newPhotoUrl()"
             (ngModelChange)="newPhotoUrl.set($event)"
             [ngModelOptions]="{ standalone: true }"
-            (keyup.enter)="addPhoto()"
+            (keyup.enter)="addPhotoUrl()"
           />
-          <button matSuffix mat-icon-button type="button" matTooltip="Add photo" (click)="addPhoto()">
-            <mat-icon>add_photo_alternate</mat-icon>
+          <button matSuffix mat-icon-button type="button" matTooltip="Add photo" (click)="addPhotoUrl()">
+            <mat-icon>add</mat-icon>
           </button>
         </mat-form-field>
       </div>
