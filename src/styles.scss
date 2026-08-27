@@ -54,6 +54,7 @@ html.dark-theme {
   --r-md:     12px;
   --r-lg:     20px;
   --ease:     .25s cubic-bezier(.4,0,.2,1);
+  --mat-sys-on-surface-variant: #414752 !important;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -162,4 +163,8 @@ button mat-spinner {
   .section{padding:48px 0}
   .section-header{margin-bottom:32px}
   .container{padding:0 16px}
+}
+
+::ng-deep .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label, ::ng-deep mdc-evolution-chip__text-label {
+    color: #414752 !important;
 }
