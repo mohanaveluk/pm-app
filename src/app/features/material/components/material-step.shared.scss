@@ -183,6 +183,70 @@
 
 // ── Documents step ───────────────────────────────────────────────────
 
+.doc-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.doc-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  &__icon {
+    color: var(--primary);
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &__hint {
+    font-size: 0.74rem;
+    color: #8098b8;
+  }
+
+  &__uploading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 12px;
+    font-size: 0.82rem;
+    color: #8098b8;
+  }
+
+  // The link field is secondary to the drop zone above it.
+  &__url {
+    width: 100%;
+    margin-top: auto;
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  .doc-row {
+    margin: 0;
+  }
+}
+
 .doc-dropzone {
   border: 2px dashed var(--border);
   border-radius: var(--r-md);
@@ -218,13 +282,28 @@
   &__hint {
     font-size: 0.78rem;
   }
-}
 
-.doc-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
+  // Slot-sized variant: fits inside a document card.
+  &--compact {
+    padding: 16px 10px;
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+
+    .doc-dropzone__title {
+      font-size: 0.84rem;
+    }
+
+    .doc-dropzone__hint {
+      font-size: 0.7rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }
 
 .doc-row {
@@ -238,6 +317,7 @@
 
   &__icon {
     color: var(--primary);
+    overflow: visible;
   }
 
   &__meta {
