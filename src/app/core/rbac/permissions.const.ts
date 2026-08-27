@@ -57,6 +57,14 @@ export const PERMISSIONS = {
   DEPARTMENT_DISCIPLINES_DELETE: 'department-disciplines.delete',
   DEPARTMENT_DISCIPLINES_EXPORT: 'department-disciplines.export',
 
+  INDUSTRY_CATEGORIES_VIEW: 'industry-categories.view',
+  INDUSTRY_CATEGORIES_CREATE: 'industry-categories.create',
+  INDUSTRY_CATEGORIES_UPDATE: 'industry-categories.update',
+  INDUSTRY_CATEGORIES_DELETE: 'industry-categories.delete',
+  INDUSTRY_CATEGORIES_ENABLE: 'industry-categories.enable',
+  INDUSTRY_CATEGORIES_DISABLE: 'industry-categories.disable',
+  INDUSTRY_CATEGORIES_EXPORT: 'industry-categories.export',
+
   MATERIAL_CATEGORIES_VIEW: 'material-categories.view',
   MATERIAL_CATEGORIES_CREATE: 'material-categories.create',
   MATERIAL_CATEGORIES_UPDATE: 'material-categories.update',

@@ -202,6 +202,11 @@ export const routes: Routes = [
             data: { breadcrumb: 'Activity', permission: PERMISSIONS.ACTIVITIES_VIEW },
           },
           {
+            path: 'industry-categories',
+            loadComponent: () => import('./features/industry-category/industry-category.component').then(m => m.IndustryCategoryComponent),
+            data: { breadcrumb: 'Industry Categories', permission: PERMISSIONS.INDUSTRY_CATEGORIES_VIEW },
+          },
+          {
             path: 'material-categories',
             loadComponent: () => import('./features/material-category/material-category.component').then(m => m.MaterialCategoryComponent),
             data: { breadcrumb: 'Material Categories', permission: PERMISSIONS.MATERIAL_CATEGORIES_VIEW },
