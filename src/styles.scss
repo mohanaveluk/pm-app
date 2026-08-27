@@ -28,6 +28,7 @@ html.dark-theme {
       theme-type: dark,
     ),
   ));
+  --mat-chip-label-text-color: #414752 !important;
 }
 
 // Bridge from the app's pre-existing custom properties (used throughout
@@ -54,7 +55,6 @@ html.dark-theme {
   --r-md:     12px;
   --r-lg:     20px;
   --ease:     .25s cubic-bezier(.4,0,.2,1);
-  --mat-sys-on-surface-variant: #414752 !important;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -165,6 +165,7 @@ button mat-spinner {
   .container{padding:0 16px}
 }
 
-::ng-deep .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label, ::ng-deep mdc-evolution-chip__text-label {
+::ng-deep .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label, 
+::ng-deep .mdc-evolution-chip__text-label {
     color: #414752 !important;
 }
