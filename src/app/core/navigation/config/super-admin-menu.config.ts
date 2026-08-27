@@ -27,6 +27,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
       { id: 'org-material-categories', label: 'Material Categories', route: '/admin/material-categories', order: 6, permission: PERMISSIONS.MATERIAL_CATEGORIES_VIEW },
       { id: 'org-material-groups', label: 'Material Groups', route: '/admin/material-group', order: 7, permission: PERMISSIONS.MATERIAL_GROUPS_VIEW },
       { id: 'org-uom', label: 'Unit of Measurements', route: '/admin/unit-of-measurements', order: 8, permission: PERMISSIONS.UOM_VIEW },
+      { id: 'org-industry-categories', label: 'Industry Categories', route: '/admin/industry-categories', order: 9, permission: PERMISSIONS.INDUSTRY_CATEGORIES_VIEW },
     ],
   },
 

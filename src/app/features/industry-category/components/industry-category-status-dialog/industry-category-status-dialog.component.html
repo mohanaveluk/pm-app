@@ -1,0 +1,44 @@
+@if (data.activate) {
+  <h2 mat-dialog-title class="dlg-title">
+    <mat-icon class="dlg-icon--enable">toggle_on</mat-icon>
+    Enable Industry Category?
+  </h2>
+
+  <mat-dialog-content>
+    <p>
+      Enable <strong>"{{ data.industryCategory.name }}"</strong>?
+    </p>
+    <p class="dlg-note">This category will become available for selection again.</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" type="button" (click)="confirm()">
+      <mat-icon>toggle_on</mat-icon>
+      Enable
+    </button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title class="dlg-title">
+    <mat-icon color="warn">warning</mat-icon>
+    Disable Industry Category?
+  </h2>
+
+  <mat-dialog-content>
+    <p>
+      Disable <strong>"{{ data.industryCategory.name }}"</strong>?
+    </p>
+    <p class="dlg-note">
+      Existing Project, Department, Discipline, Activity and Supplier records may reference
+      this category. It will no longer be available for new selections.
+    </p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="warn" type="button" (click)="confirm()">
+      <mat-icon>toggle_off</mat-icon>
+      Disable
+    </button>
+  </mat-dialog-actions>
+}
