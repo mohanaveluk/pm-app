@@ -6,7 +6,7 @@ import { Observable, Subject, lastValueFrom, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { VendorService } from '../services/vendor.service';
 import {
-  DEFAULT_VENDOR_FILTER, SortDirection, VendorFilter, VendorListItem, VendorSortField,
+  DEFAULT_VENDOR_FILTER, SortDirection, Vendor, VendorFilter, VendorListItem, VendorSortField,
 } from '../models/vendor.model';
 import { VendorQueryParams } from '../models/vendor-request.model';
 import { VendorStatusChangeAccepted } from '../models/vendor-response.model';
@@ -131,6 +131,32 @@ export class VendorListStore {
       });
     } finally {
       this.deleting.set(false);
+    }
+  }
+
+  /**
+   * Clones a vendor via POST /vendors/:id/clone, then reloads so the new row
+   * appears. Sorting by createdAt desc (the default) surfaces it at the top of
+   * page 1 without a manual refresh; a different sort/filter still finds it on
+   * the next `refresh()` since the whole list is reloaded.
+   */
+  async cloneVendor(vendor: VendorListItem): Promise<Vendor> {
+    this.saving.set(true);
+    try {
+      const res = await lastValueFrom(this.service.cloneVendor(vendor.id));
+      this.snack.open(`Cloned as ${res.data.code}`, 'OK', { duration: 3000 });
+      this.page.set(0);
+      this.sortBy.set('createdAt');
+      this.sortDirection.set('desc');
+      this.reload$.next();
+      return res.data;
+    } catch (err) {
+      throw this.toStoreError(err, 'Unable to clone this vendor', {
+        404: 'This vendor could not be found. It may have been deleted.',
+        409: 'The Industry Category has since been deactivated, or the cloned name/registration number is already taken.',
+      });
+    } finally {
+      this.saving.set(false);
     }
   }
 

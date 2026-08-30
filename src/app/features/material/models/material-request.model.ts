@@ -111,6 +111,7 @@ export interface CreateMaterialRequest {
   unitOfMeasurementId: string;
   criticalityLevel: CriticalityLevel;
   longDescription?: string;
+  specialInstruction?: string;
   isSystem?: boolean;
   isStockItem?: boolean;
   isSerialized?: boolean;

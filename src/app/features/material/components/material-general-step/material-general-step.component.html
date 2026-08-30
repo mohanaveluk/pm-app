@@ -31,6 +31,19 @@
         ></textarea>
         @if (err('longDescription')) { <mat-error>{{ err('longDescription') }}</mat-error> }
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Special Instruction</mat-label>
+        <textarea
+          matInput
+          formControlName="specialInstruction"
+          rows="3"
+          maxlength="4000"
+          placeholder="e.g. Black color 6 inch NB, Schedule 40, 6000mm length"
+          [readonly]="readonly()"
+        ></textarea>
+        @if (err('specialInstruction')) { <mat-error>{{ err('specialInstruction') }}</mat-error> }
+      </mat-form-field>
     </div>
   </section>
 

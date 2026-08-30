@@ -257,6 +257,15 @@ export class MaterialListComponent {
     });
   }
 
+  async cloneMaterial(material: MaterialListItem, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    try {
+      await this.store.cloneMaterial(material);
+    } catch {
+      // Store already surfaced a snackbar with the failure reason.
+    }
+  }
+
   // ── Lifecycle actions ──────────────────────────────────────────────
 
   async setStatus(material: MaterialListItem, status: MaterialStatus, event?: Event): Promise<void> {

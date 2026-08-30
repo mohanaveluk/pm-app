@@ -317,6 +317,12 @@
                   <mat-icon>content_paste</mat-icon> Copy Material Code
                 </button>
 
+                @if (can(PERMISSIONS.MATERIALS_CREATE)) {
+                  <button mat-menu-item (click)="cloneMaterial(m, $event)">
+                    <mat-icon>content_copy</mat-icon> Clone
+                  </button>
+                }
+
                 @if (m.status !== MaterialStatus.ACTIVE && m.status !== MaterialStatus.OBSOLETE && can(PERMISSIONS.MATERIALS_ENABLE)) {
                   <button mat-menu-item (click)="setStatus(m, MaterialStatus.ACTIVE, $event)">
                     <mat-icon>toggle_on</mat-icon> Enable
