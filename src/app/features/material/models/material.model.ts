@@ -123,6 +123,7 @@ export interface Material {
   code: string;
   shortDescription: string;
   longDescription?: string;
+  specialInstruction?: string;
   status: MaterialStatus;
   criticalityLevel: CriticalityLevel;
   isSystem: boolean;
@@ -190,6 +191,7 @@ export interface MaterialListItem {
   code: string;
   shortDescription: string;
   longDescription?: string;
+  specialInstruction?: string;
   materialCategoryId: string;
   materialGroupId: string;
   unitOfMeasurementId: string;

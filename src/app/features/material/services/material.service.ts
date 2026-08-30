@@ -85,4 +85,14 @@ export class MaterialService {
   deleteMaterial(id: string): Observable<MaterialDeleteResponse> {
     return this.http.delete<MaterialDeleteResponse>(`${this.baseUrl}/${id}`);
   }
+
+  /**
+   * POST /materials/:id/clone — server copies every field (descriptions,
+   * category, group, UOM, technical/procurement/inventory/quality/accounting/
+   * safety/logistics data, document URLs) into a new record with a new id,
+   * dguid, and the next sequential code in the same category.
+   */
+  cloneMaterial(id: string): Observable<MaterialResponse> {
+    return this.http.post<MaterialResponse>(`${this.baseUrl}/${id}/clone`, {});
+  }
 }

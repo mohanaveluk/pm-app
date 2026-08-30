@@ -20,6 +20,7 @@ export interface MaterialFormValue {
   general: {
     shortDescription: string;
     longDescription: string;
+    specialInstruction?: string;
     materialCategoryId: string;
     materialGroupId: string;
     unitOfMeasurementId: string;
@@ -118,6 +119,7 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
     unitOfMeasurementId: v.general.unitOfMeasurementId,
     criticalityLevel: v.general.criticalityLevel,
     longDescription: s(v.general.longDescription),
+    specialInstruction: s(v.general.specialInstruction),
     isStockItem: v.general.isStockItem,
     isSerialized: v.general.isSerialized,
     isBatchManaged: v.general.isBatchManaged,
@@ -240,6 +242,7 @@ export function pickMaterialSection(
         unitOfMeasurementId: request.unitOfMeasurementId,
         criticalityLevel: request.criticalityLevel,
         longDescription: request.longDescription,
+        specialInstruction: request.specialInstruction,
         isStockItem: request.isStockItem,
         isSerialized: request.isSerialized,
         isBatchManaged: request.isBatchManaged,
@@ -269,6 +272,7 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
     general: {
       shortDescription: m.shortDescription ?? '',
       longDescription: m.longDescription ?? '',
+      specialInstruction: m.specialInstruction ?? '',
       materialCategoryId: m.materialCategoryId ?? '',
       materialGroupId: m.materialGroupId ?? '',
       unitOfMeasurementId: m.unitOfMeasurementId ?? '',

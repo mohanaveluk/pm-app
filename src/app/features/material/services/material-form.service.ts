@@ -106,6 +106,7 @@ export class MaterialFormService {
       general: this.fb.group({
         shortDescription: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(500)]],
         longDescription: ['', [Validators.maxLength(4000)]],
+        specialInstruction: ['', [Validators.maxLength(4000)]],
         materialCategoryId: ['', [Validators.required]],
         materialGroupId: ['', [Validators.required]],
         unitOfMeasurementId: ['', [Validators.required]],

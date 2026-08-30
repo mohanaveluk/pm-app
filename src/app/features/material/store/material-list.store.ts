@@ -12,7 +12,7 @@ import { MaterialCategoryOption } from '../../material-category/models/material-
 import { MaterialGroupOption } from '../../material-group/models/material-group.model';
 import { UnitOfMeasurementOption } from '../../unit-of-measurement/models/unit-of-measurement.model';
 import {
-  DEFAULT_MATERIAL_FILTER, MaterialFilter, MaterialListItem, MaterialSortField,
+  DEFAULT_MATERIAL_FILTER, Material, MaterialFilter, MaterialListItem, MaterialSortField,
   MaterialStatus, SortDirection,
 } from '../models/material.model';
 import { MaterialQueryParams } from '../models/material-request.model';
@@ -151,6 +151,32 @@ export class MaterialListStore {
       throw this.toStoreError(err, 'Unable to change the material status', {
         400: 'The material is already in that status.',
         409: 'This material is referenced by existing transactions and cannot change status.',
+      });
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /**
+   * Clones a material via POST /materials/:id/clone, then reloads so the new
+   * row appears. Sorting by createdAt desc (the default) surfaces it at the
+   * top of page 1 without a manual refresh; a different sort/filter still
+   * finds it on the next `refresh()` since the whole list is reloaded.
+   */
+  async cloneMaterial(material: MaterialListItem): Promise<Material> {
+    this.saving.set(true);
+    try {
+      const res = await lastValueFrom(this.service.cloneMaterial(material.id));
+      this.snack.open(`Cloned as ${res.data.code}`, 'OK', { duration: 3000 });
+      this.page.set(0);
+      this.sortBy.set('createdAt');
+      this.sortDirection.set('desc');
+      this.reload$.next();
+      return res.data;
+    } catch (err) {
+      throw this.toStoreError(err, 'Unable to clone the material', {
+        404: 'This material could not be found. It may have been deleted.',
+        409: 'The category, group, or unit of measurement has since been deactivated.',
       });
     } finally {
       this.saving.set(false);

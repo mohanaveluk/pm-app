@@ -94,6 +94,20 @@ export class VendorService {
     return this.http.delete<VendorDeleteResponse>(`${this.baseUrl}/${id}`);
   }
 
+  /**
+   * POST /vendors/:id/clone — server copies every column plus all reference
+   * tables (addresses, contacts, bank accounts, certifications, documents,
+   * material mappings, turnovers), each re-keyed with its own new id/dguid.
+   * Evaluation history, performance scores and blacklist requests are NOT
+   * copied — those record events that happened to the source vendor.
+   *
+   * The body is optional; sending {} takes the server's defaults (source name
+   * + " (Copy)", statutory numbers left blank since they must stay unique).
+   */
+  cloneVendor(id: string): Observable<VendorResponse> {
+    return this.http.post<VendorResponse>(`${this.baseUrl}/${id}/clone`, {});
+  }
+
   // ── Status transitions ──────────────────────────────────────────────
 
   /** PATCH /vendors/:id/enable — vendorStatus=ACTIVE, isActive=true. */

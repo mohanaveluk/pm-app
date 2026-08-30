@@ -385,6 +385,15 @@ export class VendorListComponent implements OnInit {
     });
   }
 
+  async cloneVendor(vendor: VendorListItem, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    try {
+      await this.store.cloneVendor(vendor);
+    } catch {
+      // The store already surfaced a snackbar with the failure reason.
+    }
+  }
+
   async setActive(vendor: VendorListItem, activate: boolean, event?: Event): Promise<void> {
     event?.stopPropagation();
     const ref = this.dialog.open(ConfirmDialogComponent, {

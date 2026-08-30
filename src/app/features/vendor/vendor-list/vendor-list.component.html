@@ -519,6 +519,11 @@
       <button mat-menu-item type="button" (click)="copyCode(vendor)">
         <mat-icon>content_copy</mat-icon> Copy Vendor Code
       </button>
+      @if (can(PERMISSIONS.VENDORS_CREATE)) {
+        <button mat-menu-item type="button" (click)="cloneVendor(vendor)">
+          <mat-icon>file_copy</mat-icon> Clone
+        </button>
+      }
 
       <mat-divider />
 
