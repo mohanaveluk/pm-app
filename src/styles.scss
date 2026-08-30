@@ -171,13 +171,19 @@ button mat-spinner {
 }
 
 // The inline search box rendered as the first option of a long mat-select.
-// In a `multiple` select every option gets a checkbox, and clicking the search
-// row would push `undefined` into the value array — so the row is marked
-// disabled in the template and its checkbox is hidden here. The panel lives in
-// the CDK overlay, outside any component's DOM, so this rule has to be global.
+// This row must stay a genuinely enabled mat-option: Angular Material's own
+// stylesheet sets `pointer-events: none` on a `disabled` option, which wins the
+// cascade over any override here (same specificity, injected later) and kills
+// the <input> inside it — typing and clicking both stop working. So the row is
+// never marked `disabled` in the template; instead:
+//   - the pseudo-checkbox `multiple` selects render per option is hidden below,
+//     removing the one clickable target that used to push `undefined` into the
+//     value array;
+//   - the input's own (click)/(keydown) handlers call stopPropagation(), so
+//     interacting with it never reaches mat-option's select-on-click handler.
+// The panel lives in the CDK overlay, outside any component's DOM, so this
+// rule has to be global rather than scoped to a component's stylesheet.
 .mat-mdc-option.select-search-option {
-  opacity: 1;
-  pointer-events: auto;
   cursor: default;
   min-height: 0;
   padding: 6px 10px;
@@ -189,7 +195,6 @@ button mat-spinner {
 
   .mdc-list-item__primary-text {
     width: 100%;
-    opacity: 1;
   }
 
   &:hover,
