@@ -141,7 +141,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Vendor Status</mat-label>
         <mat-select [value]="store.filter().vendorStatus" (selectionChange)="onStatusFilter($event.value)">
-          <mat-option class="select-search-option" disabled>
+          <mat-option class="select-search-option">
             <input
               class="select-search"
               type="text"
@@ -175,7 +175,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Industry Category</mat-label>
         <mat-select [value]="store.filter().industryCategoryId" (selectionChange)="onIndustryFilter($event.value)">
-          <mat-option class="select-search-option" disabled>
+          <mat-option class="select-search-option">
             <input
               class="select-search"
               type="text"
@@ -198,7 +198,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Risk Category</mat-label>
         <mat-select [value]="store.filter().riskCategory" (selectionChange)="onRiskFilter($event.value)">
-          <mat-option class="select-search-option" disabled>
+          <mat-option class="select-search-option">
             <input
               class="select-search"
               type="text"
@@ -221,7 +221,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Classification</mat-label>
         <mat-select [value]="store.filter().vendorClassification" (selectionChange)="onClassificationFilter($event.value)">
-          <mat-option class="select-search-option" disabled>
+          <mat-option class="select-search-option">
             <input
               class="select-search"
               type="text"
@@ -244,7 +244,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Country of Registration</mat-label>
         <mat-select [value]="store.filter().countryOfRegistration" (selectionChange)="onCountryFilter($event.value)">
-          <mat-option class="select-search-option" disabled>
+          <mat-option class="select-search-option">
             <input
               class="select-search"
               type="text"
