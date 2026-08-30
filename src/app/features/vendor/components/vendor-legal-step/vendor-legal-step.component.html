@@ -1,0 +1,86 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>gavel</mat-icon> Registration</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Business Registration Number</mat-label>
+        <input matInput formControlName="businessRegistrationNumber" maxlength="100" [readonly]="readonly()" placeholder="e.g. CN-1234567" />
+        <mat-hint>Commercial registration / incorporation number</mat-hint>
+        @if (err('businessRegistrationNumber', 'Registration number')) {
+          <mat-error>{{ err('businessRegistrationNumber', 'Registration number') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tax Registration Number</mat-label>
+        <input matInput formControlName="taxRegistrationNumber" maxlength="100" [readonly]="readonly()" placeholder="e.g. 100123456700003" />
+        @if (err('taxRegistrationNumber', 'Tax registration number')) {
+          <mat-error>{{ err('taxRegistrationNumber', 'Tax registration number') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Import-Export Code</mat-label>
+        <input matInput formControlName="importExportCode" maxlength="100" [readonly]="readonly()" placeholder="e.g. IEC0912345" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>MSME / SME Registration</mat-label>
+        <input matInput formControlName="msmeSmeRegistration" maxlength="100" [readonly]="readonly()" placeholder="e.g. UDYAM-XX-00-0000000" />
+        <mat-hint>Small-enterprise registration, where applicable</mat-hint>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>receipt_long</mat-icon> Tax Regime</h3>
+    <p class="step-section__hint">
+      Tax regimes vary by country — pick the one this vendor is registered under.
+    </p>
+
+    <mat-radio-group
+      formControlName="taxDocumentType"
+      class="step-toggles"
+      aria-label="Tax registration type"
+    >
+      @for (option of taxTypeOptions; track option.value) {
+        <mat-radio-button [value]="option.value" [disabled]="readonly()" color="primary">
+          {{ option.label }}
+        </mat-radio-button>
+      }
+    </mat-radio-group>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>{{ isOtherTaxType ? 'Specify Tax Registration Type & Document Number' : 'Tax Document Number' }}</mat-label>
+        <input
+          matInput
+          formControlName="taxDocumentNumber"
+          maxlength="100"
+          [readonly]="readonly()"
+          [required]="isOtherTaxType"
+          [placeholder]="isOtherTaxType ? 'e.g. Corporate Income Tax — CIT-99213' : 'e.g. AAACX1234C'"
+        />
+        <mat-hint>
+          @if (isOtherTaxType) {
+            Name the regime here — the API stores a single tax document field.
+          } @else {
+            Statutory document number for the selected regime
+          }
+        </mat-hint>
+        @if (err('taxDocumentNumber', 'Tax document number')) {
+          <mat-error>{{ err('taxDocumentNumber', 'Tax document number') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (otherTypeError) {
+      <p class="step-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        Specify the tax registration type and its document number when "Other" is selected.
+      </p>
+    }
+  </section>
+</div>

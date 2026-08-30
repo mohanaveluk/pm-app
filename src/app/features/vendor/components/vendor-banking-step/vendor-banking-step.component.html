@@ -1,0 +1,159 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Existing accounts (edit / view) ────────────────────────────── -->
+  @if (existingAccounts().length) {
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>account_balance</mat-icon> Recorded Bank Accounts</h3>
+      <p class="step-section__hint">
+        Account numbers are masked. Full details are visible only to users
+        authorised for sensitive vendor data.
+      </p>
+
+      <div class="doc-list">
+        @for (account of existingAccounts(); track account.id) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">account_balance</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name">
+                {{ account.bankName }}
+                @if (account.branch) { <span class="doc-row__sub">· {{ account.branch }}</span> }
+              </div>
+              <div class="doc-row__sub">
+                <span class="masked-value">{{ account.isMasked ? (account.accountNumber || '••••') : mask(account.accountNumber) }}</span>
+                @if (account.currency) { · {{ account.currency }} }
+                @if (account.isPrimary) { · Primary }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ── Primary bank account ───────────────────────────────────────── -->
+  <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>savings</mat-icon> Primary Bank Account</h3>
+      <p class="step-section__hint">
+        Enter the account used for payment. Leave blank to add it later — the bank
+        name is what makes the record valid.
+      </p>
+
+      <div class="step-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Bank Name</mat-label>
+          <input matInput formControlName="bankName" maxlength="255" [readonly]="readonly()" placeholder="e.g. Emirates NBD" />
+          @if (err('bankName', 'Bank name')) { <mat-error>{{ err('bankName', 'Bank name') }}</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Branch</mat-label>
+          <input matInput formControlName="branch" maxlength="255" [readonly]="readonly()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Account Holder Name</mat-label>
+          <input matInput formControlName="accountHolderName" maxlength="255" [readonly]="readonly()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <input matInput formControlName="bankCurrency" maxlength="10" [readonly]="readonly()" placeholder="e.g. AED" />
+          <mat-hint>ISO 4217 code</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Account Number</mat-label>
+          <input
+            matInput
+            [type]="accountInputType"
+            formControlName="accountNumber"
+            maxlength="100"
+            autocomplete="off"
+            [readonly]="readonly()"
+          />
+          <button
+            matSuffix
+            mat-icon-button
+            type="button"
+            [attr.aria-label]="revealTyped() ? 'Hide account number' : 'Show account number'"
+            [matTooltip]="revealTyped() ? 'Hide' : 'Show'"
+            (click)="toggleReveal()"
+          >
+            <mat-icon>{{ revealTyped() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-hint>Letters, digits and hyphens only</mat-hint>
+          @if (err('accountNumber', 'Account number')) { <mat-error>{{ err('accountNumber', 'Account number') }}</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>IBAN</mat-label>
+          <input
+            matInput
+            [type]="accountInputType"
+            formControlName="iban"
+            maxlength="50"
+            autocomplete="off"
+            [readonly]="readonly()"
+          />
+          @if (err('iban', 'IBAN')) { <mat-error>{{ err('iban', 'IBAN') }}</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>SWIFT / BIC</mat-label>
+          <input matInput formControlName="swiftCode" maxlength="20" [readonly]="readonly()" placeholder="e.g. EBILAEAD" />
+          @if (err('swiftCode', 'SWIFT code')) { <mat-error>{{ err('swiftCode', 'SWIFT code') }}</mat-error> }
+        </mat-form-field>
+      </div>
+  </section>
+
+  <!-- ── Payment terms (vendor-level scalars) ───────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>payments</mat-icon> Payment Terms</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Payment Terms</mat-label>
+        <mat-select formControlName="paymentTerms" [disabled]="readonly()">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search payment terms…"
+              aria-label="Search payment terms"
+              [ngModel]="optionSearch.term('paymentTerms')"
+              (ngModelChange)="optionSearch.set('paymentTerms', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">—</mat-option>
+          @for (option of optionSearch.options('paymentTerms', paymentTermsOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Preferred Payment Method</mat-label>
+        <mat-select formControlName="preferredPaymentMethod" [disabled]="readonly()">
+          <mat-option [value]="null">—</mat-option>
+          @for (option of paymentMethodOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Payment Milestones</mat-label>
+        <textarea
+          matInput
+          formControlName="paymentMilestones"
+          rows="2"
+          [readonly]="readonly()"
+          placeholder="e.g. 30% advance, 60% on delivery, 10% on commissioning"
+        ></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,402 @@
+// Read-only vendor detail: summary header, badge row, then one tab per child
+// collection. Deliberately not a disabled form — reading a vendor record and
+// editing one are different jobs.
+
+:host {
+  display: block;
+}
+
+.vv-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px;
+}
+
+// ── Header ───────────────────────────────────────────────────────────
+
+.vv-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  align-items: start;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__main {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  &__eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8098b8;
+  }
+
+  &__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin: 2px 0 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  &__trade {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #8098b8;
+  }
+
+  &__badges {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.vv-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.vv-score {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 11px;
+  background: #e8f0fe;
+  color: #1a56c4;
+  border: 1px solid #b6ccf6;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.vv-danger {
+  color: var(--error);
+
+  .mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Banners & notes ──────────────────────────────────────────────────
+
+.vv-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  font-size: 0.84rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  &--danger {
+    background: #fdecea;
+    color: #b3261e;
+    border-left: 3px solid #b3261e;
+  }
+}
+
+.vv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: #f1f3f5;
+  color: #5f6b7a;
+  font-size: 0.82rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// ── Tabs & cards ─────────────────────────────────────────────────────
+
+.vv-tabs {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  padding: 0 16px 18px;
+}
+
+.vv-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.vv-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  background: var(--body-bg);
+
+  &__title {
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5a7a9e;
+  }
+}
+
+.vv-facts {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 0.85rem;
+
+  div {
+    display: contents;
+  }
+
+  dt {
+    color: #8098b8;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  &--wide {
+    padding-top: 14px;
+  }
+}
+
+// ── Lists ────────────────────────────────────────────────────────────
+
+.vv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.vv-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--body-bg);
+
+  &__icon {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  &__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+
+  &__sub {
+    font-size: 0.76rem;
+    color: #8098b8;
+    overflow-wrap: anywhere;
+  }
+}
+
+.vv-masked {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em;
+}
+
+.vv-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #e8f0fe;
+  color: #1a56c4;
+  border: 1px solid #b6ccf6;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--warn   { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--danger { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+.vv-empty {
+  padding: 32px 12px;
+  text-align: center;
+  color: #8098b8;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+// ── Timeline ─────────────────────────────────────────────────────────
+
+.vv-timeline {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0 0 0 8px;
+
+  &__item {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    padding: 0 0 18px 14px;
+    border-left: 2px solid var(--border);
+
+    &:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+  }
+
+  &__marker {
+    position: absolute;
+    left: -7px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--card);
+  }
+
+  &__body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+  }
+
+  &__comment {
+    margin: 6px 0 0;
+    font-size: 0.83rem;
+  }
+}
+
+// ── States ───────────────────────────────────────────────────────────
+
+.vv-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #8098b8;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Status vocabulary (shared with the list) ─────────────────────────
+
+.status-chip,
+.risk-chip,
+.class-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 11px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-chip {
+  &--active      { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--inactive    { background: #f1f3f5; color: #5f6b7a; border-color: #d8dee6; }
+  &--blacklisted { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+  &--evaluation  { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+}
+
+.risk-chip {
+  &--low    { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--medium { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--high   { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+.class-chip {
+  &--preferred   { background: #e8f0fe; color: #1a56c4; border-color: #b6ccf6; }
+  &--approved    { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--conditional { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--rejected    { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────
+
+@media (max-width: 720px) {
+  .vv-header {
+    grid-template-columns: 1fr;
+  }
+
+  .vv-facts {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+
+    dt {
+      font-size: 0.74rem;
+    }
+
+    dd {
+      margin-bottom: 8px;
+    }
+  }
+}

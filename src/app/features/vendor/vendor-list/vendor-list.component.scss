@@ -1,0 +1,369 @@
+// Vendor Master list. Shares the visual language of the other master-data
+// screens (Material Category, Department) — same header rhythm, same state
+// blocks, same chip vocabulary.
+
+:host {
+  display: block;
+}
+
+.vl-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+// ── Header ───────────────────────────────────────────────────────────
+
+// Title block only — the action buttons sit in the toolbar row beneath it, the
+// same arrangement the Material and Department masters use.
+.vl-header {
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+    //max-width: 72ch;
+  }
+}
+
+// ── Toolbar & filters ────────────────────────────────────────────────
+
+.vl-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 60px;
+  flex-wrap: wrap;
+
+  button[mat-flat-button],
+  button[mat-stroked-button] {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.vl-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  &__field {
+    flex: 1 1 380px;
+    min-width: 240px;
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+}
+
+.vl-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.vl-count {
+  font-size: 0.82rem;
+  color: #8098b8;
+  white-space: nowrap;
+}
+
+.vl-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px 14px;
+  align-items: center;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__toggle {
+    padding: 0 0 14px;
+  }
+}
+
+.vl-column-menu .vl-column-check {
+  pointer-events: none;
+}
+
+// ── Table ────────────────────────────────────────────────────────────
+
+.vl-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  // Wide vendor tables scroll inside their own container rather than pushing
+  // the page sideways.
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.vl-table {
+  width: 100%;
+  min-width: 900px;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5a7a9e;
+    white-space: nowrap;
+  }
+
+  td.mat-mdc-cell {
+    font-size: 0.86rem;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+.vl-page--compact .vl-table td.mat-mdc-cell {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.vl-row {
+  cursor: pointer;
+  transition: background var(--ease);
+
+  &:hover {
+    background: rgba(25, 118, 210, 0.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+}
+
+.vl-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.vl-name {
+  font-weight: 500;
+}
+
+.vl-subtext {
+  display: block;
+  font-size: 0.72rem;
+  color: #8098b8;
+}
+
+// Material categories: a vendor can supply many, so the cell shows the first
+// couple and folds the remainder into a +n chip rather than wrapping the row.
+.vl-cats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.vl-cat {
+  display: inline-block;
+  max-width: 140px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--body-bg);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+
+  &--more {
+    background: #e8f0fe;
+    border-color: #b6ccf6;
+    color: #1a56c4;
+    font-weight: 600;
+    cursor: default;
+  }
+}
+
+.vl-danger {
+  color: var(--error);
+
+  .mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Status vocabulary ────────────────────────────────────────────────
+// Status is never conveyed by colour alone — every chip carries its label.
+
+.status-chip,
+.risk-chip,
+.class-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 11px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-chip {
+  &--active      { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--inactive    { background: #f1f3f5; color: #5f6b7a; border-color: #d8dee6; }
+  &--blacklisted { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+  &--evaluation  { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+}
+
+.risk-chip {
+  &--low    { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--medium { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--high   { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+// A requested-but-unapproved status change. Deliberately distinct from the
+// settled status chips — striped, not solid — so a pending blacklist can never
+// be mistaken for an applied one at a glance.
+.pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 1px 8px 1px 5px;
+  border-radius: 11px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #8a4b00;
+  border: 1px dashed #e0a458;
+  background: repeating-linear-gradient(
+    45deg,
+    #fff4e5,
+    #fff4e5 6px,
+    #ffe9cc 6px,
+    #ffe9cc 12px
+  );
+
+  &__icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.class-chip {
+  &--preferred   { background: #e8f0fe; color: #1a56c4; border-color: #b6ccf6; }
+  &--approved    { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--conditional { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--rejected    { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+// ── States ───────────────────────────────────────────────────────────
+
+.vl-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #8098b8;
+  }
+
+  &__title {
+    margin: 4px 0 0;
+    font-weight: 600;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #8098b8;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.vl-skeleton {
+  width: 100%;
+  border-collapse: collapse;
+
+  td {
+    padding: 12px 16px;
+  }
+
+  &__bar {
+    display: block;
+    height: 14px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 37%, #eef2f7 63%);
+    background-size: 400% 100%;
+    animation: vl-shimmer 1.4s ease infinite;
+  }
+}
+
+@keyframes vl-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-skeleton__bar {
+    animation: none;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────
+
+@media (max-width: 720px) {
+  .vl-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+
+  .vl-search {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__field {
+      max-width: none;
+    }
+  }
+}
+
+@media print {
+  .vl-toolbar,
+  .vl-search,
+  .vl-filters,
+  mat-paginator,
+  .mat-column-actions {
+    display: none !important;
+  }
+
+  .vl-table-wrap {
+    overflow: visible;
+    border: none;
+  }
+}

@@ -1,0 +1,414 @@
+// Vendor creation and editing workspace. Seeded from the Material workspace
+// stylesheet so the two wizards share one visual language, then extended with
+// the review panel and the API-limitation banners this module needs.
+
+.vw-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+// ── Persistent summary header ────────────────────────────────────────
+
+.vw-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8098b8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin: 2px 0 0;
+    font-size: 1.15rem;
+  }
+
+  &__desc {
+    font-weight: 500;
+    color: #0d2137;
+  }
+
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 0;
+
+    dt {
+      font-size: 0.64rem;
+      color: #8098b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    dd {
+      margin: 0;
+      font-size: 0.84rem;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+.vw-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+
+  &--new {
+    color: #8098b8;
+    font-size: 0.82rem;
+    padding: 2px 8px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+}
+
+.vw-progressbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vw-progress {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #5a7a9e;
+}
+
+// Persistence indicator — real, not decorative: each step is written to the
+// server as the user advances.
+.vw-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--success);
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  &--pending {
+    color: #8098b8;
+  }
+}
+
+// ── Status chips ─────────────────────────────────────────────────────
+
+.status-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  &--active   { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+  &--obsolete { background: #fbe9e7; color: #c62828; }
+  &--new      { background: #e3f2fd; color: #1565c0; }
+}
+
+// ── Stepper ──────────────────────────────────────────────────────────
+
+.vw-stepper {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--body-bg);
+
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 16px;
+  }
+
+  // Let the nine headers wrap instead of squeezing on narrow screens.
+  ::ng-deep .mat-horizontal-stepper-header-container {
+    flex-wrap: wrap;
+    background: var(--card);
+  }
+
+  ::ng-deep .mat-horizontal-stepper-header {
+    padding: 12px 14px;
+    .mat-step-icon {
+      margin-top: 12px;
+    }
+    .mat-step-label {
+      padding: 4px 0 0 0 !important;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  // Below this width the header row becomes unusable, so hide the rail and
+  // rely on the "Step N of 9 — Title" line plus the footer buttons.
+  .vw-stepper ::ng-deep .mat-horizontal-stepper-header-container {
+    display: none;
+  }
+
+  .vw-progress {
+    font-weight: 600;
+    color: #0d2137;
+  }
+}
+
+// ── Footer ───────────────────────────────────────────────────────────
+
+.vw-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  box-shadow: 0 -2px 8px rgba(13, 33, 55, 0.06);
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  button mat-spinner {
+    display: inline-block;
+    margin-right: 8px;
+  }
+}
+
+// ── States ───────────────────────────────────────────────────────────
+
+.vw-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 72px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Success screen ───────────────────────────────────────────────────
+
+.vw-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 48px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    color: var(--success);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 28px;
+    margin: 18px 0 8px;
+    text-align: left;
+
+    @media (max-width: 760px) {
+      grid-template-columns: 1fr;
+    }
+
+    dt {
+      font-size: 0.66rem;
+      color: #8098b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 3px;
+    }
+
+    dd {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+}
+
+@media print {
+  .vw-footer,
+  .vw-stepper ::ng-deep .mat-horizontal-stepper-header-container {
+    display: none !important;
+  }
+}
+
+// ── Banners ──────────────────────────────────────────────────────────
+// Used where the API's shape constrains what the form can do, so the limit is
+// stated up front rather than discovered through a silent no-op.
+
+.vw-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(25, 118, 210, 0.08);
+  color: var(--primary);
+  font-size: 0.83rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  &--warn {
+    background: #fff8e1;
+    color: #8a6100;
+  }
+}
+
+// ── Review before submit ─────────────────────────────────────────────
+
+.vw-review {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  padding: 18px 20px;
+
+  &__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  &__hint {
+    margin: 4px 0 16px;
+    font-size: 0.84rem;
+    color: #8098b8;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--body-bg);
+
+    &--error {
+      border-color: #f3b8b3;
+      background: #fdecea;
+    }
+  }
+
+  &__icon {
+    color: #1e7e34;
+    flex-shrink: 0;
+  }
+
+  &__row--error &__icon {
+    color: var(--error);
+  }
+
+  &__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__label {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  &__status {
+    font-size: 0.78rem;
+    color: #8098b8;
+  }
+}
+
+.vw-success__note {
+  max-width: 58ch;
+  margin: 0 auto 8px;
+  font-size: 0.88rem;
+  color: #5f6b7a;
+}
+
+// Status vocabulary, matching the Vendor list.
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 11px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+
+  &--active      { background: #e6f4ea; color: #1e7e34; border-color: #b7dfc4; }
+  &--inactive    { background: #f1f3f5; color: #5f6b7a; border-color: #d8dee6; }
+  &--blacklisted { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+  &--evaluation  { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--new         { background: #e8f0fe; color: #1a56c4; border-color: #b6ccf6; }
+}

@@ -1,0 +1,90 @@
+<div class="vfu">
+  <div class="vfu__head">
+    <mat-icon class="vfu__icon">description</mat-icon>
+    <div class="vfu__meta">
+      <div class="vfu__label">{{ label() }}</div>
+      @if (description()) { <div class="vfu__hint">{{ description() }}</div> }
+    </div>
+  </div>
+
+  <!-- Each slot owns its own input; the slot decides the destination. -->
+  <input
+    #fileInput
+    type="file"
+    hidden
+    aria-hidden="true"
+    [accept]="accept()"
+    (change)="onFileSelected($event)"
+  />
+
+  @if (uploading()) {
+    <div class="vfu__uploading" aria-live="polite">
+      <mat-spinner diameter="22" />
+      <span>Uploading…</span>
+    </div>
+  } @else if (url) {
+    <div class="vfu__file">
+      <mat-icon class="vfu__file-icon">check_circle</mat-icon>
+      <div class="vfu__file-meta">
+        <div class="vfu__file-name" [matTooltip]="url">{{ displayName }}</div>
+        <div class="vfu__file-sub">
+          {{ fileType }}
+          @if (sizeLabel) { · {{ sizeLabel }} }
+          @if (lastUpload(); as up) { · Uploaded {{ up.uploadedAt | date: 'short' }} } @else { · Uploaded }
+        </div>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        [matTooltip]="isPreviewable ? 'Preview' : 'Open'"
+        [attr.aria-label]="'Open ' + label()"
+        (click)="preview()"
+      >
+        <mat-icon>{{ isPreviewable ? 'visibility' : 'open_in_new' }}</mat-icon>
+      </button>
+
+      @if (!readonly()) {
+        <button
+          mat-icon-button
+          type="button"
+          matTooltip="Replace"
+          [attr.aria-label]="'Replace ' + label()"
+          (click)="fileInput.click()"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          color="warn"
+          matTooltip="Remove"
+          [attr.aria-label]="'Remove ' + label()"
+          (click)="remove()"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @else if (!readonly()) {
+    <div
+      class="vfu__drop"
+      [class.vfu__drop--active]="dragActive()"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="'Upload ' + label()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()"
+      (keydown.enter)="fileInput.click()"
+      (keydown.space)="fileInput.click(); $event.preventDefault()"
+    >
+      <mat-icon>upload_file</mat-icon>
+      <p class="vfu__drop-title">Drop file or choose</p>
+      <p class="vfu__drop-hint">{{ accept() }} · max {{ maxFileSizeMb }} MB</p>
+    </div>
+  } @else {
+    <p class="vfu__empty">Not attached.</p>
+  }
+</div>

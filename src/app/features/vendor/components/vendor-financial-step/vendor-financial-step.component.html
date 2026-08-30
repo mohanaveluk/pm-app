@@ -1,0 +1,153 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Annual turnover ────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>trending_up</mat-icon> Annual Turnover</h3>
+    <p class="step-section__hint">
+      Declared turnover per financial year. A row is saved only when it has a
+      year, an amount and a currency.
+    </p>
+
+    <div formArrayName="turnovers">
+      @for (row of turnovers.controls; track $index) {
+        <div class="repeat-row" [formGroupName]="$index">
+          <div class="repeat-row__head">
+            <span>Year {{ $index + 1 }}</span>
+            @if (!readonly() && turnovers.length > 1) {
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Remove this year"
+                [attr.aria-label]="'Remove turnover row ' + ($index + 1)"
+                (click)="removeTurnover($index)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Financial Year</mat-label>
+            <input matInput type="number" formControlName="financialYear" [readonly]="readonly()" placeholder="e.g. 2025" />
+            @if (rowErr($index, 'financialYear', 'Financial year')) {
+              <mat-error>{{ rowErr($index, 'financialYear', 'Financial year') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Turnover</mat-label>
+            <input matInput type="number" min="0" formControlName="turnover" [readonly]="readonly()" />
+            @if (rowErr($index, 'turnover', 'Turnover')) {
+              <mat-error>{{ rowErr($index, 'turnover', 'Turnover') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Currency</mat-label>
+            <input matInput formControlName="currency" maxlength="10" [readonly]="readonly()" placeholder="e.g. USD" />
+            <mat-hint>Defaults to the currency below</mat-hint>
+          </mat-form-field>
+
+          <mat-checkbox formControlName="isAudited" color="primary" [disabled]="readonly()">
+            Audited
+          </mat-checkbox>
+        </div>
+      }
+    </div>
+
+    @if (!readonly()) {
+      <button mat-stroked-button type="button" class="repeat-add" (click)="addTurnover()">
+        <mat-icon>add</mat-icon> Add Year
+      </button>
+    }
+  </section>
+
+  <!-- ── Commercial terms ───────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>payments</mat-icon> Credit &amp; Commercial Terms</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" maxlength="10" [readonly]="readonly()" placeholder="e.g. USD" />
+        <mat-hint>ISO 4217 code used for credit and pricing</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Credit Limit Requested</mat-label>
+        <input matInput type="number" min="0" formControlName="creditLimitRequested" [readonly]="readonly()" />
+        @if (err('creditLimitRequested', 'Credit limit')) {
+          <mat-error>{{ err('creditLimitRequested', 'Credit limit') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Credit Rating</mat-label>
+        <input matInput formControlName="creditRating" maxlength="50" [readonly]="readonly()" placeholder="e.g. A- (Dun &amp; Bradstreet)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Price Structure / Discount Terms</mat-label>
+        <textarea matInput formControlName="priceStructure" rows="2" [readonly]="readonly()" placeholder="e.g. Rate contract with quarterly price revision"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Discount Terms</mat-label>
+        <textarea matInput formControlName="discountTerms" rows="2" [readonly]="readonly()" placeholder="e.g. 5% on orders above USD 250,000"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Contract Reference Numbers</mat-label>
+        <mat-chip-grid #contractGrid [disabled]="readonly()">
+          @for (reference of contractReferences; track reference) {
+            <mat-chip-row (removed)="removeContractReference(reference)" [removable]="!readonly()">
+              {{ reference }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + reference">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="Type a reference and press Enter"
+            [matChipInputFor]="contractGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addContractReference($event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Insurance Coverage</mat-label>
+        <textarea matInput formControlName="insuranceCoverage" rows="2" [readonly]="readonly()" placeholder="e.g. Public liability USD 5M, workmen compensation as per local law"></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Audited financial statements ───────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>upload_file</mat-icon> Audited Financial Statements</h3>
+
+    <div class="doc-slot-grid">
+      <app-vendor-file-upload
+        [control]="control('auditedFinancialStatementsUrl')"
+        label="Audited Financial Statements"
+        description="Latest audited accounts"
+        [readonly]="readonly()"
+      />
+
+      @for (row of turnovers.controls; track $index) {
+        @if (turnoverGroup($index).get('financialYear')?.value) {
+          <app-vendor-file-upload
+            [control]="turnoverStatementControl($index)"
+            [label]="'Statement — ' + turnoverGroup($index).get('financialYear')?.value"
+            description="Financial statement for this year"
+            [readonly]="readonly()"
+          />
+        }
+      }
+    </div>
+  </section>
+</div>
