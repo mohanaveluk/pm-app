@@ -1,0 +1,564 @@
+<div class="vl-page" [class.vl-page--compact]="compactDensity()">
+
+  <!-- ── Header: title only. Actions live in the toolbar below, matching ──
+       the Material, Department and Category masters. -->
+  <div class="vl-header">
+    <div>
+      <h1>Vendor Master</h1>
+      <p>Manage suppliers, manufacturers, contractors and service providers across the organization.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="vl-toolbar">
+    @if (can(PERMISSIONS.VENDORS_CREATE)) {
+      <button mat-flat-button color="primary" type="button" (click)="createVendor()">
+        <mat-icon>add</mat-icon> New Vendor
+      </button>
+    }
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="store.refresh()"
+      [disabled]="store.loading()"
+      matTooltip="Reload, keeping filters and paging"
+    >
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.VENDORS_EXPORT)) {
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item type="button" (click)="exportCsv()">
+          <mat-icon>description</mat-icon> Export CSV
+        </button>
+        <button mat-menu-item type="button" (click)="exportComingSoon('Export to Excel')">
+          <mat-icon>grid_on</mat-icon> Export Excel
+        </button>
+        <button mat-menu-item type="button" (click)="print()">
+          <mat-icon>print</mat-icon> Print
+        </button>
+      </mat-menu>
+    }
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="toggleFilters()"
+      [matBadge]="store.hasActiveFilters() ? '!' : null"
+      matBadgeSize="small"
+      matBadgeColor="primary"
+    >
+      <mat-icon>filter_alt</mat-icon> Filters
+    </button>
+
+    <span class="vl-toolbar__spacer"></span>
+
+    <button
+      mat-icon-button
+      type="button"
+      matTooltip="Column Settings"
+      aria-label="Column settings"
+      [matMenuTriggerFor]="columnMenu"
+    >
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu" class="vl-column-menu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item type="button" (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item type="button" (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button
+      mat-icon-button
+      type="button"
+      [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'"
+      aria-label="Toggle row density"
+      (click)="toggleDensity()"
+    >
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Search sits outside the collapsible panel — it's the most-used control. -->
+  <div class="vl-search">
+    <mat-form-field appearance="outline" class="vl-search__field">
+      <mat-label>Search by code, name, trade name, email or registration number…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        type="search"
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search vendors"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" aria-label="Clear search" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button type="button" (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Clear Filters
+      </button>
+    }
+
+    <span class="vl-toolbar__spacer"></span>
+    <span class="vl-count">{{ store.totalCount() }} vendor{{ store.totalCount() === 1 ? '' : 's' }}</span>
+  </div>
+
+  @if (showFilters()) {
+    <section class="vl-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Vendor Type</mat-label>
+        <mat-select [value]="store.filter().vendorType" (selectionChange)="onTypeFilter($event.value)">
+          <mat-option [value]="null">All types</mat-option>
+          @for (option of typeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Vendor Status</mat-label>
+        <mat-select [value]="store.filter().vendorStatus" (selectionChange)="onStatusFilter($event.value)">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search statuses…"
+              aria-label="Search vendor statuses"
+              [ngModel]="filterSearch('status')"
+              (ngModelChange)="setFilterSearch('status', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">All statuses</mat-option>
+          @for (option of filterOptions('status', statusOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Approval Pending</mat-label>
+        <mat-select [value]="store.filter().pendingStatusChange" (selectionChange)="onPendingFilter($event.value)">
+          <mat-option [value]="null">Any</mat-option>
+          @for (option of pendingOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Blacklist requests awaiting a manager decision</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Industry Category</mat-label>
+        <mat-select [value]="store.filter().industryCategoryId" (selectionChange)="onIndustryFilter($event.value)">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search categories…"
+              aria-label="Search industry categories"
+              [ngModel]="filterSearch('industry')"
+              (ngModelChange)="setFilterSearch('industry', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">All categories</mat-option>
+          @for (category of filteredIndustryCategories(); track category.id) {
+            <mat-option [value]="category.id">{{ category.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Risk Category</mat-label>
+        <mat-select [value]="store.filter().riskCategory" (selectionChange)="onRiskFilter($event.value)">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search risk levels…"
+              aria-label="Search risk levels"
+              [ngModel]="filterSearch('risk')"
+              (ngModelChange)="setFilterSearch('risk', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">All risk levels</mat-option>
+          @for (option of filterOptions('risk', riskOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Classification</mat-label>
+        <mat-select [value]="store.filter().vendorClassification" (selectionChange)="onClassificationFilter($event.value)">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search classifications…"
+              aria-label="Search classifications"
+              [ngModel]="filterSearch('classification')"
+              (ngModelChange)="setFilterSearch('classification', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">All classifications</mat-option>
+          @for (option of filterOptions('classification', classificationOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country of Registration</mat-label>
+        <mat-select [value]="store.filter().countryOfRegistration" (selectionChange)="onCountryFilter($event.value)">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search countries…"
+              aria-label="Search countries"
+              [ngModel]="filterSearch('country')"
+              (ngModelChange)="setFilterSearch('country', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">All countries</mat-option>
+          @for (country of filteredCountries(); track country.code) {
+            <mat-option [value]="country.code">{{ country.flag }} {{ country.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Availability</mat-label>
+        <mat-select [value]="store.filter().isActive" (selectionChange)="onActiveFilter($event.value)">
+          <mat-option [value]="null">Active &amp; inactive</mat-option>
+          <mat-option [value]="true">Active only</mat-option>
+          <mat-option [value]="false">Inactive only</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-slide-toggle
+        class="vl-filters__toggle"
+        color="primary"
+        [checked]="store.filter().includeBlacklisted"
+        (change)="onIncludeBlacklisted($event.checked)"
+      >
+        Include blacklisted
+      </mat-slide-toggle>
+    </section>
+  }
+
+  <!-- ── States ─────────────────────────────────────────────────────── -->
+  @if (store.loading()) {
+    <div class="vl-table-wrap" aria-busy="true" aria-label="Loading vendors">
+      <table class="vl-skeleton">
+        @for (row of skeletonRows; track $index) {
+          <tr><td><span class="vl-skeleton__bar"></span></td></tr>
+        }
+      </table>
+      <p class="vl-state__hint">Loading vendors…</p>
+    </div>
+  } @else if (store.error()) {
+    <div class="vl-state vl-state--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p class="vl-state__title">Unable to load vendors</p>
+      <p class="vl-state__hint">{{ store.error() }}</p>
+      <button mat-stroked-button type="button" (click)="store.refresh()">
+        <mat-icon>refresh</mat-icon> Retry
+      </button>
+    </div>
+  } @else if (store.isEmpty()) {
+    @if (store.hasActiveFilters()) {
+      <div class="vl-state">
+        <mat-icon>search_off</mat-icon>
+        <p class="vl-state__title">No matching vendors</p>
+        <p class="vl-state__hint">No vendor matches the current search and filters.</p>
+        <button mat-stroked-button type="button" (click)="resetFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Clear Filters
+        </button>
+      </div>
+    } @else {
+      <div class="vl-state">
+        <mat-icon>storefront</mat-icon>
+        <p class="vl-state__title">No vendors found</p>
+        <p class="vl-state__hint">Create your first vendor to begin managing your supplier network.</p>
+        @if (can(PERMISSIONS.VENDORS_CREATE)) {
+          <button mat-raised-button color="primary" type="button" (click)="createVendor()">
+            <mat-icon>add</mat-icon> New Vendor
+          </button>
+        }
+      </div>
+    }
+  } @else {
+
+    <!-- ── Table ────────────────────────────────────────────────────── -->
+    <div class="vl-table-wrap">
+      <table
+        mat-table
+        matSort
+        [dataSource]="store.vendors()"
+        [matSortActive]="store.sortBy()"
+        [matSortDirection]="store.sortDirection()"
+        (matSortChange)="onSortChange($event)"
+        [trackBy]="trackByVendorId"
+        class="vl-table"
+      >
+        <ng-container matColumnDef="actions" sticky>
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let v">
+            <button mat-icon-button type="button" matTooltip="View" (click)="viewVendor(v); $event.stopPropagation()">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            @if (can(PERMISSIONS.VENDORS_UPDATE)) {
+              <button mat-icon-button type="button" matTooltip="Edit" (click)="editVendor(v, $event)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="rowMenu"
+              [matMenuTriggerData]="{ vendor: v }"
+              matTooltip="More actions"
+              aria-label="More actions"
+              (click)="$event.stopPropagation()"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Vendor Code</th>
+          <td mat-cell *matCellDef="let v"><span class="vl-code">{{ v.code }}</span></td>
+        </ng-container>
+
+        <ng-container matColumnDef="vendorName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorName">Vendor Name</th>
+          <td mat-cell *matCellDef="let v">
+            <div class="vl-name">{{ v.vendorName }}</div>
+            @if (v.parentCompanyName) {
+              <div class="vl-subtext">Subsidiary of {{ v.parentCompanyName }}</div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tradeName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeName">Trade Name</th>
+          <td mat-cell *matCellDef="let v">{{ v.tradeName || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="vendorType">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorType">Vendor Type</th>
+          <td mat-cell *matCellDef="let v">{{ label(v.vendorType) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="productCategories">
+          <th mat-header-cell *matHeaderCellDef>Material Categories</th>
+          <td mat-cell *matCellDef="let v">
+            @if (v.productCategories?.length) {
+              <!-- A vendor can supply many categories; the first few are shown
+                   and the rest collapse into a +n chip so rows stay one line. -->
+              <span class="vl-cats">
+                @for (name of visibleCategories(v.productCategories); track name) {
+                  <span class="vl-cat">{{ name }}</span>
+                }
+                @if (hiddenCategoryCount(v.productCategories); as extra) {
+                  <span
+                    class="vl-cat vl-cat--more"
+                    [matTooltip]="v.productCategories.join(', ')"
+                  >+{{ extra }}</span>
+                }
+              </span>
+            } @else { — }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="countryOfRegistration">
+          <th mat-header-cell *matHeaderCellDef>Country</th>
+          <td mat-cell *matCellDef="let v">{{ country(v.countryOfRegistration) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="primaryContactPerson">
+          <th mat-header-cell *matHeaderCellDef>Primary Contact</th>
+          <td mat-cell *matCellDef="let v">{{ v.primaryContactPerson || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let v">{{ v.email || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="mobileNumber">
+          <th mat-header-cell *matHeaderCellDef>Mobile</th>
+          <td mat-cell *matCellDef="let v">{{ v.mobileNumber || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="vendorStatus">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorStatus">Status</th>
+          <td mat-cell *matCellDef="let v">
+            <span [class]="statusClass(v.vendorStatus)">{{ label(v.vendorStatus) }}</span>
+
+            <!-- A requested blacklisting has not been applied yet: the settled
+                 status above is still the truth, so the pending state is shown
+                 as a separate badge rather than replacing it. -->
+            @if (v.pendingStatusChange) {
+              <span
+                class="pending-chip"
+                [matTooltip]="pendingTooltip(v.pendingStatusChange)"
+                role="status"
+              >
+                <mat-icon class="pending-chip__icon">hourglass_top</mat-icon>
+                {{ label(v.pendingStatusChange) }}
+              </span>
+            }
+
+            @if (!v.isActive && v.vendorStatus !== VendorStatus.INACTIVE && v.vendorStatus !== VendorStatus.BLACKLISTED) {
+              <span class="vl-subtext" matTooltip="Not yet available for transactions">Not selectable</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="riskCategory">
+          <th mat-header-cell *matHeaderCellDef>Risk</th>
+          <td mat-cell *matCellDef="let v">
+            @if (v.riskCategory) {
+              <span [class]="riskClass(v.riskCategory)">{{ label(v.riskCategory) }}</span>
+            } @else { — }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="vendorClassification">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorClassification">Classification</th>
+          <td mat-cell *matCellDef="let v">
+            @if (v.vendorClassification) {
+              <span [class]="classificationClass(v.vendorClassification)">{{ label(v.vendorClassification) }}</span>
+            } @else { — }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="createdAt">Created Date</th>
+          <td mat-cell *matCellDef="let v">{{ v.createdAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="updatedAt">Updated Date</th>
+          <td mat-cell *matCellDef="let v">{{ v.updatedAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns()"
+          class="vl-row"
+          tabindex="0"
+          (click)="viewVendor(row)"
+          (keydown.enter)="viewVendor(row)"
+        ></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="store.totalCount()"
+      [pageIndex]="store.page()"
+      [pageSize]="store.pageSize()"
+      [pageSizeOptions]="[10, 20, 50, 100]"
+      showFirstLastButtons
+      (page)="onPageChange($event)"
+    />
+  }
+
+  <!-- Row overflow menu, shared by every row. -->
+  <mat-menu #rowMenu="matMenu">
+    <ng-template matMenuContent let-vendor="vendor">
+      <button mat-menu-item type="button" (click)="viewVendor(vendor)">
+        <mat-icon>visibility</mat-icon> View Details
+      </button>
+      @if (can(PERMISSIONS.VENDORS_UPDATE)) {
+        <button mat-menu-item type="button" (click)="editVendor(vendor)">
+          <mat-icon>edit</mat-icon> Edit Vendor
+        </button>
+      }
+      <button mat-menu-item type="button" (click)="copyCode(vendor)">
+        <mat-icon>content_copy</mat-icon> Copy Vendor Code
+      </button>
+
+      <mat-divider />
+
+      <!-- Only one status-change request can be in flight; the API rejects a
+           second with 409, so the actions are disabled while one is pending. -->
+      @if (vendor.pendingStatusChange) {
+        <button mat-menu-item type="button" disabled>
+          <mat-icon>hourglass_top</mat-icon>
+          {{ label(vendor.pendingStatusChange) }} — awaiting approval
+        </button>
+      } @else if (vendor.vendorStatus === VendorStatus.BLACKLISTED) {
+        @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
+          <button mat-menu-item type="button" (click)="removeBlacklist(vendor)">
+            <mat-icon>restart_alt</mat-icon> Request Removal from Blacklist
+          </button>
+        }
+      } @else {
+        @if (!vendor.isActive && can(PERMISSIONS.VENDORS_ENABLE)) {
+          <button mat-menu-item type="button" (click)="setActive(vendor, true)">
+            <mat-icon>toggle_on</mat-icon> Enable
+          </button>
+        }
+        @if (vendor.isActive && can(PERMISSIONS.VENDORS_DISABLE)) {
+          <button mat-menu-item type="button" (click)="setActive(vendor, false)">
+            <mat-icon>toggle_off</mat-icon> Disable
+          </button>
+        }
+        @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
+          <button mat-menu-item type="button" class="vl-danger" (click)="blacklist(vendor)">
+            <mat-icon>block</mat-icon> Request Blacklisting
+          </button>
+        }
+      }
+
+      @if (can(PERMISSIONS.VENDORS_DELETE)) {
+        <mat-divider />
+        <button mat-menu-item type="button" class="vl-danger" (click)="deleteVendor(vendor)">
+          <mat-icon>delete</mat-icon> Delete
+        </button>
+      }
+    </ng-template>
+  </mat-menu>
+</div>

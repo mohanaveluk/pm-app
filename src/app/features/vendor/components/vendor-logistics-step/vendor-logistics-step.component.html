@@ -1,0 +1,94 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>schedule</mat-icon> Supply Terms</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Standard Lead Time (days)</mat-label>
+        <input matInput type="number" min="0" formControlName="standardLeadTimeDays" [readonly]="readonly()" />
+        @if (err('standardLeadTimeDays', 'Lead time')) { <mat-error>{{ err('standardLeadTimeDays', 'Lead time') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Minimum Order Quantity</mat-label>
+        <input matInput type="number" min="0" formControlName="minimumOrderQuantity" [readonly]="readonly()" />
+        @if (err('minimumOrderQuantity', 'Minimum order quantity')) {
+          <mat-error>{{ err('minimumOrderQuantity', 'Minimum order quantity') }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>local_shipping</mat-icon> Delivery Capability</h3>
+
+    <mat-radio-group formControlName="deliveryCapability" class="step-toggles" aria-label="Delivery capability">
+      @for (option of deliveryOptions; track option.value) {
+        <mat-radio-button [value]="option.value" [disabled]="readonly()" color="primary">
+          {{ option.label }}
+        </mat-radio-button>
+      }
+    </mat-radio-group>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Transport Modes Supported</mat-label>
+        <mat-select formControlName="transportModesSupported" multiple [disabled]="readonly()">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search transport modes…"
+              aria-label="Search transport modes"
+              [ngModel]="optionSearch.term('transport')"
+              (ngModelChange)="optionSearch.set('transport', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (option of optionSearch.options('transport', transportOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Select every mode the vendor can arrange</mat-hint>
+      </mat-form-field>
+
+      <div class="step-toggle">
+        <span class="step-toggle__label">Export Documentation</span>
+        <mat-slide-toggle formControlName="exportDocumentationCapability" color="primary" [disabled]="readonly()">
+          {{ group.get('exportDocumentationCapability')?.value ? 'Capable' : 'Not capable' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Can the vendor produce export documentation?</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>warehouse</mat-icon> Warehouse Locations</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Warehouse Locations</mat-label>
+        <mat-chip-grid #warehouseGrid [disabled]="readonly()">
+          @for (location of warehouses; track location) {
+            <mat-chip-row (removed)="removeWarehouse(location)" [removable]="!readonly()">
+              {{ location }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + location"><mat-icon>cancel</mat-icon></button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="e.g. Jebel Ali FZ — press Enter to add"
+            [matChipInputFor]="warehouseGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addWarehouse($event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+    </div>
+  </section>
+</div>

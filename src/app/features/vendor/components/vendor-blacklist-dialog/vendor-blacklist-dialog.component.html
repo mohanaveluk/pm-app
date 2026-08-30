@@ -1,0 +1,42 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon [color]="isBlacklist ? 'warn' : undefined">{{ copy().icon }}</mat-icon>
+  {{ copy().title }}
+</h2>
+
+<mat-dialog-content>
+  <p>
+    Request that <strong>{{ data.vendorName }}</strong> ({{ data.vendorCode }})
+    be {{ copy().lead }}?
+  </p>
+  <p class="dlg-note">{{ copy().note }}</p>
+
+  <form [formGroup]="form">
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>Reason</mat-label>
+      <textarea
+        matInput
+        formControlName="reason"
+        rows="3"
+        maxlength="2000"
+        required
+        cdkFocusInitial
+        [placeholder]="copy().placeholder"
+      ></textarea>
+      <mat-hint align="end">{{ form.controls.reason.value.length }}/2000</mat-hint>
+      @if (error()) { <mat-error>{{ error() }}</mat-error> }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button
+    mat-raised-button
+    [color]="isBlacklist ? 'warn' : 'primary'"
+    type="button"
+    (click)="confirm()"
+  >
+    <mat-icon>{{ copy().icon }}</mat-icon>
+    {{ copy().confirm }}
+  </button>
+</mat-dialog-actions>

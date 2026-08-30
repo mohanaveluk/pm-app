@@ -1,0 +1,54 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Vendor Documents</h3>
+    <p class="step-section__hint">
+      Each card uploads into its own document type. Drop a file on the card you
+      want — file names are never used to work out where a document belongs, so
+      you can upload anything named anything.
+    </p>
+
+    <div class="doc-slot-grid">
+      @for (slot of slots; track slot.key) {
+        <app-vendor-file-upload
+          [control]="control(slot)"
+          [label]="slot.label"
+          [description]="slot.description"
+          [accept]="slot.accept"
+          [readonly]="readonly()"
+        />
+      }
+    </div>
+  </section>
+
+  <!-- ── Documents already on the record ────────────────────────────── -->
+  @if (existingDocuments().length) {
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>inventory_2</mat-icon> Stored Documents</h3>
+      <p class="step-section__hint">
+        Every version held against this vendor, newest first.
+      </p>
+
+      <div class="doc-list">
+        @for (doc of existingDocuments(); track doc.id) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">description</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name">{{ doc.fileName || label(doc.documentType) }}</div>
+              <div class="doc-row__sub">
+                {{ label(doc.documentType) }}
+                @if (doc.version) { · v{{ doc.version }} }
+                @if (sizeLabel(doc.fileSizeBytes)) { · {{ sizeLabel(doc.fileSizeBytes) }} }
+                @if (doc.uploadedAt) { · {{ doc.uploadedAt | date: 'mediumDate' }} }
+                @if (doc.expiryDate) { · expires {{ doc.expiryDate | date: 'mediumDate' }} }
+              </div>
+            </div>
+            <button mat-icon-button type="button" matTooltip="Open" [attr.aria-label]="'Open ' + label(doc.documentType)" (click)="open(doc.documentUrl)">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

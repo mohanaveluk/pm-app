@@ -1,0 +1,114 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Categories ─────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>category</mat-icon> Service Categories</h3>
+    <p class="step-section__hint">
+      Material categories are chosen on the Identification step. Service
+      categories are free text, so scopes no master covers yet are still accepted.
+    </p>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Service Categories</mat-label>
+        <mat-chip-grid #serviceGrid [disabled]="readonly()">
+          @for (value of values('serviceCategories'); track value) {
+            <mat-chip-row (removed)="removeValue('serviceCategories', value)" [removable]="!readonly()">
+              {{ value }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + value"><mat-icon>cancel</mat-icon></button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="e.g. NDT Inspection, Heat Treatment"
+            [matChipInputFor]="serviceGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addFromChipInput('serviceCategories', $event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Capability ─────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>precision_manufacturing</mat-icon> Capability</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Technical Expertise Areas</mat-label>
+        <textarea matInput formControlName="technicalExpertiseAreas" rows="2" [readonly]="readonly()" placeholder="e.g. ASME Section VIII pressure vessel design and fabrication"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Manufacturing Capabilities</mat-label>
+        <textarea matInput formControlName="manufacturingCapabilities" rows="2" [readonly]="readonly()" placeholder="e.g. CNC machining, plate rolling up to 60mm, automated SAW welding"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Production Capacity</mat-label>
+        <input matInput formControlName="productionCapacity" [readonly]="readonly()" placeholder="e.g. 4,000 MT per annum" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Key Equipment List</mat-label>
+        <input matInput formControlName="keyEquipmentList" [readonly]="readonly()" placeholder="e.g. 2 x 50T EOT cranes, radiography bunker" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Quality Control Processes</mat-label>
+        <textarea matInput formControlName="qualityControlProcesses" rows="2" [readonly]="readonly()" placeholder="e.g. ITP-driven inspection with third-party witness points"></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Compliance standards ───────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>rule</mat-icon> Compliance Standards</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Compliance Standards</mat-label>
+        <input matInput formControlName="complianceStandards" [readonly]="readonly()" placeholder="e.g. ASME, API 5L, EN 10204 3.2" />
+        <mat-hint>Free text — list every standard the vendor works to</mat-hint>
+      </mat-form-field>
+
+      @if (!readonly()) {
+        <div class="chip-field">
+          <p class="chip-hint">Common standards:</p>
+          <mat-chip-set aria-label="Suggested compliance standards">
+            @for (standard of standardSuggestions; track standard) {
+              <mat-chip (click)="addStandard(standard)">
+                <mat-icon matChipAvatar>add</mat-icon>{{ standard }}
+              </mat-chip>
+            }
+          </mat-chip-set>
+        </div>
+      }
+
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Technical Datasheets / Catalogue URLs</mat-label>
+        <mat-chip-grid #datasheetGrid [disabled]="readonly()">
+          @for (value of values('technicalDatasheets'); track value) {
+            <mat-chip-row (removed)="removeValue('technicalDatasheets', value)" [removable]="!readonly()">
+              {{ value }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + value"><mat-icon>cancel</mat-icon></button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="Paste a link and press Enter"
+            [matChipInputFor]="datasheetGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addFromChipInput('technicalDatasheets', $event)"
+          />
+        </mat-chip-grid>
+        <mat-hint>Catalogue files can also be attached on the Documents step</mat-hint>
+      </mat-form-field>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,267 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Primary contact ────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>person</mat-icon> Primary Contact</h3>
+    <p class="step-section__hint">
+      The single point of contact shown on vendor lists and enquiries.
+    </p>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Primary Contact Person</mat-label>
+        <input matInput formControlName="primaryContactPerson" maxlength="255" required [readonly]="readonly()" />
+        @if (err('primaryContactPerson', 'Contact person')) {
+          <mat-error>{{ err('primaryContactPerson', 'Contact person') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Designation</mat-label>
+        <input matInput formControlName="designation" maxlength="150" [readonly]="readonly()" placeholder="e.g. Sales Manager" />
+        @if (err('designation', 'Designation')) { <mat-error>{{ err('designation', 'Designation') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" maxlength="255" [readonly]="readonly()" placeholder="contact@vendor.example" />
+        @if (err('email', 'Email')) { <mat-error>{{ err('email', 'Email') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Website</mat-label>
+        <input matInput type="url" formControlName="website" maxlength="500" [readonly]="readonly()" placeholder="https://vendor.example.ae" />
+        <mat-hint>Include https:// — any public domain is accepted</mat-hint>
+        @if (err('website', 'Website')) { <mat-error>{{ err('website', 'Website') }}</mat-error> }
+      </mat-form-field>
+
+      <!-- Country code and number are separate inputs, one stored string. -->
+      <div class="phone-row">
+        <mat-form-field appearance="outline" class="phone-row__code">
+          <mat-label>Code</mat-label>
+          <mat-select formControlName="mobileDialCode" [disabled]="readonly()">
+            <mat-option class="select-search-option" disabled>
+              <input
+                class="select-search"
+                type="text"
+                placeholder="Search country or code…"
+                aria-label="Search dialling codes"
+                [ngModel]="optionSearch.term('mobileDial')"
+                (ngModelChange)="optionSearch.set('mobileDial', $event)"
+                [ngModelOptions]="{ standalone: true }"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-option>
+            <mat-option value="">—</mat-option>
+            @for (country of optionSearch.dialCodes('mobileDial', countries); track country.code) {
+              <mat-option [value]="country.dialCode">{{ country.flag }} {{ country.dialCode }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="phone-row__number">
+          <mat-label>Mobile Number</mat-label>
+          <input matInput formControlName="mobileNumber" [readonly]="readonly()" placeholder="50 123 4567" />
+          @if (err('mobileNumber', 'Mobile number')) { <mat-error>{{ err('mobileNumber', 'Mobile number') }}</mat-error> }
+        </mat-form-field>
+      </div>
+
+      <div class="phone-row">
+        <mat-form-field appearance="outline" class="phone-row__code">
+          <mat-label>Code</mat-label>
+          <mat-select formControlName="landlineDialCode" [disabled]="readonly()">
+            <mat-option class="select-search-option" disabled>
+              <input
+                class="select-search"
+                type="text"
+                placeholder="Search country or code…"
+                aria-label="Search dialling codes"
+                [ngModel]="optionSearch.term('landlineDial')"
+                (ngModelChange)="optionSearch.set('landlineDial', $event)"
+                [ngModelOptions]="{ standalone: true }"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-option>
+            <mat-option value="">—</mat-option>
+            @for (country of optionSearch.dialCodes('landlineDial', countries); track country.code) {
+              <mat-option [value]="country.dialCode">{{ country.flag }} {{ country.dialCode }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="phone-row__number">
+          <mat-label>Landline</mat-label>
+          <input matInput formControlName="landlineNumber" [readonly]="readonly()" placeholder="4 123 4567" />
+          @if (err('landlineNumber', 'Landline')) { <mat-error>{{ err('landlineNumber', 'Landline') }}</mat-error> }
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country of Registration</mat-label>
+        <mat-select formControlName="countryOfRegistration" [disabled]="readonly()">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search countries…"
+              aria-label="Search countries"
+              [ngModel]="optionSearch.term('registration')"
+              (ngModelChange)="optionSearch.set('registration', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">—</mat-option>
+          @for (country of optionSearch.countries('registration', countries); track country.code) {
+            <mat-option [value]="country.code">{{ country.flag }} {{ country.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Country of legal registration</mat-hint>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Addresses (repeatable child rows) ──────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>location_on</mat-icon> Addresses</h3>
+    <p class="step-section__hint">
+      Add as many premises as the vendor operates — registered office, corporate
+      office, factories, workshops, warehouses, branches and site offices. One
+      address is the primary one.
+    </p>
+
+    <div formArrayName="addresses">
+      @for (row of addresses.controls; track $index) {
+        <div class="repeat-row" [formGroupName]="$index">
+          <div class="repeat-row__head">
+            <span>{{ addressLabel($index) }}</span>
+            <span class="repeat-row__actions">
+              @if (!readonly() && canCopyFromRegistered($index)) {
+                <button
+                  mat-button
+                  type="button"
+                  matTooltip="Copy the postal fields from the registered address"
+                  (click)="copyFromRegistered($index)"
+                >
+                  <mat-icon>content_copy</mat-icon> Same as Registered
+                </button>
+              }
+              @if (!readonly() && addresses.length > 1) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Remove this address"
+                  [attr.aria-label]="'Remove ' + addressLabel($index)"
+                  (click)="removeAddress($index)"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </span>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Address Type</mat-label>
+            <mat-select formControlName="addressType" required [disabled]="readonly()">
+              @for (option of addressTypeOptions; track option.value) {
+                <mat-option [value]="option.value">
+                  {{ option.label }}
+                  @if (option.hint) { <span class="step-option-hint"> — {{ option.hint }}</span> }
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Address Line 1</mat-label>
+            <input matInput formControlName="addressLine1" maxlength="255" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Address Line 2</mat-label>
+            <input matInput formControlName="addressLine2" maxlength="255" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" maxlength="100" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>State / Province</mat-label>
+            <input matInput formControlName="state" maxlength="100" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Postal Code</mat-label>
+            <input matInput formControlName="postalCode" maxlength="20" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <mat-select formControlName="country" [disabled]="readonly()">
+              <mat-option class="select-search-option" disabled>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search countries…"
+                  aria-label="Search countries"
+                  [ngModel]="optionSearch.term(countryKey($index))"
+                  (ngModelChange)="optionSearch.set(countryKey($index), $event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
+              <mat-option value="">—</mat-option>
+              @for (country of optionSearch.countries(countryKey($index), countries); track country.code) {
+                <mat-option [value]="country.code">{{ country.flag }} {{ country.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phoneNumber" maxlength="30" [readonly]="readonly()" placeholder="+966 13 340 1234" />
+            @if (rowErr($index, 'phoneNumber', 'Phone')) {
+              <mat-error>{{ rowErr($index, 'phoneNumber', 'Phone') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" maxlength="255" [readonly]="readonly()" placeholder="works@vendor.example" />
+            @if (rowErr($index, 'email', 'Email')) {
+              <mat-error>{{ rowErr($index, 'email', 'Email') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Remarks</mat-label>
+            <input matInput formControlName="remarks" [readonly]="readonly()" placeholder="e.g. Main fabrication yard" />
+          </mat-form-field>
+
+          <div class="chip-field">
+            <mat-checkbox
+              color="primary"
+              [disabled]="readonly()"
+              [checked]="addressGroup($index).get('isPrimary')?.value"
+              (change)="setPrimary($index)"
+            >
+              Primary address
+            </mat-checkbox>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!readonly()) {
+      <button mat-stroked-button type="button" class="repeat-add" (click)="addAddress()">
+        <mat-icon>add_location_alt</mat-icon> Add Address
+      </button>
+    }
+  </section>
+</div>

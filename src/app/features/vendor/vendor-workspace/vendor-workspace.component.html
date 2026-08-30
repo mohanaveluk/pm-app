@@ -1,0 +1,318 @@
+<div class="vw-page">
+
+  @if (loading()) {
+    <div class="vw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading vendor…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="vw-state vw-state--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Vendor Master
+      </button>
+    </div>
+  } @else if (created(); as done) {
+
+    <!-- ── Success screen ─────────────────────────────────────────── -->
+    <div class="vw-success">
+      <mat-icon class="vw-success__icon">check_circle</mat-icon>
+      <h1>Vendor Created Successfully</h1>
+      <p class="vw-success__note">
+        {{ done.vendorName }} has been registered and is
+        <strong>Under Evaluation</strong> — it becomes selectable for transactions
+        only once an authorised user enables it.
+      </p>
+
+      <dl class="vw-success__facts">
+        <div>
+          <dt>Vendor Code</dt>
+          <dd><span class="vw-code">{{ done.code }}</span></dd>
+        </div>
+        <div>
+          <dt>Vendor</dt>
+          <dd>{{ done.vendorName }}</dd>
+        </div>
+        <div>
+          <dt>Type</dt>
+          <dd>{{ label(done.vendorType) }}</dd>
+        </div>
+        <div>
+          <dt>Material Categories</dt>
+          <dd>{{ done.productCategories?.length ? done.productCategories?.join(", ") : "—" }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><mat-chip [class]="statusClass(done.vendorStatus)">{{ label(done.vendorStatus) }}</mat-chip></dd>
+        </div>
+      </dl>
+
+      <div class="vw-success__actions">
+        <button mat-raised-button color="primary" type="button" (click)="viewCreated()">
+          <mat-icon>visibility</mat-icon> View Vendor
+        </button>
+        <button mat-stroked-button type="button" (click)="createAnother()">
+          <mat-icon>add</mat-icon> Create Another
+        </button>
+        <button mat-button type="button" (click)="backToList()">Back to Vendor Master</button>
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header class="vw-header">
+      <div class="vw-header__main">
+        <button mat-icon-button type="button" matTooltip="Back to Vendor Master" aria-label="Back to Vendor Master" (click)="backToList()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="vw-header__eyebrow">Vendor Master</div>
+          @if (vendor(); as v) {
+            <h1 class="vw-header__title">
+              <span class="vw-code">{{ v.code }}</span>
+              <span class="vw-header__desc">{{ v.vendorName }}</span>
+            </h1>
+          } @else {
+            <h1 class="vw-header__title">
+              <span class="vw-code vw-code--new">NEW VENDOR</span>
+              <span class="vw-header__desc">The vendor code is generated when the vendor is saved</span>
+            </h1>
+          }
+        </div>
+      </div>
+
+      <dl class="vw-header__facts">
+        <div>
+          <dt>Type</dt>
+          <dd>{{ label(formService.form.get('identification.vendorType')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Categories</dt>
+          <dd>{{ selectedCategoryLabels() }}</dd>
+        </div>
+        <div>
+          <dt>Classification</dt>
+          <dd>{{ label(formService.form.get('evaluation.vendorClassification')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><mat-chip [class]="statusClass(statusValue)">{{ statusValue ? label(statusValue) : 'NEW' }}</mat-chip></dd>
+        </div>
+      </dl>
+    </header>
+
+    <div class="vw-progressbar">
+      <p class="vw-progress" aria-live="polite">
+        @if (showReview()) {
+          Review — check every section before submitting
+        } @else {
+          Step {{ selectedIndex() + 1 }} of {{ steps.length }} — {{ currentStepTitle() }}
+        }
+      </p>
+
+      @if (lastSavedAt(); as saved) {
+        <span class="vw-saved" aria-live="polite">
+          <mat-icon>cloud_done</mat-icon> Saved {{ saved | date: 'shortTime' }}
+        </span>
+      } @else if (!isEdit()) {
+        <span class="vw-saved vw-saved--pending">
+          <mat-icon>cloud_off</mat-icon> Not saved yet
+        </span>
+      }
+    </div>
+
+    @if (formService.referenceError(); as refError) {
+      <p class="vw-banner vw-banner--warn" role="status">
+        <mat-icon>warning</mat-icon> {{ refError }}
+      </p>
+    }
+
+    @if (showReview()) {
+
+      <!-- ── Review before submit ─────────────────────────────────── -->
+      <section class="vw-review">
+        <h2 class="vw-review__title">Review before submitting</h2>
+        <p class="vw-review__hint">
+          Check each section. Anything marked "Needs attention" must be fixed
+          before the vendor can be submitted.
+        </p>
+
+        <ul class="vw-review__list">
+          @for (step of steps; track step.key; let i = $index) {
+            <li class="vw-review__row" [class.vw-review__row--error]="sectionStatus(step.key) === 'incomplete'">
+              <mat-icon class="vw-review__icon">
+                @switch (sectionStatus(step.key)) {
+                  @case ('complete') { check_circle }
+                  @case ('incomplete') { error }
+                  @default { radio_button_unchecked }
+                }
+              </mat-icon>
+              <div class="vw-review__meta">
+                <div class="vw-review__label">{{ step.title }}</div>
+                <div class="vw-review__status">
+                  @switch (sectionStatus(step.key)) {
+                    @case ('complete') { Complete }
+                    @case ('incomplete') { Needs attention — required information missing }
+                    @default { Nothing entered }
+                  }
+                </div>
+              </div>
+              <button mat-stroked-button type="button" (click)="goToStep(i)">
+                <mat-icon>edit</mat-icon> Edit
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+
+    } @else {
+
+      <!-- ── Stepper ──────────────────────────────────────────────── -->
+      <mat-stepper
+        #stepper
+        class="vw-stepper"
+        [linear]="!isEdit()"
+        [selectedIndex]="selectedIndex()"
+        (selectionChange)="onStepChange($event.selectedIndex)"
+        labelPosition="bottom"
+        headerPosition="top"
+      >
+        <mat-step
+          [stepControl]="formService.group('identification')"
+          [state]="stepState('identification', 0)"
+          [hasError]="isStepInvalid('identification')"
+          errorMessage="Required information missing"
+        >
+          <ng-template matStepLabel>Identification</ng-template>
+          <app-vendor-identification-step
+            [vendorCode]="vendor()?.code ?? null"
+            [vendorStatus]="statusValue"
+          />
+        </mat-step>
+
+        <mat-step
+          [stepControl]="formService.group('contact')"
+          [state]="stepState('contact', 1)"
+          [hasError]="isStepInvalid('contact')"
+          errorMessage="Check the contact details"
+        >
+          <ng-template matStepLabel>Contact</ng-template>
+          <app-vendor-contact-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('legal')" [state]="stepState('legal', 2)" [hasError]="isStepInvalid('legal')" errorMessage="Check the tax regime">
+          <ng-template matStepLabel>Legal</ng-template>
+          <app-vendor-legal-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('banking')" [state]="stepState('banking', 3)">
+          <ng-template matStepLabel>Banking</ng-template>
+          <app-vendor-banking-step
+            [existingAccounts]="vendor()?.bankAccounts ?? []"
+          />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('financial')" [state]="stepState('financial', 4)">
+          <ng-template matStepLabel>Financial</ng-template>
+          <app-vendor-financial-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('technical')" [state]="stepState('technical', 5)">
+          <ng-template matStepLabel>Technical</ng-template>
+          <app-vendor-technical-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('quality')" [state]="stepState('quality', 6)">
+          <ng-template matStepLabel>Quality &amp; HSE</ng-template>
+          <app-vendor-quality-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('performance')" [state]="stepState('performance', 7)">
+          <ng-template matStepLabel>Performance</ng-template>
+          <app-vendor-performance-step [performanceHistory]="performanceHistory()" />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('logistics')" [state]="stepState('logistics', 8)">
+          <ng-template matStepLabel>Logistics</ng-template>
+          <app-vendor-logistics-step />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('documents')" [state]="stepState('documents', 9)">
+          <ng-template matStepLabel>Documents</ng-template>
+          <app-vendor-documents-step
+            [existingDocuments]="vendor()?.documents ?? []"
+          />
+        </mat-step>
+
+        <mat-step [stepControl]="formService.group('evaluation')" [state]="stepState('evaluation', 10)">
+          <ng-template matStepLabel>Evaluation</ng-template>
+          <app-vendor-evaluation-step [canApprove]="canApprove()" [evaluations]="evaluations()" />
+        </mat-step>
+      </mat-stepper>
+    }
+
+    <!-- ── Footer ─────────────────────────────────────────────────── -->
+    <footer class="vw-footer">
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="back()"
+        [disabled]="saving() || (selectedIndex() === 0 && !showReview())"
+      >
+        <mat-icon>arrow_back</mat-icon> Previous
+      </button>
+
+      <span class="vw-footer__spacer"></span>
+
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+
+      @if (isEdit()) {
+        <button mat-stroked-button color="primary" type="button" (click)="saveChanges(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+          Save Changes
+        </button>
+        @if (!showReview() && selectedIndex() < steps.length - 1) {
+          <button mat-raised-button color="primary" type="button" (click)="next()">
+            Next <mat-icon>arrow_forward</mat-icon>
+          </button>
+        } @else {
+          <button mat-raised-button color="primary" type="button" (click)="saveChanges(true)" [disabled]="saving()">
+            Save &amp; Close
+          </button>
+        }
+      } @else {
+        <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>bookmark_border</mat-icon> }
+          Save Draft
+        </button>
+
+        @if (showReview()) {
+          <button mat-stroked-button type="button" (click)="closeReview()" [disabled]="saving()">
+            <mat-icon>edit</mat-icon> Keep Editing
+          </button>
+          <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
+            @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
+            Submit Vendor
+          </button>
+        } @else if (selectedIndex() < steps.length - 1) {
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="next()"
+            [disabled]="saving() || !canAdvance()"
+            [matTooltip]="nextTooltip()"
+          >
+            Next <mat-icon>arrow_forward</mat-icon>
+          </button>
+        } @else {
+          <button mat-raised-button color="primary" type="button" (click)="openReview()" [disabled]="saving()">
+            <mat-icon>fact_check</mat-icon> Review &amp; Submit
+          </button>
+        }
+      }
+    </footer>
+  }
+</div>

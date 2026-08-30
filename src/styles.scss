@@ -169,3 +169,31 @@ button mat-spinner {
 ::ng-deep .mdc-evolution-chip__text-label {
     color: #414752 !important;
 }
+
+// The inline search box rendered as the first option of a long mat-select.
+// In a `multiple` select every option gets a checkbox, and clicking the search
+// row would push `undefined` into the value array — so the row is marked
+// disabled in the template and its checkbox is hidden here. The panel lives in
+// the CDK overlay, outside any component's DOM, so this rule has to be global.
+.mat-mdc-option.select-search-option {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: default;
+  min-height: 0;
+  padding: 6px 10px;
+
+  .mat-pseudo-checkbox,
+  .mat-mdc-option-pseudo-checkbox {
+    display: none;
+  }
+
+  .mdc-list-item__primary-text {
+    width: 100%;
+    opacity: 1;
+  }
+
+  &:hover,
+  &.mdc-list-item--selected {
+    background: transparent;
+  }
+}

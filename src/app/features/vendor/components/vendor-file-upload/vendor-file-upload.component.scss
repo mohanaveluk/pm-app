@@ -1,0 +1,135 @@
+// One document slot: header, drop zone, and the attached-file row that replaces
+// it once a URL is present.
+
+:host {
+  display: block;
+}
+
+.vfu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  height: 100%;
+  box-sizing: border-box;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  &__icon {
+    color: var(--primary);
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &__hint {
+    font-size: 0.74rem;
+    color: #8098b8;
+  }
+
+  &__uploading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 12px;
+    font-size: 0.82rem;
+    color: #8098b8;
+  }
+
+  &__drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--r-md);
+    padding: 16px 10px;
+    text-align: center;
+    color: #8098b8;
+    cursor: pointer;
+    transition: border-color var(--ease), background var(--ease);
+    margin-top: auto;
+
+    &:hover,
+    &--active {
+      border-color: var(--primary);
+      background: rgba(25, 118, 210, 0.04);
+      color: var(--primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  &__drop-title {
+    font-weight: 600;
+    font-size: 0.84rem;
+    margin: 6px 0 2px;
+  }
+
+  &__drop-hint {
+    font-size: 0.7rem;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--body-bg);
+    margin-top: auto;
+  }
+
+  &__file-icon {
+    color: #1e7e34;
+    flex-shrink: 0;
+  }
+
+  &__file-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__file-name {
+    font-size: 0.86rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__file-sub {
+    font-size: 0.72rem;
+    color: #8098b8;
+  }
+
+  &__empty {
+    color: #8098b8;
+    font-size: 0.82rem;
+    font-style: italic;
+    margin: 0;
+  }
+}

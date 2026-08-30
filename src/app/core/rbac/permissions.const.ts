@@ -116,6 +116,17 @@ export const PERMISSIONS = {
 
   VENDORS_VIEW: 'vendors.view',
   VENDORS_MANAGE: 'vendors.manage',
+  // Per-action grants for the Vendor Master. PermissionService matches the
+  // exact string or the `vendors.*` wildcard, so the Vendor screens check each
+  // of these together with the coarser VENDORS_MANAGE that predates them.
+  VENDORS_CREATE: 'vendors.create',
+  VENDORS_UPDATE: 'vendors.update',
+  VENDORS_DELETE: 'vendors.delete',
+  VENDORS_ENABLE: 'vendors.enable',
+  VENDORS_DISABLE: 'vendors.disable',
+  VENDORS_BLACKLIST: 'vendors.blacklist',
+  VENDORS_APPROVE: 'vendors.approve',
+  VENDORS_EXPORT: 'vendors.export',
 
   PO_VIEW: 'po.view',
   PO_MANAGE: 'po.manage',

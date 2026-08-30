@@ -1,0 +1,427 @@
+<div class="vv-page">
+
+  @if (loading()) {
+    <div class="vv-state">
+      <mat-spinner diameter="40" />
+      <p>Loading vendor…</p>
+    </div>
+  } @else if (error()) {
+    <div class="vv-state vv-state--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-stroked-button type="button" (click)="back()">
+        <mat-icon>arrow_back</mat-icon> Back to Vendor Master
+      </button>
+    </div>
+  } @else if (vendor(); as v) {
+
+    <!-- ── Summary header ─────────────────────────────────────────── -->
+    <header class="vv-header">
+      <div class="vv-header__main">
+        <button mat-icon-button type="button" matTooltip="Back to Vendor Master" aria-label="Back to Vendor Master" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="vv-header__eyebrow">Vendor Master</div>
+          <h1 class="vv-header__title">
+            <span class="vv-code">{{ v.code }}</span>
+            <span>{{ v.vendorName }}</span>
+          </h1>
+          @if (v.tradeName) { <p class="vv-header__trade">Trading as {{ v.tradeName }}</p> }
+        </div>
+      </div>
+
+      <div class="vv-header__badges">
+        <span [class]="statusClass(v.vendorStatus)">{{ label(v.vendorStatus) }}</span>
+        @if (v.pendingStatusChange) {
+          <span class="pending-chip" [matTooltip]="pendingTooltip(v.pendingStatusChange)" role="status">
+            <mat-icon class="pending-chip__icon">hourglass_top</mat-icon>
+            {{ label(v.pendingStatusChange) }}
+          </span>
+        }
+        @if (v.riskCategory) { <span [class]="riskClass(v.riskCategory)">{{ label(v.riskCategory) }} risk</span> }
+        @if (v.vendorClassification) { <span [class]="classificationClass(v.vendorClassification)">{{ label(v.vendorClassification) }}</span> }
+        @if (v.vendorEvaluationScore != null) { <span class="vv-score">Score {{ v.vendorEvaluationScore }}/100</span> }
+      </div>
+
+      <div class="vv-header__actions">
+        @if (can(PERMISSIONS.VENDORS_UPDATE)) {
+          <button mat-raised-button color="primary" type="button" (click)="edit()" [disabled]="busy()">
+            <mat-icon>edit</mat-icon> Edit Vendor
+          </button>
+        }
+        <button mat-stroked-button type="button" [matMenuTriggerFor]="actionMenu" [disabled]="busy()">
+          <mat-icon>more_horiz</mat-icon> Actions
+        </button>
+        <mat-menu #actionMenu="matMenu">
+          <!-- Only one status-change request may be in flight; a second is
+               rejected with 409, so the actions wait for the decision. -->
+          @if (v.pendingStatusChange) {
+            <button mat-menu-item type="button" disabled>
+              <mat-icon>hourglass_top</mat-icon>
+              {{ label(v.pendingStatusChange) }} — awaiting approval
+            </button>
+          } @else if (hasBlacklist()) {
+            @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
+              <button mat-menu-item type="button" (click)="removeBlacklist()">
+                <mat-icon>restart_alt</mat-icon> Request Removal from Blacklist
+              </button>
+            }
+          } @else {
+            @if (!v.isActive && can(PERMISSIONS.VENDORS_ENABLE)) {
+              <button mat-menu-item type="button" (click)="setActive(true)">
+                <mat-icon>toggle_on</mat-icon> Enable
+              </button>
+            }
+            @if (v.isActive && can(PERMISSIONS.VENDORS_DISABLE)) {
+              <button mat-menu-item type="button" (click)="setActive(false)">
+                <mat-icon>toggle_off</mat-icon> Disable
+              </button>
+            }
+            @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
+              <button mat-menu-item type="button" class="vv-danger" (click)="blacklist()">
+                <mat-icon>block</mat-icon> Request Blacklisting
+              </button>
+            }
+          }
+          @if (can(PERMISSIONS.VENDORS_DELETE)) {
+            <mat-divider />
+            <button mat-menu-item type="button" class="vv-danger" (click)="remove()">
+              <mat-icon>delete</mat-icon> Delete
+            </button>
+          }
+        </mat-menu>
+      </div>
+    </header>
+
+    @if (v.vendorStatus === VendorStatus.BLACKLISTED && v.blacklistReason) {
+      <p class="vv-banner vv-banner--danger" role="status">
+        <mat-icon>block</mat-icon>
+        <span>
+          <strong>Blacklisted</strong>
+          @if (v.blacklistedAt) { on {{ v.blacklistedAt | date: 'mediumDate' }} }
+          @if (v.blacklistedBy) { by {{ v.blacklistedBy }} }
+          — {{ v.blacklistReason }}
+        </span>
+      </p>
+    }
+
+    <!-- ── Tabs ───────────────────────────────────────────────────── -->
+    <mat-tab-group class="vv-tabs" animationDuration="120ms">
+
+      <mat-tab label="Overview">
+        <div class="vv-cards">
+          <section class="vv-card">
+            <h3 class="vv-card__title">Identification</h3>
+            <dl class="vv-facts">
+              <div><dt>Vendor Code</dt><dd><span class="vv-code">{{ v.code }}</span></dd></div>
+              <div><dt>Vendor Type</dt><dd>{{ label(v.vendorType) }}</dd></div>
+              <div><dt>Industry Category</dt><dd>{{ v.industryCategory?.name || '—' }}</dd></div>
+              <div><dt>Parent Company</dt><dd>{{ v.parentCompany?.vendorName || '—' }}</dd></div>
+              <div><dt>Country of Registration</dt><dd>{{ country(v.countryOfRegistration) }}</dd></div>
+              <div><dt>Description</dt><dd>{{ v.vendorDescription || '—' }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="vv-card">
+            <h3 class="vv-card__title">Primary Contact</h3>
+            <dl class="vv-facts">
+              <div><dt>Contact Person</dt><dd>{{ v.primaryContactPerson || '—' }}</dd></div>
+              <div><dt>Designation</dt><dd>{{ v.designation || '—' }}</dd></div>
+              <div><dt>Email</dt><dd>{{ v.email || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ v.mobileNumber || '—' }}</dd></div>
+              <div><dt>Landline</dt><dd>{{ v.landlineNumber || '—' }}</dd></div>
+              <div>
+                <dt>Website</dt>
+                <dd>
+                  @if (v.website) {
+                    <a [href]="v.website" target="_blank" rel="noopener">{{ v.website }}</a>
+                  } @else { — }
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="vv-card">
+            <h3 class="vv-card__title">Statutory &amp; Legal</h3>
+            <dl class="vv-facts">
+              <div><dt>Business Registration</dt><dd>{{ v.businessRegistrationNumber || '—' }}</dd></div>
+              <div><dt>Tax Registration</dt><dd>{{ v.taxRegistrationNumber || '—' }}</dd></div>
+              <div><dt>Tax Regime</dt><dd>{{ label(v.taxDocumentType) }}</dd></div>
+              <div><dt>Tax Document No.</dt><dd>{{ v.taxDocumentNumber || '—' }}</dd></div>
+              <div><dt>Import-Export Code</dt><dd>{{ v.importExportCode || '—' }}</dd></div>
+              <div><dt>MSME / SME</dt><dd>{{ v.msmeSmeRegistration || '—' }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="vv-card">
+            <h3 class="vv-card__title">Commercial</h3>
+            <dl class="vv-facts">
+              <div><dt>Payment Terms</dt><dd>{{ label(v.paymentTerms) }}</dd></div>
+              <div><dt>Payment Method</dt><dd>{{ label(v.preferredPaymentMethod) }}</dd></div>
+              <div><dt>Credit Limit</dt><dd>{{ v.creditLimitRequested != null ? (v.creditLimitRequested | number) + ' ' + (v.currency || '') : '—' }}</dd></div>
+              <div><dt>Credit Rating</dt><dd>{{ v.creditRating || '—' }}</dd></div>
+              <div><dt>Milestones</dt><dd>{{ v.paymentMilestones || '—' }}</dd></div>
+              <div><dt>Insurance</dt><dd>{{ v.insuranceCoverage || '—' }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="vv-card">
+            <h3 class="vv-card__title">Technical Capability</h3>
+            <dl class="vv-facts">
+              <div><dt>Product Categories</dt><dd>{{ v.productCategories?.length ? v.productCategories?.join(', ') : '—' }}</dd></div>
+              <div><dt>Service Categories</dt><dd>{{ v.serviceCategories?.length ? v.serviceCategories?.join(', ') : '—' }}</dd></div>
+              <div><dt>Expertise</dt><dd>{{ v.technicalExpertiseAreas || '—' }}</dd></div>
+              <div><dt>Manufacturing</dt><dd>{{ v.manufacturingCapabilities || '—' }}</dd></div>
+              <div><dt>Capacity</dt><dd>{{ v.productionCapacity || '—' }}</dd></div>
+              <div><dt>Standards</dt><dd>{{ v.complianceStandards || '—' }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="vv-card">
+            <h3 class="vv-card__title">Logistics</h3>
+            <dl class="vv-facts">
+              <div><dt>Lead Time</dt><dd>{{ v.standardLeadTimeDays != null ? v.standardLeadTimeDays + ' days' : '—' }}</dd></div>
+              <div><dt>Minimum Order</dt><dd>{{ v.minimumOrderQuantity ?? '—' }}</dd></div>
+              <div><dt>Delivery</dt><dd>{{ label(v.deliveryCapability) }}</dd></div>
+              <div><dt>Transport Modes</dt><dd>{{ v.transportModesSupported?.length ? v.transportModesSupported?.join(', ') : '—' }}</dd></div>
+              <div><dt>Warehouses</dt><dd>{{ v.warehouseLocations?.length ? v.warehouseLocations?.join(', ') : '—' }}</dd></div>
+              <div><dt>Export Documentation</dt><dd>{{ v.exportDocumentationCapability ? 'Capable' : 'Not capable' }}</dd></div>
+            </dl>
+          </section>
+        </div>
+      </mat-tab>
+
+      <mat-tab [label]="'Contacts (' + (v.contacts?.length || 0) + ')'">
+        @if (v.contacts?.length) {
+          <div class="vv-list">
+            @for (contact of v.contacts; track contact.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">person</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">
+                    {{ contact.contactPerson }}
+                    @if (contact.isPrimary) { <span class="vv-tag">Primary</span> }
+                  </div>
+                  <div class="vv-row__sub">
+                    {{ contact.designation || '—' }}
+                    @if (contact.department) { · {{ contact.department }} }
+                    @if (contact.email) { · {{ contact.email }} }
+                    @if (contact.mobileNumber) { · {{ contact.mobileNumber }} }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No contacts recorded.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Addresses (' + (v.addresses?.length || 0) + ')'">
+        @if (v.addresses?.length) {
+          <div class="vv-list">
+            @for (address of v.addresses; track address.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">location_on</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">
+                    {{ label(address.addressType) }}
+                    @if (address.isPrimary) { <span class="vv-tag">Primary</span> }
+                  </div>
+                  <div class="vv-row__sub">{{ addressLine(address) || '—' }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No addresses recorded.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Banking (' + (v.bankAccounts?.length || 0) + ')'">
+        <p class="vv-note">
+          <mat-icon>lock</mat-icon>
+          Account numbers, IBANs and SWIFT codes are masked. Full values are
+          available only to users authorised for sensitive vendor data.
+        </p>
+        @if (v.bankAccounts?.length) {
+          <div class="vv-list">
+            @for (account of v.bankAccounts; track account.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">account_balance</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">
+                    {{ account.bankName }}
+                    @if (account.isPrimary) { <span class="vv-tag">Primary</span> }
+                  </div>
+                  <div class="vv-row__sub">
+                    @if (account.branch) { {{ account.branch }} · }
+                    <span class="vv-masked">{{ account.accountNumber || '••••' }}</span>
+                    @if (account.currency) { · {{ account.currency }} }
+                    @if (account.accountHolderName) { · {{ account.accountHolderName }} }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No bank accounts recorded.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Certifications (' + (v.certifications?.length || 0) + ')'">
+        @if (v.certifications?.length) {
+          <div class="vv-list">
+            @for (cert of v.certifications; track cert.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">workspace_premium</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">
+                    {{ cert.certificationName }}
+                    @if (cert.isExpired) { <span class="vv-tag vv-tag--danger">Expired</span> }
+                    @else if (cert.daysToExpiry != null && cert.daysToExpiry <= 90) {
+                      <span class="vv-tag vv-tag--warn">Expires in {{ cert.daysToExpiry }} days</span>
+                    }
+                  </div>
+                  <div class="vv-row__sub">
+                    @if (cert.certificateNumber) { {{ cert.certificateNumber }} · }
+                    @if (cert.issuingAuthority) { {{ cert.issuingAuthority }} · }
+                    @if (cert.expiryDate) { Expires {{ cert.expiryDate | date: 'mediumDate' }} }
+                  </div>
+                </div>
+                @if (cert.documentUrl) {
+                  <button mat-icon-button type="button" matTooltip="Open certificate" (click)="open(cert.documentUrl)">
+                    <mat-icon>open_in_new</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No certifications recorded.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Materials (' + (v.materials?.length || 0) + ')'">
+        @if (v.materials?.length) {
+          <div class="vv-list">
+            @for (material of v.materials; track material.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">inventory_2</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">
+                    {{ material.materialCode || material.materialId }}
+                    @if (material.isPreferred) { <span class="vv-tag">Preferred</span> }
+                  </div>
+                  <div class="vv-row__sub">
+                    {{ material.materialDescription || '—' }}
+                    @if (material.leadTimeDays != null) { · {{ material.leadTimeDays }} days }
+                    @if (material.unitPrice != null) { · {{ material.unitPrice | number }} {{ material.currency }} }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No materials linked to this vendor.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Documents (' + (v.documents?.length || 0) + ')'">
+        @if (v.documents?.length) {
+          <div class="vv-list">
+            @for (doc of v.documents; track doc.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">description</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">{{ doc.fileName || label(doc.documentType) }}</div>
+                  <div class="vv-row__sub">
+                    {{ label(doc.documentType) }}
+                    @if (doc.version) { · v{{ doc.version }} }
+                    @if (fileSize(doc.fileSizeBytes)) { · {{ fileSize(doc.fileSizeBytes) }} }
+                    @if (doc.uploadedAt) { · {{ doc.uploadedAt | date: 'mediumDate' }} }
+                  </div>
+                </div>
+                <button mat-icon-button type="button" matTooltip="Open document" (click)="open(doc.documentUrl)">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No documents attached.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Performance (' + performance().length + ')'">
+        @if (performance().length) {
+          <div class="vv-list">
+            @for (record of performance(); track record.id) {
+              <div class="vv-row">
+                <mat-icon class="vv-row__icon">insights</mat-icon>
+                <div class="vv-row__meta">
+                  <div class="vv-row__name">Overall {{ record.overallScore ?? '—' }}</div>
+                  <div class="vv-row__sub">
+                    @if (record.qualityScore != null) { Quality {{ record.qualityScore }} · }
+                    @if (record.deliveryScore != null) { Delivery {{ record.deliveryScore }} · }
+                    @if (record.commercialScore != null) { Commercial {{ record.commercialScore }} · }
+                    @if (record.hseScore != null) { HSE {{ record.hseScore }} · }
+                    {{ record.evaluatedBy }} · {{ record.evaluatedAt | date: 'mediumDate' }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No performance evaluations recorded yet.</p>
+        }
+      </mat-tab>
+
+      <mat-tab [label]="'Evaluations (' + evaluations().length + ')'">
+        @if (evaluations().length) {
+          <ol class="vv-timeline">
+            @for (record of evaluations(); track record.id) {
+              <li class="vv-timeline__item">
+                <div class="vv-timeline__marker"></div>
+                <div class="vv-timeline__body">
+                  <div class="vv-timeline__head">
+                    <strong>{{ label(record.stage) }}</strong>
+                    <span class="vv-tag">{{ label(record.decision) }}</span>
+                    @if (record.score != null) { <span class="vv-score">Score {{ record.score }}</span> }
+                  </div>
+                  <div class="vv-row__sub">
+                    {{ record.evaluatedBy }} · {{ record.evaluatedAt | date: 'medium' }}
+                    @if (record.referenceNumber) { · {{ record.referenceNumber }} }
+                  </div>
+                  @if (record.comments) { <p class="vv-timeline__comment">{{ record.comments }}</p> }
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="vv-empty">No approval decisions recorded.</p>
+        }
+      </mat-tab>
+
+      <mat-tab label="Audit History">
+        @if (auditHistory().length) {
+          <p class="vv-empty">Audit entries will render here.</p>
+        } @else {
+          <p class="vv-note">
+            <mat-icon>info_outline</mat-icon>
+            Audit history is not available yet — the API exposes no vendor audit
+            endpoint. Creation and update stamps below are what the record carries
+            today.
+          </p>
+          <dl class="vv-facts vv-facts--wide">
+            <div><dt>Created By</dt><dd>{{ v.createdBy || '—' }}</dd></div>
+            <div><dt>Created At</dt><dd>{{ v.createdAt | date: 'medium' }}</dd></div>
+            <div><dt>Updated By</dt><dd>{{ v.updatedBy || '—' }}</dd></div>
+            <div><dt>Updated At</dt><dd>{{ v.updatedAt | date: 'medium' }}</dd></div>
+          </dl>
+        }
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

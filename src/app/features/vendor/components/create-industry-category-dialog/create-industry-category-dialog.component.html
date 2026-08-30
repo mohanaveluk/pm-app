@@ -1,0 +1,51 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>category</mat-icon>
+  New Industry Category
+</h2>
+
+<mat-dialog-content>
+  <p class="dlg-note">
+    Enter the category name. The code, short name and description are derived
+    automatically and can be refined later in the Industry Category master.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="create()">
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>Category Name</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        maxlength="255"
+        required
+        cdkFocusInitial
+        placeholder="e.g. Civil"
+      />
+      @if (err()) { <mat-error>{{ err() }}</mat-error> }
+    </mat-form-field>
+  </form>
+
+  @if (preview().code) {
+    <dl class="dlg-preview">
+      <div>
+        <dt>Code</dt>
+        <dd><span class="dlg-code">{{ preview().code }}</span></dd>
+      </div>
+      <div>
+        <dt>Short Name</dt>
+        <dd>{{ preview().shortName }}</dd>
+      </div>
+      <div>
+        <dt>Description</dt>
+        <dd>{{ preview().description }}</dd>
+      </div>
+    </dl>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  <button mat-raised-button color="primary" type="button" (click)="create()" [disabled]="saving()">
+    @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>add</mat-icon> }
+    Create &amp; Select
+  </button>
+</mat-dialog-actions>

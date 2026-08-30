@@ -1,0 +1,128 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Declared experience ────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>groups</mat-icon> Clients &amp; Experience</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Major Clients</mat-label>
+        <mat-chip-grid #clientGrid [disabled]="readonly()">
+          @for (client of values('majorClients'); track client) {
+            <mat-chip-row (removed)="removeValue('majorClients', client)" [removable]="!readonly()">
+              {{ client }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + client"><mat-icon>cancel</mat-icon></button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="Type a client name and press Enter"
+            [matChipInputFor]="clientGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addFromChipInput('majorClients', $event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Project Experience</mat-label>
+        <textarea
+          matInput
+          formControlName="projectExperience"
+          rows="4"
+          [readonly]="readonly()"
+          placeholder="One project per line — name, client, country, year, scope and outcome. e.g.&#10;Refinery revamp package 3 — ADNOC, UAE, 2024 — 1,200 MT piping spools — delivered on schedule"
+        ></textarea>
+        <mat-hint>
+          Stored as narrative text. Structured per-project rows would need a
+          project-experience child endpoint the API does not expose yet.
+        </mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Past PO / Contract References</mat-label>
+        <textarea matInput formControlName="pastPoContractReferences" rows="2" [readonly]="readonly()" placeholder="e.g. PO-2023-0451, PO-2024-0912"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Blacklisting History</mat-label>
+        <textarea matInput formControlName="blacklistingHistory" rows="2" [readonly]="readonly()" placeholder="e.g. No prior blacklisting declared"></textarea>
+        <mat-hint>Declared by the vendor — separate from this system's own blacklist actions</mat-hint>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Geography ──────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>public</mat-icon> Geographical Experience</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="chip-field">
+        <mat-label>Countries Worked In</mat-label>
+        <mat-chip-grid #geoGrid [disabled]="readonly()">
+          @for (code of values('geographicalExperience'); track code) {
+            <mat-chip-row (removed)="removeValue('geographicalExperience', code)" [removable]="!readonly()">
+              {{ country(code) }}
+              @if (!readonly()) {
+                <button matChipRemove [attr.aria-label]="'Remove ' + country(code)"><mat-icon>cancel</mat-icon></button>
+              }
+            </mat-chip-row>
+          }
+          <input
+            placeholder="Pick from the list below"
+            [matChipInputFor]="geoGrid"
+            [matChipInputAddOnBlur]="true"
+            [disabled]="readonly()"
+            (matChipInputTokenEnd)="addFromChipInput('geographicalExperience', $event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+
+      @if (!readonly()) {
+        <div class="chip-field">
+          <p class="chip-hint">Add a country:</p>
+          <mat-chip-set aria-label="Available countries">
+            @for (country of unusedCountries.slice(0, 24); track country.code) {
+              <mat-chip (click)="addValue('geographicalExperience', country.code)">
+                {{ country.flag }} {{ country.name }}
+              </mat-chip>
+            }
+          </mat-chip-set>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ── Recorded performance (read-only) ───────────────────────────── -->
+  @if (performanceHistory().length) {
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>insights</mat-icon> Recorded Performance</h3>
+      <p class="step-section__hint">
+        Scores recorded by project and procurement teams. This history is
+        append-only and cannot be edited from the Vendor Master.
+      </p>
+
+      <div class="doc-list">
+        @for (record of performanceHistory(); track record.id) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">star_rate</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name">
+                Overall {{ record.overallScore ?? '—' }}
+                @if (record.qualityScore != null) { · Quality {{ record.qualityScore }} }
+                @if (record.deliveryScore != null) { · Delivery {{ record.deliveryScore }} }
+                @if (record.hseScore != null) { · HSE {{ record.hseScore }} }
+              </div>
+              <div class="doc-row__sub">
+                {{ record.evaluatedBy }} · {{ record.evaluatedAt | date: 'mediumDate' }}
+                @if (record.remarks) { · {{ record.remarks }} }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

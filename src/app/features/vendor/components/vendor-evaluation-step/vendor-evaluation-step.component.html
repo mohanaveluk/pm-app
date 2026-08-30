@@ -1,0 +1,176 @@
+<div class="step" [formGroup]="group">
+
+  @if (!canApprove() && !readonly()) {
+    <p class="step-readonly-note">
+      <mat-icon>lock</mat-icon>
+      Approval fields are read-only for your role. A vendor cannot be approved by
+      the person registering it — the API is the authority on this either way.
+    </p>
+  }
+
+  <!-- ── Scoring ────────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>scoreboard</mat-icon> Evaluation Score</h3>
+    <p class="step-section__hint">
+      A single rolled-up score, 0–100. Per-discipline scores live in the
+      evaluation trail below, which is written by the approval workflow.
+    </p>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Vendor Evaluation Score</mat-label>
+        <input
+          matInput
+          type="number"
+          min="0"
+          max="100"
+          formControlName="vendorEvaluationScore"
+          [readonly]="approvalLocked"
+        />
+        <mat-hint>0–100</mat-hint>
+        @if (err('vendorEvaluationScore', 'Evaluation score')) {
+          <mat-error>{{ err('vendorEvaluationScore', 'Evaluation score') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Risk Category</mat-label>
+        <mat-select formControlName="riskCategory" [disabled]="approvalLocked">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search risk levels…"
+              aria-label="Search risk levels"
+              [ngModel]="optionSearch.term('risk')"
+              (ngModelChange)="optionSearch.set('risk', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">—</mat-option>
+          @for (option of optionSearch.options('risk', riskOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Vendor Classification</mat-label>
+        <mat-select formControlName="vendorClassification" [disabled]="approvalLocked">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search classifications…"
+              aria-label="Search classifications"
+              [ngModel]="optionSearch.term('classification')"
+              (ngModelChange)="optionSearch.set('classification', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">—</mat-option>
+          @for (option of optionSearch.options('classification', classificationOptions); track option.value) {
+            <mat-option [value]="option.value">
+              {{ option.label }}
+              @if (option.hint) { <span class="step-option-hint"> — {{ option.hint }}</span> }
+            </mat-option>
+          }
+        </mat-select>
+        <mat-hint>Approved Vendor List standing</mat-hint>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Approval ───────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>approval</mat-icon> Approval &amp; Review</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Approval Reference</mat-label>
+        <input matInput formControlName="approvalReference" maxlength="100" [readonly]="approvalLocked" placeholder="e.g. AVL-2026-0031" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Approval Date</mat-label>
+        <input matInput [matDatepicker]="approvalPicker" formControlName="approvalDate" [readonly]="approvalLocked" />
+        <mat-datepicker-toggle matSuffix [for]="approvalPicker" [disabled]="approvalLocked" />
+        <mat-datepicker #approvalPicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Review Cycle</mat-label>
+        <mat-select formControlName="reviewCycle" [disabled]="approvalLocked">
+          <mat-option class="select-search-option" disabled>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search review cycles…"
+              aria-label="Search review cycles"
+              [ngModel]="optionSearch.term('reviewCycle')"
+              (ngModelChange)="optionSearch.set('reviewCycle', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option [value]="null">—</mat-option>
+          @for (option of optionSearch.options('reviewCycle', reviewCycleOptions); track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Next Review Date</mat-label>
+        <input matInput [matDatepicker]="reviewPicker" formControlName="nextReviewDate" [readonly]="approvalLocked" />
+        <mat-datepicker-toggle matSuffix [for]="reviewPicker" [disabled]="approvalLocked" />
+        <mat-datepicker #reviewPicker />
+      </mat-form-field>
+    </div>
+
+    @if (reviewDateError) {
+      <p class="step-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        The next review date cannot fall before the approval date.
+      </p>
+    }
+  </section>
+
+  <!-- ── Approval trail (read-only) ─────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>history</mat-icon> Approval Trail</h3>
+
+    @if (evaluations().length) {
+      <div class="doc-list">
+        @for (record of evaluations(); track record.id) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">how_to_reg</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name">
+                {{ label(record.stage) }}
+                @if (record.score != null) { · Score {{ record.score }} }
+              </div>
+              <div class="doc-row__sub">
+                {{ record.evaluatedBy }} · {{ record.evaluatedAt | date: 'medium' }}
+                @if (record.referenceNumber) { · {{ record.referenceNumber }} }
+                @if (record.comments) { · {{ record.comments }} }
+              </div>
+            </div>
+            <span [class]="decisionClass(record.decision)">{{ label(record.decision) }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="doc-empty">
+        No evaluation decisions recorded. Technical, commercial, HSE and final
+        approvals are written by the approval workflow — the API exposes this
+        trail for reading only, so decisions cannot be entered here yet.
+      </p>
+    }
+  </section>
+</div>

@@ -1,0 +1,46 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dlg-note {
+  font-size: 0.84rem;
+  color: #8098b8;
+}
+
+.dlg-full-width {
+  width: 100%;
+}
+
+// Derived values are shown before submitting so the code is never a surprise.
+.dlg-preview {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 12px;
+  margin: 4px 0 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--body-bg);
+  font-size: 0.84rem;
+
+  div {
+    display: contents;
+  }
+
+  dt {
+    color: #8098b8;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.dlg-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 600;
+  color: var(--primary);
+}

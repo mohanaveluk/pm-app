@@ -1,0 +1,162 @@
+<div class="step" [formGroup]="group">
+
+  <!-- ── Quality management ─────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>verified</mat-icon> Quality Management</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Quality Management System Details</mat-label>
+        <textarea
+          matInput
+          formControlName="qualityManagementSystemDetails"
+          rows="3"
+          [readonly]="readonly()"
+          placeholder="e.g. ISO 9001:2015 certified QMS with documented procedures"
+        ></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── HSE ────────────────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>health_and_safety</mat-icon> Health, Safety &amp; Environment</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Incident / Accident History — Last 3 Years</mat-label>
+        <textarea
+          matInput
+          formControlName="incidentAccidentHistory"
+          rows="2"
+          [readonly]="readonly()"
+          placeholder="e.g. Zero LTI in the last 36 months; 2 first-aid cases in 2024"
+        ></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="doc-slot-grid">
+      <app-vendor-file-upload
+        [control]="control('hsePolicyUrl')"
+        label="HSE Policy"
+        description="Health, safety and environment policy document"
+        [readonly]="readonly()"
+      />
+    </div>
+  </section>
+
+  <!-- ── Ethics & compliance ────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>balance</mat-icon> Ethics &amp; Compliance</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>CSR Compliance</mat-label>
+        <textarea matInput formControlName="csrCompliance" rows="2" [readonly]="readonly()" placeholder="e.g. Local community skills programme; annual CSR report published"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Ethical Sourcing Policy</mat-label>
+        <textarea matInput formControlName="ethicalSourcingPolicy" rows="2" [readonly]="readonly()" placeholder="e.g. Conflict-minerals declaration on file"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Anti-Bribery Policy</mat-label>
+        <textarea matInput formControlName="antiBriberyPolicy" rows="2" [readonly]="readonly()" placeholder="e.g. Signed anti-bribery and anti-corruption undertaking"></textarea>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- ── Certifications ─────────────────────────────────────────────── -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>workspace_premium</mat-icon> Certifications</h3>
+    <p class="step-section__hint">
+      Safety, quality and environmental certificates. Expiry dates drive
+      re-qualification reminders, so record them where known.
+    </p>
+
+    <div formArrayName="certifications">
+      @for (row of certifications.controls; track $index) {
+        <div class="repeat-row" [formGroupName]="$index">
+          <div class="repeat-row__head">
+            <span>Certificate {{ $index + 1 }}</span>
+            @if (!readonly()) {
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Remove this certificate"
+                [attr.aria-label]="'Remove certificate ' + ($index + 1)"
+                (click)="removeCertification($index)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Certification Name</mat-label>
+            <input matInput formControlName="certificationName" maxlength="255" required [readonly]="readonly()" placeholder="e.g. ISO 9001:2015" />
+            @if (rowErr($index, 'certificationName', 'Certification name')) {
+              <mat-error>{{ rowErr($index, 'certificationName', 'Certification name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Certificate Number</mat-label>
+            <input matInput formControlName="certificateNumber" maxlength="100" [readonly]="readonly()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Issuing Authority</mat-label>
+            <input matInput formControlName="issuingAuthority" maxlength="255" [readonly]="readonly()" placeholder="e.g. TUV Rheinland" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Scope</mat-label>
+            <input matInput formControlName="scopeOfCertification" maxlength="100" [readonly]="readonly()" placeholder="e.g. Fabrication of pressure vessels" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Issue Date</mat-label>
+            <input matInput [matDatepicker]="issuePicker" formControlName="issueDate" [readonly]="readonly()" />
+            <mat-datepicker-toggle matSuffix [for]="issuePicker" [disabled]="readonly()" />
+            <mat-datepicker #issuePicker />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Expiry Date</mat-label>
+            <input matInput [matDatepicker]="expiryPicker" formControlName="expiryDate" [readonly]="readonly()" />
+            <mat-datepicker-toggle matSuffix [for]="expiryPicker" [disabled]="readonly()" />
+            <mat-datepicker #expiryPicker />
+          </mat-form-field>
+
+          @if (expiryBeforeIssue($index)) {
+            <p class="step-error" role="alert">
+              <mat-icon>error_outline</mat-icon>
+              Expiry date cannot be before the issue date.
+            </p>
+          }
+
+          <div class="chip-field">
+            <app-vendor-file-upload
+              [control]="certificationDocControl($index)"
+              label="Certificate Document"
+              description="Scanned certificate"
+              [readonly]="readonly()"
+            />
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!certifications.length) {
+      <p class="doc-empty">No certifications recorded.</p>
+    }
+
+    @if (!readonly()) {
+      <button mat-stroked-button type="button" class="repeat-add" (click)="addCertification()">
+        <mat-icon>add</mat-icon> Add Certificate
+      </button>
+    }
+  </section>
+</div>

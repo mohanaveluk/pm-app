@@ -1,0 +1,494 @@
+// Shared stylesheet for all eleven Vendor workspace steps. Referenced by every
+// step component's `styleUrl` so the sections stay visually identical and there
+// is exactly one place to adjust the form rhythm. Seeded from the Material
+// workspace stylesheet so the two masters read as one product.
+
+:host {
+  display: block;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step-section {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  padding: 16px 18px;
+}
+
+.step-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5a7a9e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 14px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+  }
+}
+
+.step-section__hint {
+  margin: -8px 0 14px;
+  font-size: 0.82rem;
+  color: #8098b8;
+}
+
+// Two columns on desktop, one on mobile — never a horizontal scrollbar.
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 18px;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-full {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.step-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 6px 0 2px;
+}
+
+.step-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 0.72rem;
+    color: #8098b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: #8098b8;
+  }
+}
+
+// Read-only / derived data callout used by the Procurement step.
+.step-derived {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border-radius: var(--r-sm);
+  background: rgba(25, 118, 210, 0.08);
+  color: var(--primary);
+  font-size: 0.82rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+.step-derived-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--body-bg);
+  border: 1px solid var(--border);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8098b8;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+// Caution banner for hazardous classifications — informative, not alarming.
+.step-caution {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  border-radius: var(--r-sm);
+  background: #fff8e1;
+  border-left: 3px solid #f9a825;
+  color: #8a6100;
+  font-size: 0.82rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #f9a825;
+  }
+}
+
+.step-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--error);
+  font-size: 0.78rem;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.step-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+// ── Documents step ───────────────────────────────────────────────────
+
+.doc-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.doc-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  &__icon {
+    color: var(--primary);
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &__hint {
+    font-size: 0.74rem;
+    color: #8098b8;
+  }
+
+  &__uploading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 12px;
+    font-size: 0.82rem;
+    color: #8098b8;
+  }
+
+  // The link field is secondary to the drop zone above it.
+  &__url {
+    width: 100%;
+    margin-top: auto;
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  .doc-row {
+    margin: 0;
+  }
+}
+
+.doc-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--r-md);
+  padding: 28px 16px;
+  text-align: center;
+  color: #8098b8;
+  transition: border-color var(--ease), background var(--ease);
+  cursor: pointer;
+
+  &:hover,
+  &--active {
+    border-color: var(--primary);
+    background: rgba(25, 118, 210, 0.04);
+    color: var(--primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  mat-icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  &__title {
+    font-weight: 600;
+    margin: 6px 0 2px;
+  }
+
+  &__hint {
+    font-size: 0.78rem;
+  }
+
+  // Slot-sized variant: fits inside a document card.
+  &--compact {
+    padding: 16px 10px;
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+
+    .doc-dropzone__title {
+      font-size: 0.84rem;
+    }
+
+    .doc-dropzone__hint {
+      font-size: 0.7rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+
+  &__icon {
+    color: var(--primary);
+    overflow: visible;
+  }
+
+  &__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__sub {
+    font-size: 0.74rem;
+    color: #8098b8;
+  }
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.photo-tile {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--body-bg);
+  aspect-ratio: 4 / 3;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+  }
+}
+
+.doc-empty {
+  color: #8098b8;
+  font-size: 0.82rem;
+  font-style: italic;
+  margin: 10px 0 0;
+}
+
+// Inline search box rendered as the first option of the long dropdowns.
+// Authored inside this component's template, so the emulated-encapsulation
+// attribute travels with it into the CDK overlay.
+.select-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: 0.86rem;
+  background: var(--card);
+  color: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+// ── Vendor-specific additions ────────────────────────────────────────
+
+// Phone entry: a narrow country selector welded to the number field.
+.phone-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+
+  .phone-row__code {
+    flex: 0 0 128px;
+  }
+
+  .phone-row__number {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+// Repeating child rows (turnovers, certifications).
+.repeat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 4px 14px;
+  align-items: start;
+  padding: 12px 14px 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  margin-bottom: 10px;
+
+  &__head {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #5a7a9e;
+  }
+}
+
+.repeat-add {
+  margin-top: 4px;
+}
+
+// Chip-based multi-value inputs (clients, warehouses, contract references).
+.chip-field {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.chip-hint {
+  font-size: 0.76rem;
+  color: #8098b8;
+  margin: -6px 0 10px;
+}
+
+// Read-only notice shown where the API has no update path.
+.step-readonly-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border-radius: var(--r-sm);
+  background: #f1f3f5;
+  border-left: 3px solid #8098b8;
+  color: #5f6b7a;
+  font-size: 0.82rem;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+// Sensitive values are masked in summaries; the input itself stays plain text
+// so the user can verify what they typed.
+.masked-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em;
+}
+
+.doc-slot__uploading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px;
+  font-size: 0.82rem;
+  color: #8098b8;
+}

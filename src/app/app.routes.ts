@@ -106,9 +106,9 @@ export const routes: Routes = [
       },
       {
         path: 'vendors',
-        loadComponent: comingSoon,
+        loadChildren: () => import('./features/vendor/vendor.routes').then(m => m.VENDOR_ROUTES),
         canActivate: [permissionGuard],
-        data: { breadcrumb: 'Vendors', title: 'Vendor Management', icon: 'storefront', permission: PERMISSIONS.VENDORS_VIEW },
+        data: { breadcrumb: 'Vendor Master', title: 'Vendor Management', icon: 'storefront', permission: PERMISSIONS.VENDORS_VIEW },
       },
       {
         path: 'purchase-orders',
