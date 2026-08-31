@@ -7,7 +7,7 @@ import {
 import {
   DeliveryCapability, PaymentMethod, PaymentTerms, ReviewCycle, RiskCategory,
   TaxDocumentType, TransportationMode, Vendor, VendorAddressType,
-  VendorClassification, VendorType,
+  VendorClassification,
 } from '../models/vendor.model';
 import { joinPhone, splitPhone } from '../../../shared/reference/countries';
 
@@ -229,7 +229,7 @@ export type CategoryIdResolver = (values: readonly string[]) => string[];
 const passThroughIds: CategoryIdResolver = (values) => [...values];
 
 /** Scalar payload shared by create and update. */
-function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit<CreateVendorRequest, 'vendorName' | 'vendorType' | 'industryCategoryId'> {
+function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit<CreateVendorRequest, 'vendorName' | 'vendorTypeId' | 'industryCategoryId'> {
   const id = v.identification ?? {};
   const contact = v.contact ?? {};
   const legal = v.legal ?? {};
@@ -339,7 +339,7 @@ export function toCreateRequest(v: FormValue, resolveNames: CategoryNameResolver
 
   return {
     vendorName: (id.vendorName ?? '').toString().trim(),
-    vendorType: id.vendorType as VendorType,
+    vendorTypeId: id.vendorTypeId as string,
     industryCategoryId: id.industryCategoryId,
     ...toScalarPayload(v, resolveNames),
 
@@ -362,7 +362,7 @@ export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver
 
   return {
     vendorName: (id.vendorName ?? '').toString().trim(),
-    vendorType: id.vendorType as VendorType,
+    vendorTypeId: id.vendorTypeId as string,
     ...toScalarPayload(v, resolveNames),
 
     // Sent as complete lists, never undefined: the API replaces the collections
@@ -431,7 +431,7 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       vendorName: vendor.vendorName ?? '',
       vendorDescription: vendor.vendorDescription ?? '',
       tradeName: vendor.tradeName ?? '',
-      vendorType: vendor.vendorType ?? null,
+      vendorTypeId: vendor.vendorTypeId ?? null,
       industryCategoryId: vendor.industryCategoryId ?? '',
       productCategories: resolveIds(vendor.productCategories ?? []),
       parentCompanyId: vendor.parentCompanyId ?? '',

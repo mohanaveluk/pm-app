@@ -30,7 +30,7 @@
           <mat-hint>New vendors start Under Evaluation</mat-hint>
         </mat-form-field>
       }
-      
+
       <mat-form-field appearance="outline" class="step-full">
         <mat-label>Vendor Name</mat-label>
         <input
@@ -60,15 +60,31 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Vendor Type</mat-label>
-        <mat-select formControlName="vendorType" required [disabled]="readonly()">
-          @for (option of typeOptions; track option.value) {
-            <mat-option [value]="option.value">
-              {{ option.label }}
-              @if (option.hint) { <span class="step-option-hint"> — {{ option.hint }}</span> }
+        <mat-select formControlName="vendorTypeId" required [disabled]="readonly()">
+          <mat-option class="select-search-option">
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search vendor types…"
+              aria-label="Search vendor types"
+              [ngModel]="vendorTypeSearch()"
+              (ngModelChange)="vendorTypeSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (type of filteredVendorTypes(); track type.id) {
+            <mat-option [value]="type.id">
+              {{ type.name }}
+              @if (type.description) { <span class="step-option-hint"> — {{ type.description }}</span> }
             </mat-option>
           }
+          @if (!filteredVendorTypes().length) {
+            <mat-option disabled>No matching vendor types</mat-option>
+          }
         </mat-select>
-        @if (err('vendorType', 'Vendor type')) { <mat-error>{{ err('vendorType', 'Vendor type') }}</mat-error> }
+        @if (err('vendorTypeId', 'Vendor type')) { <mat-error>{{ err('vendorTypeId', 'Vendor type') }}</mat-error> }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="step-full">
@@ -128,13 +144,13 @@
         }
       </mat-form-field>
 
-      <div class="step-inline-action">
+      <!-- <div class="step-inline-action">
         @if (!readonly()) {
           <button mat-stroked-button type="button" (click)="createMaterialCategory()">
             <mat-icon>add</mat-icon> Create New Category
           </button>
         }
-      </div>
+      </div> -->
 
       @if (selectedMaterialCategories.length) {
         <div class="chip-field">

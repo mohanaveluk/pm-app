@@ -1,0 +1,24 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon color="warn">warning</mat-icon>
+  Delete Vendor Type?
+</h2>
+
+<mat-dialog-content>
+  <p>
+    Vendor Type <strong>"{{ data.vendorType.name }}"</strong> ({{ data.vendorType.code }})
+    will be removed from active master data.
+  </p>
+  <p class="dlg-note">
+    This performs a soft delete — the record is retained for audit purposes and can be
+    restored if needed, but it will no longer be selectable when creating or editing vendors.
+    If it is currently referenced by one or more vendors, the delete will be refused.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="warn" type="button" (click)="confirm()">
+    <mat-icon>delete</mat-icon>
+    Delete
+  </button>
+</mat-dialog-actions>

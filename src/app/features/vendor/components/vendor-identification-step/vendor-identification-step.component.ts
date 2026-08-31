@@ -12,7 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { VendorFormService } from '../../services/vendor-form.service';
-import { VENDOR_TYPE_OPTIONS, VendorStatus, enumLabel } from '../../models/vendor.model';
+import { VendorStatus, enumLabel } from '../../models/vendor.model';
 import { firstErrorMessage } from '../../validators/vendor.validators';
 import {
   CreateCategoryDialogComponent, CreateCategoryDialogResult,
@@ -47,9 +47,19 @@ export class VendorIdentificationStepComponent {
   readonly vendorCode = input<string | null>(null);
   readonly vendorStatus = input<VendorStatus | null>(null);
 
-  protected readonly typeOptions = VENDOR_TYPE_OPTIONS;
   protected readonly parentSearch = signal('');
   protected readonly materialSearch = signal('');
+  protected readonly vendorTypeSearch = signal('');
+
+  /** Active vendor types for this organization, ordered for display. */
+  protected readonly filteredVendorTypes = computed(() => {
+    const term = this.vendorTypeSearch().trim().toLowerCase();
+    const all = [...this.formService.vendorTypes()].sort(
+      (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
+    );
+    if (!term) return all;
+    return all.filter((t) => `${t.name} ${t.code} ${t.shortName ?? ''}`.toLowerCase().includes(term));
+  });
 
   protected get group(): FormGroup {
     return this.formService.group('identification');

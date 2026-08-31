@@ -11,8 +11,10 @@ import { VendorFormValue } from './vendor.mapper';
 import {
   DeliveryCapability, PaymentMethod, PaymentTerms, ReviewCycle, RiskCategory,
   TaxDocumentType, VendorAddressType, VendorClassification, VendorDocumentType,
-  VendorOption, VendorType,
+  VendorOption,
 } from '../models/vendor.model';
+import { VendorTypeService } from '../../vendor-type/services/vendor-type.service';
+import { VendorType } from '../../vendor-type/models/vendor-type.model';
 import {
   dateOrderValidator, decimalPlacesValidator, financialYearValidator,
   nonBlankEntriesValidator, nonNegativeValidator, otherTaxTypeValidator,
@@ -77,6 +79,7 @@ export class VendorFormService {
   private readonly snack = inject(MatSnackBar);
   private readonly industryCategoryService = inject(IndustryCategoryService);
   private readonly materialCategoryService = inject(MaterialCategoryService);
+  private readonly vendorTypeService = inject(VendorTypeService);
   private readonly vendorService = inject(VendorService);
 
   readonly steps = VENDOR_STEPS;
@@ -85,6 +88,7 @@ export class VendorFormService {
   // ── Reference data ──────────────────────────────────────────────────
   readonly industryCategories = signal<IndustryCategoryOption[]>([]);
   readonly materialCategories = signal<MaterialCategoryOption[]>([]);
+  readonly vendorTypes = signal<VendorType[]>([]);
   readonly parentVendors = signal<VendorOption[]>([]);
   readonly referenceLoading = signal(true);
   readonly referenceError = signal<string | null>(null);
@@ -185,11 +189,13 @@ export class VendorFormService {
     forkJoin({
       industry: this.industryCategoryService.getActiveIndustryCategories(),
       materials: this.materialCategoryService.getActiveMaterialCategories(),
+      vendorTypes: this.vendorTypeService.getActiveVendorTypes(),
       vendors: this.vendorService.getActiveVendors(),
     }).subscribe({
       next: (res) => {
         this.industryCategories.set(res.industry.data ?? []);
         this.materialCategories.set(res.materials.data ?? []);
+        this.vendorTypes.set(res.vendorTypes.data ?? []);
         this.parentVendors.set(res.vendors.data ?? []);
         this.referenceLoading.set(false);
         this.applyDefaultIndustryCategory();
@@ -249,6 +255,12 @@ export class VendorFormService {
     return match ? `${match.code} — ${match.name}` : '—';
   }
 
+  vendorTypeLabel(id: string | null | undefined): string {
+    if (!id) return '—';
+    const match = this.vendorTypes().find((t) => t.id === id);
+    return match ? match.name : '—';
+  }
+
   parentVendorLabel(id: string | null | undefined): string {
     if (!id) return '—';
     const match = this.parentVendors().find((v) => v.id === id);
@@ -291,7 +303,7 @@ export class VendorFormService {
         vendorName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
         vendorDescription: ['', [Validators.maxLength(4000)]],
         tradeName: ['', [Validators.maxLength(255)]],
-        vendorType: [null as VendorType | null, [Validators.required]],
+        vendorTypeId: [null as string | null, [Validators.required]],
         industryCategoryId: [''],
         // Material categories the vendor supplies. Persisted as
         // technical.productCategories (a string[] of names) — the API has no
@@ -568,7 +580,7 @@ export class VendorFormService {
   applyCreateDefaults(): void {
     this.form.get('contact.mobileDialCode')?.setValue('');
     this.form.get('logistics.exportDocumentationCapability')?.setValue(false);
-    this.form.get('identification.vendorType')?.setValue(null);
+    this.form.get('identification.vendorTypeId')?.setValue(null);
     this.form.markAsPristine();
   }
 

@@ -68,9 +68,10 @@ export interface MaterialFormValue {
     specialTransportRequirements: string; barcodeQrCodeRequired: boolean;
   };
   documents: {
-    datasheetUrl: string; drawingSketchUrl: string; technicalSpecSheetUrl: string;
-    qualityCertificatesUrl: string; complianceCertificatesUrl: string;
-    vendorQuotationUrl: string; inspectionReportsUrl: string; photos: string[];
+    // The seven typed URLs used to live here; they are now managed one row at
+    // a time via the dedicated document endpoints (see MaterialDocumentsStepComponent)
+    // rather than bundled into the whole-record payload. Only `photos` remains.
+    photos: string[];
   };
 }
 
@@ -209,13 +210,6 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
     }),
 
     documents: compact({
-      datasheetUrl: s(v.documents.datasheetUrl),
-      drawingSketchUrl: s(v.documents.drawingSketchUrl),
-      technicalSpecSheetUrl: s(v.documents.technicalSpecSheetUrl),
-      qualityCertificatesUrl: s(v.documents.qualityCertificatesUrl),
-      complianceCertificatesUrl: s(v.documents.complianceCertificatesUrl),
-      vendorQuotationUrl: s(v.documents.vendorQuotationUrl),
-      inspectionReportsUrl: s(v.documents.inspectionReportsUrl),
       photos: v.documents.photos?.length ? v.documents.photos : undefined,
     }),
   };
@@ -358,13 +352,9 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       barcodeQrCodeRequired: m.barcodeQrCodeRequired ?? false,
     },
     documents: {
-      datasheetUrl: m.datasheetUrl ?? '',
-      drawingSketchUrl: m.drawingSketchUrl ?? '',
-      technicalSpecSheetUrl: m.technicalSpecSheetUrl ?? '',
-      qualityCertificatesUrl: m.qualityCertificatesUrl ?? '',
-      complianceCertificatesUrl: m.complianceCertificatesUrl ?? '',
-      vendorQuotationUrl: m.vendorQuotationUrl ?? '',
-      inspectionReportsUrl: m.inspectionReportsUrl ?? '',
+      // The seven typed URLs are intentionally not read here — see the
+      // MaterialDocumentsStepComponent doc comment. `m.documents` (the
+      // versioned register) is fetched and rendered independently of this form.
       photos: m.photos ?? [],
     },
   };

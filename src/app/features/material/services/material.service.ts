@@ -3,10 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  CreateMaterialRequest, MaterialQueryParams, UpdateMaterialRequest,
+  AddMaterialDocumentRequest, CreateMaterialRequest, MaterialDocumentQueryParams,
+  MaterialQueryParams, UpdateMaterialRequest,
 } from '../models/material-request.model';
 import {
-  MaterialDeleteResponse, MaterialOptionsResponse, MaterialResponse, PagedMaterialResponse,
+  MaterialDeleteResponse, MaterialDocumentDeleteResponse, MaterialDocumentResponse,
+  MaterialDocumentsResponse, MaterialOptionsResponse, MaterialResponse, PagedMaterialResponse,
 } from '../models/material-response.model';
 
 /**
@@ -84,6 +86,46 @@ export class MaterialService {
   /** DELETE /materials/:id — soft delete. */
   deleteMaterial(id: string): Observable<MaterialDeleteResponse> {
     return this.http.delete<MaterialDeleteResponse>(`${this.baseUrl}/${id}`);
+  }
+
+  // ── Document register (material_documents) ──────────────────────────
+  // GET /materials/:id already returns the current version of each type as
+  // `documents`; these three are the dedicated endpoints for full history and
+  // for mutating one document at a time.
+
+  /**
+   * GET /materials/:id/documents — defaults to `includeSuperseded: true` so
+   * the Documents step can show every version of every type; pass `false`
+   * explicitly for just the current row of each chain.
+   */
+  getMaterialDocuments(
+    materialId: string,
+    params: MaterialDocumentQueryParams = { includeSuperseded: true },
+  ): Observable<MaterialDocumentsResponse> {
+    let httpParams = new HttpParams();
+    if (params.documentType) httpParams = httpParams.set('documentType', params.documentType);
+    if (params.includeSuperseded !== undefined) {
+      httpParams = httpParams.set('includeSuperseded', params.includeSuperseded);
+    }
+    return this.http.get<MaterialDocumentsResponse>(`${this.baseUrl}/${materialId}/documents`, { params: httpParams });
+  }
+
+  /**
+   * POST /materials/:id/documents — allowed even once a purchase order has
+   * locked the rest of the material. Omitting `supersedesId` lets the server
+   * decide: auto-supersede for a singleton type, or start a new chain for
+   * everything else (the mechanism behind "Add New Document").
+   */
+  addMaterialDocument(materialId: string, request: AddMaterialDocumentRequest): Observable<MaterialDocumentResponse> {
+    return this.http.post<MaterialDocumentResponse>(`${this.baseUrl}/${materialId}/documents`, request);
+  }
+
+  /**
+   * DELETE /materials/:id/documents/:documentId — soft delete. Refused with
+   * 409 once a purchase order has been issued against the material.
+   */
+  removeMaterialDocument(materialId: string, documentId: string): Observable<MaterialDocumentDeleteResponse> {
+    return this.http.delete<MaterialDocumentDeleteResponse>(`${this.baseUrl}/${materialId}/documents/${documentId}`);
   }
 
   /**

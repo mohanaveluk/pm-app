@@ -45,6 +45,15 @@ export class MaterialGeneralStepComponent {
   /** Read-only mode is used by the View screen, which reuses these same steps. */
   readonly readonly = input(false);
 
+  /**
+   * Once a purchase order has been issued against this material, its
+   * identifying descriptions are frozen — the supplier was priced against
+   * this exact wording, so it must not silently change under an open PO.
+   * Every other field on this step (classification, handling, remarks)
+   * stays editable.
+   */
+  readonly isPurchaseOrderIssued = input(false);
+
   protected readonly criticalityOptions = CRITICALITY_OPTIONS;
   protected readonly shortDescriptionMax = SHORT_DESCRIPTION_MAX;
 
@@ -84,6 +93,14 @@ export class MaterialGeneralStepComponent {
         (u.symbol ?? '').toLowerCase().includes(term),
     );
   });
+
+  /** Short/Long Description are frozen once a PO has been issued. */
+  protected readonly descriptionsLocked = computed(() => this.isPurchaseOrderIssued());
+
+  protected descriptionsLockedReason(): string {
+    return 'A purchase order has been issued against this material. '
+      + 'Short and Long Description are frozen and can no longer be edited.';
+  }
 
   /** Live character counter for the short description. */
   protected remainingChars(): number {

@@ -207,6 +207,11 @@ export const routes: Routes = [
             data: { breadcrumb: 'Industry Categories', permission: PERMISSIONS.INDUSTRY_CATEGORIES_VIEW },
           },
           {
+            path: 'vendor-types',
+            loadComponent: () => import('./features/vendor-type/vendor-type.component').then(m => m.VendorTypeComponent),
+            data: { breadcrumb: 'Vendor Types', permission: PERMISSIONS.VENDOR_TYPES_VIEW },
+          },
+          {
             path: 'material-categories',
             loadComponent: () => import('./features/material-category/material-category.component').then(m => m.MaterialCategoryComponent),
             data: { breadcrumb: 'Material Categories', permission: PERMISSIONS.MATERIAL_CATEGORIES_VIEW },

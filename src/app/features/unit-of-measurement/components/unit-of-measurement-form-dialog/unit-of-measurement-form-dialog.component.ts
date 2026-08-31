@@ -58,7 +58,7 @@ export class UnitOfMeasurementFormDialogComponent implements OnInit {
   private current: UnitOfMeasurement | null = null;
 
   protected readonly form = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(20), Validators.pattern(UOM_CODE_PATTERN)]],
+    code: [''], //, [Validators.required, Validators.maxLength(20), Validators.pattern(UOM_CODE_PATTERN)]
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     // `symbol` intentionally has no character pattern — it must accept °C, m², ft³.
     symbol: ['', [Validators.maxLength(20)]],
@@ -143,7 +143,7 @@ export class UnitOfMeasurementFormDialogComponent implements OnInit {
     try {
       const unitOfMeasurement = this.isEdit && this.current
         ? await this.store.updateUnitOfMeasurement(this.current.id, common)
-        : await this.store.createUnitOfMeasurement({ ...common, code: v.code.trim().toUpperCase() });
+        : await this.store.createUnitOfMeasurement({ ...common }); //, code: v.code.trim().toUpperCase()
 
       if (saveAndNew) {
         this.resetForm();
@@ -208,11 +208,11 @@ export class UnitOfMeasurementFormDialogComponent implements OnInit {
     }
     if (control.errors['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
     if (control.errors['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
-    if (control.errors['pattern']) {
-      return field === 'code'
-        ? 'Only letters, numbers and underscore (_) are allowed.'
-        : 'Must be a whole number of 0 or more';
-    }
+    // if (control.errors['pattern']) {
+    //   return field === 'code'
+    //     ? 'Only letters, numbers and underscore (_) are allowed.'
+    //     : 'Must be a whole number of 0 or more';
+    // }
     return '';
   }
 }

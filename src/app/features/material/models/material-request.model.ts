@@ -1,6 +1,6 @@
 import {
-  CriticalityLevel, HazardClassification, InspectionType, MaterialSortField,
-  MaterialStatus, PackagingType, StockingStrategy, TransportationMode,
+  CriticalityLevel, HazardClassification, InspectionType, MaterialDocumentType,
+  MaterialSortField, MaterialStatus, PackagingType, StockingStrategy, TransportationMode,
 } from './material.model';
 
 // ── Nested section payloads (mirror the nested DTOs in create-material.dto.ts) ──
@@ -87,15 +87,46 @@ export interface MaterialLogisticsRequest {
   barcodeQrCodeRequired?: boolean;
 }
 
+/**
+ * Only `photos` remains here. The seven typed document URLs used to live on
+ * this section too, but they are now managed one row at a time through the
+ * dedicated `POST/DELETE /materials/:id/documents` endpoints (see
+ * AddMaterialDocumentRequest below) rather than bundled into the whole-record
+ * create/update payload — the register at material_documents keeps a full
+ * version history that a flat "current URL" field cannot represent.
+ */
 export interface MaterialDocumentsRequest {
-  datasheetUrl?: string;
-  drawingSketchUrl?: string;
-  technicalSpecSheetUrl?: string;
-  qualityCertificatesUrl?: string;
-  complianceCertificatesUrl?: string;
-  vendorQuotationUrl?: string;
-  inspectionReportsUrl?: string;
   photos?: string[];
+}
+
+/**
+ * Mirrors AddMaterialDocumentDto — POST /materials/:id/documents.
+ *
+ * Omit `supersedesId` to file a brand-new document: for a singleton type
+ * (DATASHEET, DRAWING_SKETCH, TECHNICAL_SPEC_SHEET, VENDOR_QUOTATION, MSDS) the
+ * server auto-supersedes whatever is currently active; for every other type it
+ * starts an independent chain alongside any existing ones (the same mechanism
+ * that lets several photos coexist). Pass `supersedesId` to explicitly version
+ * one specific existing document instead of leaving that choice to the server.
+ */
+export interface AddMaterialDocumentRequest {
+  documentType: MaterialDocumentType;
+  documentUrl: string;
+  fileName?: string;
+  mimeType?: string;
+  title?: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  expiryDate?: string;
+  remarks?: string;
+  supersedesId?: string;
+}
+
+/** Mirrors MaterialDocumentQueryDto — GET /materials/:id/documents. */
+export interface MaterialDocumentQueryParams {
+  documentType?: MaterialDocumentType;
+  /** Defaults to false server-side: only the current version of each chain. */
+  includeSuperseded?: boolean;
 }
 
 /**

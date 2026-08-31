@@ -53,7 +53,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
   private current: MaterialCategory | null = null;
 
   protected readonly form = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(30), Validators.pattern(MATERIAL_CATEGORY_CODE_PATTERN)]],
+    //code: ['', [Validators.required, Validators.maxLength(30), Validators.pattern(MATERIAL_CATEGORY_CODE_PATTERN)]],
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     shortName: ['', [Validators.maxLength(100)]],
     displayOrder: [0, [Validators.required, Validators.pattern(NON_NEGATIVE_INTEGER_PATTERN)]],
@@ -64,10 +64,10 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     // Codes are stored uppercase server-side; mirror that as the user types.
-    this.form.controls.code.valueChanges.subscribe((value) => {
-      const upper = value.toUpperCase();
-      if (upper !== value) this.form.controls.code.setValue(upper, { emitEvent: false });
-    });
+    // this.form.controls.code.valueChanges.subscribe((value) => {
+    //   const upper = value.toUpperCase();
+    //   if (upper !== value) this.form.controls.code.setValue(upper, { emitEvent: false });
+    // });
 
     if (this.isEdit && this.data.materialCategoryId) {
       this.loadMaterialCategory(this.data.materialCategoryId);
@@ -82,7 +82,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
       this.current = category;
       this.isSystemCategory.set(category.isSystem);
       this.form.patchValue({
-        code: category.code,
+        //code: category.code,
         name: category.name,
         shortName: category.shortName ?? '',
         displayOrder: category.displayOrder,
@@ -91,7 +91,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
         remarks: category.remarks ?? '',
       });
       // Code is immutable after creation (backend omits it from the update DTO).
-      this.form.controls.code.disable();
+      //this.form.controls.code.disable();
       this.form.markAsPristine();
     } catch {
       this.loadError.set('Unable to load Material Category details. Please try again.');
@@ -119,7 +119,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
     try {
       const materialCategory = this.isEdit && this.current
         ? await this.store.updateMaterialCategory(this.current.id, common)
-        : await this.store.createMaterialCategory({ ...common, code: v.code.trim().toUpperCase() });
+        : await this.store.createMaterialCategory({ ...common });
 
       if (saveAndNew) {
         this.resetForm();
@@ -138,7 +138,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
 
   resetForm(): void {
     this.form.reset({
-      code: '',
+      //code: '',
       name: '',
       shortName: '',
       displayOrder: 0,
@@ -146,7 +146,7 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
       description: '',
       remarks: '',
     });
-    if (!this.isEdit) this.form.controls.code.enable();
+    //if (!this.isEdit) this.form.controls.code.enable();
     this.current = null;
   }
 
@@ -178,11 +178,11 @@ export class MaterialCategoryFormDialogComponent implements OnInit {
     if (control.errors['required']) return 'This field is required';
     if (control.errors['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
     if (control.errors['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
-    if (control.errors['pattern']) {
-      return field === 'code'
-        ? 'Only letters, numbers and underscore (_) are allowed.'
-        : 'Must be a whole number of 0 or more';
-    }
+    // if (control.errors['pattern']) {
+    //   return field === 'code'
+    //     ? 'Only letters, numbers and underscore (_) are allowed.'
+    //     : 'Must be a whole number of 0 or more';
+    // }
     return '';
   }
 }

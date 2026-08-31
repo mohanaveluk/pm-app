@@ -130,10 +130,23 @@
     <section class="vl-filters">
       <mat-form-field appearance="outline">
         <mat-label>Vendor Type</mat-label>
-        <mat-select [value]="store.filter().vendorType" (selectionChange)="onTypeFilter($event.value)">
+        <mat-select [value]="store.filter().vendorTypeId" (selectionChange)="onTypeFilter($event.value)">
+          <mat-option class="select-search-option">
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search vendor types…"
+              aria-label="Search vendor types"
+              [ngModel]="filterSearch('vendorType')"
+              (ngModelChange)="setFilterSearch('vendorType', $event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
           <mat-option [value]="null">All types</mat-option>
-          @for (option of typeOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          @for (type of filteredVendorTypes(); track type.id) {
+            <mat-option [value]="type.id">{{ type.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -385,8 +398,8 @@
         </ng-container>
 
         <ng-container matColumnDef="vendorType">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorType">Vendor Type</th>
-          <td mat-cell *matCellDef="let v">{{ label(v.vendorType) }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="vendorTypeId">Vendor Type</th>
+          <td mat-cell *matCellDef="let v">{{ v.vendorTypeName ?? '—' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="productCategories">

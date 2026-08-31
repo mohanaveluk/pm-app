@@ -197,14 +197,11 @@ export class MaterialFormService {
         specialTransportRequirements: [''],
         barcodeQrCodeRequired: [false],
       }),
+      // The seven typed document URLs used to live here as flat controls; they
+      // are now managed one row at a time via the dedicated document endpoints
+      // (see MaterialDocumentsStepComponent), so only `photos` remains bound to
+      // the whole-record form.
       documents: this.fb.group({
-        datasheetUrl: ['', [Validators.maxLength(1000)]],
-        drawingSketchUrl: ['', [Validators.maxLength(1000)]],
-        technicalSpecSheetUrl: ['', [Validators.maxLength(1000)]],
-        qualityCertificatesUrl: ['', [Validators.maxLength(1000)]],
-        complianceCertificatesUrl: ['', [Validators.maxLength(1000)]],
-        vendorQuotationUrl: ['', [Validators.maxLength(1000)]],
-        inspectionReportsUrl: ['', [Validators.maxLength(1000)]],
         photos: [[] as string[]],
       }),
     });

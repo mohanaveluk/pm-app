@@ -1,4 +1,4 @@
-import { Material, MaterialListItem, MaterialOption } from './material.model';
+import { Material, MaterialDocument, MaterialListItem, MaterialOption } from './material.model';
 
 /**
  * Every pm-api endpoint wraps its payload in ResponseDto
@@ -28,3 +28,10 @@ export type MaterialResponse = ApiEnvelope<Material>;
 export type PagedMaterialResponse = ApiEnvelope<PagedMaterials>;
 export type MaterialOptionsResponse = ApiEnvelope<MaterialOption[]>;
 export type MaterialDeleteResponse = ApiEnvelope<null>;
+
+/** GET /materials/:id/documents */
+export type MaterialDocumentsResponse = ApiEnvelope<MaterialDocument[]>;
+/** POST /materials/:id/documents */
+export type MaterialDocumentResponse = ApiEnvelope<MaterialDocument>;
+/** DELETE /materials/:id/documents/:documentId */
+export type MaterialDocumentDeleteResponse = ApiEnvelope<null>;

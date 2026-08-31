@@ -4,6 +4,13 @@
   <section class="step-section">
     <h3 class="step-section__title"><mat-icon>badge</mat-icon> Identification</h3>
 
+    @if (descriptionsLocked()) {
+      <p class="step-derived">
+        <mat-icon>lock</mat-icon>
+        {{ descriptionsLockedReason() }}
+      </p>
+    }
+
     <div class="step-grid">
       <mat-form-field appearance="outline" class="step-full">
         <mat-label>Short Description</mat-label>
@@ -13,8 +20,11 @@
           [maxlength]="shortDescriptionMax"
           placeholder="e.g. Carbon Steel Seamless Pipe"
           required
-          [readonly]="readonly()"
+          [readonly]="readonly() || descriptionsLocked()"
         />
+        @if (descriptionsLocked()) {
+          <mat-icon matSuffix [matTooltip]="descriptionsLockedReason()">lock</mat-icon>
+        }
         <mat-hint align="end">{{ remainingChars() }} characters remaining</mat-hint>
         @if (err('shortDescription')) { <mat-error>{{ err('shortDescription') }}</mat-error> }
       </mat-form-field>
@@ -27,8 +37,11 @@
           rows="3"
           maxlength="4000"
           placeholder="e.g. Carbon steel seamless pipe ASTM A106 Grade B, 6 inch NB, Schedule 40, 6000mm length"
-          [readonly]="readonly()"
+          [readonly]="readonly() || descriptionsLocked()"
         ></textarea>
+        @if (descriptionsLocked()) {
+          <mat-icon matSuffix [matTooltip]="descriptionsLockedReason()">lock</mat-icon>
+        }
         @if (err('longDescription')) { <mat-error>{{ err('longDescription') }}</mat-error> }
       </mat-form-field>
 

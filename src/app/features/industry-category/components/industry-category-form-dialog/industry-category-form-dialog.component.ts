@@ -53,7 +53,7 @@ export class IndustryCategoryFormDialogComponent implements OnInit {
   private current: IndustryCategory | null = null;
 
   protected readonly form = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(30), Validators.pattern(INDUSTRY_CATEGORY_CODE_PATTERN)]],
+    code: [''], //, [Validators.required, Validators.maxLength(30), Validators.pattern(INDUSTRY_CATEGORY_CODE_PATTERN)]
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     shortName: ['', [Validators.maxLength(100)]],
     displayOrder: [0, [Validators.required, Validators.pattern(NON_NEGATIVE_INTEGER_PATTERN)]],
@@ -119,7 +119,7 @@ export class IndustryCategoryFormDialogComponent implements OnInit {
     try {
       const industryCategory = this.isEdit && this.current
         ? await this.store.updateIndustryCategory(this.current.id, common)
-        : await this.store.createIndustryCategory({ ...common, code: v.code.trim().toUpperCase() });
+        : await this.store.createIndustryCategory({ ...common }); //, code: v.code.trim().toUpperCase()
 
       if (saveAndNew) {
         this.resetForm();
@@ -178,11 +178,11 @@ export class IndustryCategoryFormDialogComponent implements OnInit {
     if (control.errors['required']) return 'This field is required';
     if (control.errors['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
     if (control.errors['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
-    if (control.errors['pattern']) {
-      return field === 'code'
-        ? 'Only letters, numbers and underscore (_) are allowed.'
-        : 'Must be a whole number of 0 or more';
-    }
+    // if (control.errors['pattern']) {
+    //   return field === 'code'
+    //     ? 'Only letters, numbers and underscore (_) are allowed.'
+    //     : 'Must be a whole number of 0 or more';
+    // }
     return '';
   }
 }

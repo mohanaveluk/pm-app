@@ -8,7 +8,7 @@ import { MaterialGroupSortField } from './material-group.model';
 export interface CreateMaterialGroupRequest {
   /** Required; the parent category must exist and be active or the API returns 400/404. */
   materialCategoryId: string;
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;

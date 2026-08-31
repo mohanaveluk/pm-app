@@ -52,7 +52,7 @@ export class VendorListStore {
   readonly hasActiveFilters = computed(() => {
     const f = this.filter();
     return !!(
-      f.search || f.vendorType || f.vendorStatus || f.vendorClassification ||
+      f.search || f.vendorTypeId || f.vendorStatus || f.vendorClassification ||
       f.riskCategory || f.industryCategoryId || f.countryOfRegistration || f.pendingStatusChange ||
       f.isActive !== null || f.includeBlacklisted
     );
@@ -246,7 +246,7 @@ export class VendorListStore {
       sortBy: this.sortBy(),
       sortOrder: this.sortDirection() === 'asc' ? 'ASC' : 'DESC',
       search: f.search || undefined,
-      vendorType: f.vendorType ?? undefined,
+      vendorTypeId: f.vendorTypeId ?? undefined,
       vendorStatus: f.vendorStatus ?? undefined,
       vendorClassification: f.vendorClassification ?? undefined,
       riskCategory: f.riskCategory ?? undefined,

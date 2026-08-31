@@ -143,7 +143,9 @@
         errorMessage="Required information missing"
       >
         <ng-template matStepLabel>General</ng-template>
-        <app-material-general-step />
+        <app-material-general-step
+          [isPurchaseOrderIssued]="material()?.isPurchaseOrderIssued ?? false"
+        />
       </mat-step>
 
       <mat-step [stepControl]="formService.group('technical')" [state]="stepState('technical', 1)">
@@ -193,7 +195,11 @@
 
       <mat-step [stepControl]="formService.group('documents')" [state]="stepState('documents', 8)">
         <ng-template matStepLabel>Documents</ng-template>
-        <app-material-documents-step />
+        <app-material-documents-step
+          [materialId]="materialId()"
+          [isPurchaseOrderIssued]="material()?.isPurchaseOrderIssued ?? false"
+          [purchaseOrderIssuedAt]="material()?.purchaseOrderIssuedAt ?? null"
+        />
       </mat-step>
     </mat-stepper>
 

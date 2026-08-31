@@ -6,7 +6,7 @@ import { IndustryCategorySortField } from './industry-category.model';
  * (industry-category.controller.ts: `req.user.organizationId`).
  */
 export interface CreateIndustryCategoryRequest {
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;

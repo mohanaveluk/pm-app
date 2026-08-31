@@ -6,7 +6,7 @@ import { MaterialCategorySortField } from './material-category.model';
  * (material-category.controller.ts: `req.user.organizationId`).
  */
 export interface CreateMaterialCategoryRequest {
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;

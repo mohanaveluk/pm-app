@@ -28,12 +28,14 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { COUNTRIES, countryName } from '../../../shared/reference/countries';
 import { IndustryCategoryService } from '../../industry-category/services/industry-category.service';
 import { IndustryCategoryOption } from '../../industry-category/models/industry-category.model';
+import { VendorTypeService } from '../../vendor-type/services/vendor-type.service';
+import { VendorType } from '../../vendor-type/models/vendor-type.model';
 import { VendorListStore } from '../store/vendor-list.store';
 import {
   EnumOption, PENDING_STATUS_OPTIONS, PendingStatusChange, RISK_CATEGORY_OPTIONS,
   RiskCategory, VENDOR_CLASSIFICATION_OPTIONS, VENDOR_STATUS_OPTIONS,
-  VENDOR_TYPE_OPTIONS, VendorClassification, VendorListItem, VendorSortField,
-  VendorStatus, VendorType, enumLabel,
+  VendorClassification, VendorListItem, VendorSortField,
+  VendorStatus, enumLabel,
 } from '../models/vendor.model';
 import {
   VendorBlacklistDialogComponent, VendorBlacklistDialogData, VendorBlacklistDialogResult,
@@ -52,7 +54,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'code', label: 'Vendor Code', alwaysVisible: true, sortField: 'code' },
   { key: 'vendorName', label: 'Vendor Name', alwaysVisible: true, sortField: 'vendorName' },
   { key: 'tradeName', label: 'Trade Name', sortField: 'tradeName' },
-  { key: 'vendorType', label: 'Vendor Type', sortField: 'vendorType' },
+  { key: 'vendorType', label: 'Vendor Type', sortField: 'vendorTypeId' },
   // Not sortable: VendorQueryDto.sortBy does not accept productCategories.
   { key: 'productCategories', label: 'Material Categories' },
   { key: 'countryOfRegistration', label: 'Country' },
@@ -93,6 +95,7 @@ export class VendorListComponent implements OnInit {
   protected readonly store = inject(VendorListStore);
   private readonly permissionService = inject(PermissionService);
   private readonly industryCategoryService = inject(IndustryCategoryService);
+  private readonly vendorTypeService = inject(VendorTypeService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
   private readonly router = inject(Router);
@@ -101,7 +104,6 @@ export class VendorListComponent implements OnInit {
   protected readonly PERMISSIONS = PERMISSIONS;
   protected readonly columnDefs = COLUMN_DEFS;
   protected readonly countries = COUNTRIES;
-  protected readonly typeOptions = VENDOR_TYPE_OPTIONS;
   protected readonly statusOptions = VENDOR_STATUS_OPTIONS;
   protected readonly classificationOptions = VENDOR_CLASSIFICATION_OPTIONS;
   protected readonly riskOptions = RISK_CATEGORY_OPTIONS;
@@ -112,6 +114,7 @@ export class VendorListComponent implements OnInit {
   protected readonly showFilters = signal(false);
   protected readonly compactDensity = signal(false);
   protected readonly industryCategories = signal<IndustryCategoryOption[]>([]);
+  protected readonly vendorTypes = signal<VendorType[]>([]);
   protected readonly hiddenColumns = signal(new Set(this.loadColumnPreference()));
 
   /**
@@ -125,6 +128,13 @@ export class VendorListComponent implements OnInit {
     const options = this.industryCategories();
     if (!term) return options;
     return options.filter((c) => `${c.code} ${c.name}`.toLowerCase().includes(term));
+  });
+
+  protected readonly filteredVendorTypes = computed(() => {
+    const term = this.filterSearch('vendorType').trim().toLowerCase();
+    const options = this.vendorTypes();
+    if (!term) return options;
+    return options.filter((t) => `${t.code} ${t.name}`.toLowerCase().includes(term));
   });
 
   protected readonly filteredCountries = computed(() => {
@@ -146,6 +156,12 @@ export class VendorListComponent implements OnInit {
     this.industryCategoryService.getActiveIndustryCategories().subscribe({
       next: (res) => this.industryCategories.set(res.data ?? []),
       error: () => this.industryCategories.set([]),
+    });
+    // Only needed to label the Vendor Type filter — the list endpoint already
+    // returns the joined name for each row.
+    this.vendorTypeService.getActiveVendorTypes().subscribe({
+      next: (res) => this.vendorTypes.set(res.data ?? []),
+      error: () => this.vendorTypes.set([]),
     });
   }
 
@@ -178,8 +194,8 @@ export class VendorListComponent implements OnInit {
     this.store.applySearch('');
   }
 
-  onTypeFilter(vendorType: VendorType | null): void {
-    this.store.setFilter({ vendorType });
+  onTypeFilter(vendorTypeId: string | null): void {
+    this.store.setFilter({ vendorTypeId });
   }
 
   onStatusFilter(vendorStatus: VendorStatus | null): void {
@@ -328,7 +344,7 @@ export class VendorListComponent implements OnInit {
       v.code,
       v.vendorName,
       v.tradeName ?? '',
-      enumLabel(v.vendorType),
+      v.vendorTypeName ?? '',
       v.productCategories?.join('; ') ?? '',
       countryName(v.countryOfRegistration),
       v.primaryContactPerson ?? '',

@@ -115,7 +115,7 @@
             <h3 class="vv-card__title">Identification</h3>
             <dl class="vv-facts">
               <div><dt>Vendor Code</dt><dd><span class="vv-code">{{ v.code }}</span></dd></div>
-              <div><dt>Vendor Type</dt><dd>{{ label(v.vendorType) }}</dd></div>
+              <div><dt>Vendor Type</dt><dd>{{ v.vendorType?.name || '—' }}</dd></div>
               <div><dt>Industry Category</dt><dd>{{ v.industryCategory?.name || '—' }}</dd></div>
               <div><dt>Parent Company</dt><dd>{{ v.parentCompany?.vendorName || '—' }}</dd></div>
               <div><dt>Country of Registration</dt><dd>{{ country(v.countryOfRegistration) }}</dd></div>
