@@ -377,6 +377,29 @@
   margin: 10px 0 0;
 }
 
+// Highlights the current version of a document chain against its superseded
+// history in the Documents step's per-type version list.
+.step-derived-badge--active {
+  background: rgba(25, 118, 210, 0.08);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.doc-row__expired {
+  color: var(--error);
+  font-weight: 600;
+}
+
+// Stands in for Replace/Delete on a document frozen by a purchase-order lock.
+.doc-row__lock {
+  color: #8098b8;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
 // Inline search box rendered as the first option of the long dropdowns.
 // Authored inside this component's template, so the emulated-encapsulation
 // attribute travels with it into the CDK overlay.

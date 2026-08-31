@@ -51,7 +51,7 @@ export class VendorService {
       ['taxRegistrationNumber', params.taxRegistrationNumber],
       ['industryCategoryId', params.industryCategoryId],
       ['parentCompanyId', params.parentCompanyId],
-      ['vendorType', params.vendorType],
+      ['vendorTypeId', params.vendorTypeId],
       ['vendorStatus', params.vendorStatus],
       ['vendorClassification', params.vendorClassification],
       ['riskCategory', params.riskCategory],

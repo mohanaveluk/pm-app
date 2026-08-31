@@ -1,7 +1,7 @@
 import {
   DeliveryCapability, PaymentMethod, PaymentTerms, PendingStatusChange, ReviewCycle,
   RiskCategory, TaxDocumentType, TransportationMode, VendorAddressType,
-  VendorClassification, VendorDocumentType, VendorSortField, VendorStatus, VendorType,
+  VendorClassification, VendorDocumentType, VendorSortField, VendorStatus,
 } from './vendor.model';
 
 /**
@@ -158,7 +158,7 @@ export interface VendorEvaluationSummaryRequest {
  */
 export interface CreateVendorRequest {
   vendorName: string;
-  vendorType: VendorType;
+  vendorTypeId: string;
   industryCategoryId: string;
 
   vendorDescription?: string;
@@ -225,7 +225,7 @@ export interface VendorQueryParams {
   taxRegistrationNumber?: string;
   industryCategoryId?: string;
   parentCompanyId?: string;
-  vendorType?: VendorType;
+  vendorTypeId?: string;
   vendorStatus?: VendorStatus;
   vendorClassification?: VendorClassification;
   riskCategory?: RiskCategory;

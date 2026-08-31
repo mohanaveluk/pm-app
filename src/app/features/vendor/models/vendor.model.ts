@@ -8,13 +8,9 @@
 
 // ── Enums (mirror pm-api/src/modules/vendor/enums) ─────────────────────────
 
-export enum VendorType {
-  MANUFACTURER = 'MANUFACTURER',
-  SUPPLIER = 'SUPPLIER',
-  CONTRACTOR = 'CONTRACTOR',
-  CONSULTANT = 'CONSULTANT',
-  SERVICE_PROVIDER = 'SERVICE_PROVIDER',
-}
+// Vendor Type is no longer a fixed enum — it is administrable, organization-
+// scoped master data. See ../../vendor-type/models/vendor-type.model.ts and
+// GET /vendor-types/active.
 
 export enum VendorStatus {
   UNDER_EVALUATION = 'UNDER_EVALUATION',
@@ -162,34 +158,6 @@ export interface EnumOption<T extends string> {
   label: string;
   hint?: string;
 }
-
-export const VENDOR_TYPE_OPTIONS: readonly EnumOption<VendorType>[] = [
-  { value: VendorType.MANUFACTURER, label: 'Manufacturer', hint: 'Produces the goods it supplies' },
-  { value: VendorType.SUPPLIER, label: 'Supplier', hint: 'Distributes goods produced by others' },
-  { value: VendorType.CONTRACTOR, label: 'Contractor', hint: 'Construction, erection, fabrication scope' },
-  { value: VendorType.CONSULTANT, label: 'Consultant', hint: 'Engineering, design, advisory services' },
-  { value: VendorType.SERVICE_PROVIDER, label: 'Service Provider', hint: 'Inspection, logistics, calibration, manpower' },
-];
-
-/**
- * Intended vendor-code prefix per Vendor Type.
- *
- * Explicit rather than derived, because the generic "first three alphabetic
- * characters" rule collapses CONTRACTOR and CONSULTANT onto the same CON prefix
- * and would make them share one sequence counter.
- *
- * NOT in force yet: pm-api still generates the prefix from the linked Industry
- * Category name (VendorService.create → deriveCategoryPrefix(category.name)).
- * This map is the frontend half of that change, ready for when the backend
- * switches to vendorType.
- */
-export const VENDOR_TYPE_CODE_PREFIX: Readonly<Record<VendorType, string>> = {
-  [VendorType.MANUFACTURER]: 'MAN',
-  [VendorType.SUPPLIER]: 'SUP',
-  [VendorType.CONTRACTOR]: 'CTR',
-  [VendorType.CONSULTANT]: 'CNS',
-  [VendorType.SERVICE_PROVIDER]: 'SVC',
-};
 
 export const VENDOR_STATUS_OPTIONS: readonly EnumOption<VendorStatus>[] = [
   { value: VendorStatus.UNDER_EVALUATION, label: 'Under Evaluation' },
@@ -435,7 +403,8 @@ export interface Vendor {
   vendorName: string;
   vendorDescription?: string;
   tradeName?: string;
-  vendorType: VendorType;
+  vendorTypeId: string;
+  vendorType?: { id: string; code?: string; name?: string };
 
   industryCategoryId: string;
   industryCategory?: { id: string; code?: string; name?: string };
@@ -542,7 +511,8 @@ export interface VendorListItem {
   code: string;
   vendorName: string;
   tradeName?: string;
-  vendorType: VendorType;
+  vendorTypeId: string;
+  vendorTypeName?: string;
   vendorStatus: VendorStatus;
   isActive: boolean;
   industryCategoryId: string;
@@ -571,7 +541,8 @@ export interface VendorOption {
   code: string;
   vendorName: string;
   tradeName?: string;
-  vendorType: VendorType;
+  vendorTypeId: string;
+  vendorTypeName?: string;
   vendorStatus: VendorStatus;
   vendorClassification?: VendorClassification;
   industryCategoryId: string;
@@ -582,13 +553,13 @@ export interface VendorOption {
 /** Only these are accepted by VendorQueryDto.sortBy. */
 export type VendorSortField =
   | 'code' | 'vendorName' | 'tradeName' | 'vendorStatus'
-  | 'vendorType' | 'vendorClassification' | 'createdAt' | 'updatedAt';
+  | 'vendorTypeId' | 'vendorClassification' | 'createdAt' | 'updatedAt';
 
 export type SortDirection = 'asc' | 'desc';
 
 export interface VendorFilter {
   search: string;
-  vendorType: VendorType | null;
+  vendorTypeId: string | null;
   vendorStatus: VendorStatus | null;
   vendorClassification: VendorClassification | null;
   /** Vendors whose blacklist / un-blacklist request is awaiting approval. */
@@ -604,7 +575,7 @@ export interface VendorFilter {
 
 export const DEFAULT_VENDOR_FILTER: VendorFilter = {
   search: '',
-  vendorType: null,
+  vendorTypeId: null,
   vendorStatus: null,
   vendorClassification: null,
   pendingStatusChange: null,
@@ -619,7 +590,6 @@ export const DEFAULT_VENDOR_FILTER: VendorFilter = {
 
 const LABELS: Record<string, string> = {
   ...Object.fromEntries(PENDING_STATUS_OPTIONS.map((o) => [o.value, o.label])),
-  ...Object.fromEntries(VENDOR_TYPE_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(VENDOR_STATUS_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(VENDOR_CLASSIFICATION_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(PAYMENT_TERMS_OPTIONS.map((o) => [o.value, o.label])),

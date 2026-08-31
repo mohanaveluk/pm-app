@@ -36,7 +36,7 @@
         </div>
         <div>
           <dt>Type</dt>
-          <dd>{{ label(done.vendorType) }}</dd>
+          <dd>{{ done.vendorType?.name || formService.vendorTypeLabel(done.vendorTypeId) }}</dd>
         </div>
         <div>
           <dt>Material Categories</dt>
@@ -86,7 +86,7 @@
       <dl class="vw-header__facts">
         <div>
           <dt>Type</dt>
-          <dd>{{ label(formService.form.get('identification.vendorType')?.value) }}</dd>
+          <dd>{{ formService.vendorTypeLabel(formService.form.get('identification.vendorTypeId')?.value) }}</dd>
         </div>
         <div>
           <dt>Categories</dt>

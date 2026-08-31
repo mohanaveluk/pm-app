@@ -6,7 +6,7 @@ import { UnitOfMeasurementSortField, UomType } from './unit-of-measurement.model
  * (unit-of-measurement.controller.ts: `req.user.organizationId`).
  */
 export interface CreateUnitOfMeasurementRequest {
-  code: string;
+  code?: string;
   name: string;
   symbol?: string;
   shortName?: string;

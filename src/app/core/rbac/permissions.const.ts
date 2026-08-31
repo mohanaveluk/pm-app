@@ -65,6 +65,12 @@ export const PERMISSIONS = {
   INDUSTRY_CATEGORIES_DISABLE: 'industry-categories.disable',
   INDUSTRY_CATEGORIES_EXPORT: 'industry-categories.export',
 
+  VENDOR_TYPES_VIEW: 'vendor-types.view',
+  VENDOR_TYPES_CREATE: 'vendor-types.create',
+  VENDOR_TYPES_UPDATE: 'vendor-types.update',
+  VENDOR_TYPES_DELETE: 'vendor-types.delete',
+  VENDOR_TYPES_EXPORT: 'vendor-types.export',
+
   MATERIAL_CATEGORIES_VIEW: 'material-categories.view',
   MATERIAL_CATEGORIES_CREATE: 'material-categories.create',
   MATERIAL_CATEGORIES_UPDATE: 'material-categories.update',

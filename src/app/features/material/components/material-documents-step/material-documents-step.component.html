@@ -1,13 +1,37 @@
-<div class="step" [formGroup]="group">
+<div class="step">
 
-  <!-- Typed document slots — one card, one file input, one destination control -->
+  <!-- Typed document slots — each backed by the versioned register, not a flat URL -->
   <section class="step-section">
     <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Documents</h3>
     <p class="step-section__hint">
-      Each card uploads into its own document type. Drop a file on the card you want,
-      or paste a link to a document already stored elsewhere.
-      Max {{ maxFileSizeMb }} MB per file.
+      Each card holds every version of that document type. Add a new one at any
+      time, replace the active version, or delete one you no longer need —
+      nothing here is limited to a single file per type.
     </p>
+
+    @if (!materialId()) {
+      <p class="step-derived">
+        <mat-icon>info_outline</mat-icon>
+        Documents can be attached once the material has been saved.
+      </p>
+    } @else if (isPurchaseOrderIssued()) {
+      <p class="step-derived">
+        <mat-icon>lock</mat-icon>
+        A purchase order was issued against this material
+        @if (purchaseOrderIssuedAt()) { on {{ purchaseOrderIssuedAt() | date: 'mediumDate' }} }.
+        Documents filed before then are frozen — shown with
+        <mat-icon inline>lock</mat-icon> instead of Replace/Delete. Anything added from now on
+        can still be replaced or deleted freely.
+      </p>
+    }
+
+    @if (materialId() && documentsError()) {
+      <p class="step-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        {{ documentsError() }}
+        <button mat-button type="button" (click)="refreshDocuments()">Retry</button>
+      </p>
+    }
 
     <div class="doc-slot-grid">
       @for (slot of slots; track slot.key) {
@@ -20,77 +44,110 @@
             </div>
           </div>
 
+          <!-- One hidden input per slot; Add and every row's Replace funnel
+               through it — the pending target is recorded just before it opens. -->
           <input
-            #slotInput
+            #typedInput
             type="file"
             hidden
             aria-hidden="true"
             [accept]="slot.accept"
-            (change)="onFilesSelected($event, slot)"
+            (change)="onTypedFileSelected($event)"
           />
 
-          @if (isUploading(slot)) {
+          @if (isUploading(slot.key)) {
             <div class="doc-slot__uploading">
               <mat-spinner diameter="22" />
               <span>Uploading…</span>
             </div>
-          } @else if (slotValue(slot); as url) {
-            <div class="doc-row">
-              <mat-icon class="doc-row__icon">check_circle</mat-icon>
-              <div class="doc-row__meta">
-                <div class="doc-row__name" [matTooltip]="url">{{ fileNameFromUrl(url) }}</div>
-                <div class="doc-row__sub">Uploaded</div>
-              </div>
-              <button mat-icon-button type="button" matTooltip="View" (click)="openUrl(url)">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              @if (!readonly()) {
-                <button mat-icon-button type="button" matTooltip="Replace" (click)="slotInput.click()">
-                  <mat-icon>swap_horiz</mat-icon>
-                </button>
-                <button mat-icon-button type="button" color="warn" matTooltip="Remove" (click)="clearSlot(slot)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              }
-            </div>
-          } @else if (!readonly()) {
+          } @else if (!readonly() && materialId()) {
             <div
               class="doc-dropzone doc-dropzone--compact"
               [class.doc-dropzone--active]="dragSlot() === slot.key"
               role="button"
               tabindex="0"
-              [attr.aria-label]="'Upload ' + slot.label"
-              (dragover)="onDragOver($event, slot)"
-              (dragleave)="onDragLeave()"
-              (drop)="onDrop($event, slot)"
-              (click)="slotInput.click()"
-              (keydown.enter)="slotInput.click()"
-              (keydown.space)="slotInput.click(); $event.preventDefault()"
+              [attr.aria-label]="'Add ' + slot.label"
+              (dragover)="onTypedDragOver($event, slot)"
+              (dragleave)="onTypedDragLeave()"
+              (drop)="onTypedDrop($event, slot)"
+              (click)="addDocument(slot, typedInput)"
+              (keydown.enter)="addDocument(slot, typedInput)"
+              (keydown.space)="addDocument(slot, typedInput); $event.preventDefault()"
             >
-              <mat-icon>upload_file</mat-icon>
-              <p class="doc-dropzone__title">Drop file or choose</p>
-              <p class="doc-dropzone__hint">{{ slot.accept }}</p>
+              <mat-icon>add_circle_outline</mat-icon>
+              <p class="doc-dropzone__title">Add New Document</p>
+              <p class="doc-dropzone__hint">Drop a file, or click · {{ slot.accept }}</p>
             </div>
-          } @else {
-            <p class="doc-empty">Not attached.</p>
           }
 
-          <mat-form-field appearance="outline" class="doc-slot__url">
-            <mat-label>Link</mat-label>
-            <input
-              matInput
-              [formControlName]="slot.control"
-              maxlength="1000"
-              placeholder="https://…"
-              [readonly]="readonly()"
-            />
-          </mat-form-field>
+          @if (documentsLoading() && !documents().length) {
+            <p class="doc-empty">Loading…</p>
+          } @else {
+            <div class="doc-list">
+              @for (doc of documentsFor(slot); track doc.id) {
+                <div class="doc-row">
+                  <mat-icon class="doc-row__icon">
+                    {{ doc.isActive ? 'check_circle' : 'history' }}
+                  </mat-icon>
+                  <div class="doc-row__meta">
+                    <div class="doc-row__name" [matTooltip]="doc.documentUrl">
+                      {{ documentName(doc) }}
+                    </div>
+                    <div class="doc-row__sub">
+                      v{{ doc.version }}
+                      <span class="step-derived-badge" [class.step-derived-badge--active]="doc.isActive">
+                        {{ doc.isActive ? 'Active' : 'Superseded' }}
+                      </span>
+                      @if (doc.uploadedAt) { · {{ doc.uploadedAt | date: 'mediumDate' }} }
+                      @if (doc.isExpired) { · <span class="doc-row__expired">Expired</span> }
+                    </div>
+                  </div>
+
+                  <button mat-icon-button type="button" matTooltip="View" (click)="openUrl(doc.documentUrl)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+
+                  @if (!canModify(doc)) {
+                    <mat-icon
+                      class="doc-row__lock"
+                      [matTooltip]="lockedReason()"
+                    >lock</mat-icon>
+                  } @else {
+                    @if (!readonly() && doc.isActive) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        matTooltip="Replace with a new version"
+                        (click)="replaceDocument(slot, doc, typedInput)"
+                      >
+                        <mat-icon>swap_horiz</mat-icon>
+                      </button>
+                    }
+                    @if (!readonly()) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        color="warn"
+                        matTooltip="Delete"
+                        (click)="deleteDocument(slot, doc)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  }
+                </div>
+              }
+              @if (materialId() && !documentsLoading() && !documentsFor(slot).length) {
+                <p class="doc-empty">No documents uploaded yet.</p>
+              }
+            </div>
+          }
         </div>
       }
     </div>
   </section>
 
-  <!-- Photos — the one multi-file slot -->
+  <!-- Photos — unversioned, unchanged -->
   <section class="step-section">
     <h3 class="step-section__title"><mat-icon>{{ photoSlot.icon }}</mat-icon> {{ photoSlot.label }}</h3>
     <p class="step-section__hint">
@@ -104,11 +161,11 @@
       hidden
       aria-hidden="true"
       [accept]="photoSlot.accept"
-      (change)="onFilesSelected($event, photoSlot)"
+      (change)="onFilesSelected($event)"
     />
 
     @if (!readonly()) {
-      @if (isUploading(photoSlot)) {
+      @if (isUploading(photoSlot.key)) {
         <div class="doc-slot__uploading">
           <mat-spinner diameter="22" />
           <span>Uploading photos…</span>
@@ -120,9 +177,9 @@
           role="button"
           tabindex="0"
           aria-label="Upload photos"
-          (dragover)="onDragOver($event, photoSlot)"
+          (dragover)="onDragOver($event)"
           (dragleave)="onDragLeave()"
-          (drop)="onDrop($event, photoSlot)"
+          (drop)="onDrop($event)"
           (click)="photoInput.click()"
           (keydown.enter)="photoInput.click()"
           (keydown.space)="photoInput.click(); $event.preventDefault()"

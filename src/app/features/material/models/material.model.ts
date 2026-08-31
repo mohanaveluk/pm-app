@@ -42,6 +42,69 @@ export enum HazardClassification {
   RADIOACTIVE = 'RADIOACTIVE', ENVIRONMENTAL = 'ENVIRONMENTAL',
 }
 
+/**
+ * Mirrors pm-api's MaterialDocumentType. The first seven map 1:1 onto the
+ * deprecated flat URL columns (datasheetUrl, …) that the Documents step used to
+ * read and write directly; the register at `material_documents` is now the
+ * source of truth for all of them, and those flat columns are only kept in
+ * sync server-side for backward compatibility. PHOTO is handled separately —
+ * `photos` stays a plain string array, unversioned, exactly as before.
+ */
+export enum MaterialDocumentType {
+  DATASHEET = 'DATASHEET',
+  DRAWING_SKETCH = 'DRAWING_SKETCH',
+  TECHNICAL_SPEC_SHEET = 'TECHNICAL_SPEC_SHEET',
+  QUALITY_CERTIFICATE = 'QUALITY_CERTIFICATE',
+  COMPLIANCE_CERTIFICATE = 'COMPLIANCE_CERTIFICATE',
+  VENDOR_QUOTATION = 'VENDOR_QUOTATION',
+  INSPECTION_REPORT = 'INSPECTION_REPORT',
+  PHOTO = 'PHOTO',
+  MSDS = 'MSDS',
+  MILL_CERTIFICATE = 'MILL_CERTIFICATE',
+  TEST_REPORT = 'TEST_REPORT',
+  INSTALLATION_MANUAL = 'INSTALLATION_MANUAL',
+  WARRANTY = 'WARRANTY',
+  OTHER = 'OTHER',
+}
+
+/**
+ * Mirrors MaterialDocumentResponseDto. A revision is a new row — `version`
+ * increments, `supersedesId` points at the row it replaced, and that row's
+ * `isActive` flips to false but is retained. Types outside
+ * SINGLETON_DOCUMENT_TYPES (DATASHEET, DRAWING_SKETCH, TECHNICAL_SPEC_SHEET,
+ * VENDOR_QUOTATION, MSDS) hold several independent, concurrently-active chains
+ * — e.g. three separate quality certificates, each with its own version history.
+ */
+export interface MaterialDocument {
+  id: string;
+  dguid: string;
+  materialId: string;
+  documentType: MaterialDocumentType;
+  documentUrl: string;
+  fileName?: string;
+  mimeType?: string;
+  fileSizeBytes?: number;
+  title?: string;
+  version: number;
+  /** The document row this version replaced, if any. */
+  supersedesId?: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  expiryDate?: string;
+  /** False once a newer version supersedes this row. */
+  isActive: boolean;
+  /** Derived server-side: expiryDate is in the past. */
+  isExpired: boolean;
+  daysToExpiry?: number;
+  /** True when migrated from a legacy flat URL column rather than an upload. */
+  isMigrated: boolean;
+  remarks?: string;
+  uploadedBy?: string;
+  uploadedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Presentation metadata ─────────────────────────────────────────────────
 
 export interface EnumOption<T extends string> {
@@ -176,9 +239,25 @@ export interface Material {
   specialTransportRequirements?: string; barcodeQrCodeRequired?: boolean;
 
   // Documents
+  // The flat URL fields below are DEPRECATED — the server still populates them
+  // (kept in sync from `documents` for backward compatibility) but the
+  // Documents step no longer reads or writes them: `documents` is the source of
+  // truth for everything except `photos`, which stays a plain unversioned array.
   datasheetUrl?: string; drawingSketchUrl?: string; technicalSpecSheetUrl?: string;
   qualityCertificatesUrl?: string; complianceCertificatesUrl?: string;
   vendorQuotationUrl?: string; inspectionReportsUrl?: string; photos?: string[];
+  /** Current active version of each document type. Full history (including
+   *  superseded versions) comes from GET /materials/:id/documents. */
+  documents?: MaterialDocument[];
+
+  // ── Purchase-order lock ─────────────────────────────────────────────
+  // Once an order is issued the specification freezes (update/delete are
+  // refused server-side); documents remain the deliberate exception, but the
+  // Documents step still protects paperwork that predates the lock — see
+  // MaterialDocumentsStepComponent's doc comment.
+  isPurchaseOrderIssued?: boolean;
+  purchaseOrderIssuedAt?: string;
+  purchaseOrderReference?: string;
 
   // Audit
   createdBy?: string; updatedBy?: string; createdAt: string; updatedAt?: string;

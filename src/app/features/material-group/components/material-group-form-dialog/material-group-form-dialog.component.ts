@@ -59,7 +59,7 @@ export class MaterialGroupFormDialogComponent implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     materialCategoryId: ['', [Validators.required]],
-    code: ['', [Validators.required, Validators.maxLength(30), Validators.pattern(MATERIAL_GROUP_CODE_PATTERN)]],
+    code: [''], //[Validators.required, Validators.maxLength(30), Validators.pattern(MATERIAL_GROUP_CODE_PATTERN)]
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     shortName: ['', [Validators.maxLength(100)]],
     displayOrder: [0, [Validators.required, Validators.pattern(NON_NEGATIVE_INTEGER_PATTERN)]],
@@ -136,7 +136,7 @@ export class MaterialGroupFormDialogComponent implements OnInit {
         : await this.store.createMaterialGroup({
             ...common,
             materialCategoryId: v.materialCategoryId,
-            code: v.code.trim().toUpperCase(),
+            //code: v.code.trim().toUpperCase(),
           });
 
       if (saveAndNew) {
@@ -202,11 +202,11 @@ export class MaterialGroupFormDialogComponent implements OnInit {
     }
     if (control.errors['minlength']) return `Minimum ${control.errors['minlength'].requiredLength} characters`;
     if (control.errors['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
-    if (control.errors['pattern']) {
-      return field === 'code'
-        ? 'Only letters, numbers and underscore (_) are allowed.'
-        : 'Must be a whole number of 0 or more';
-    }
+    // if (control.errors['pattern']) {
+    //   return field === 'code'
+    //     ? 'Only letters, numbers and underscore (_) are allowed.'
+    //     : 'Must be a whole number of 0 or more';
+    // }
     return '';
   }
 }
