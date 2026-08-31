@@ -87,7 +87,7 @@ export class ActivityFormDialogComponent implements OnInit {
     disciplineId: ['', Validators.required],
     departmentId: ['', Validators.required],
     departmentDisciplineId: ['', Validators.required],
-    code: ['', [Validators.required, Validators.maxLength(30)]],
+    code: [''], //, [Validators.required, Validators.maxLength(30)]
     name: ['', [Validators.required, Validators.maxLength(255)]],
     shortName: ['', Validators.maxLength(80)],
     description: [''],
@@ -266,7 +266,7 @@ export class ActivityFormDialogComponent implements OnInit {
           departmentDisciplineId: v.departmentDisciplineId,
           departmentId: v.departmentId,
           disciplineId: v.disciplineId,
-          code: v.code,
+          //code: v.code,
           name: v.name,
           shortName: v.shortName.trim() || undefined,
           description: v.description.trim() || undefined,

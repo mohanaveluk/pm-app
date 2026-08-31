@@ -56,7 +56,7 @@ export class DisciplineFormDialogComponent implements OnInit {
   protected readonly organizationName = signal(this.auth.user()?.organizationId ?? '—');
 
   protected readonly form = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(20)]],
+    code: [''], //, [Validators.required, Validators.maxLength(20)]
     name: ['', [Validators.required, Validators.maxLength(255)]],
     shortName: ['', [Validators.maxLength(50)]],
     displayOrder: [1, [Validators.required, Validators.pattern(POSITIVE_INTEGER_PATTERN)]],

@@ -1,6 +1,6 @@
 export interface CreateDepartmentRequest {
   organizationId: string;
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;
