@@ -79,11 +79,13 @@
               }
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Department–Discipline Mapping</mat-label>
-              <input matInput [value]="(isBulk ? bulkForm : form).controls.departmentDisciplineId.value" disabled />
-              <mat-icon matSuffix matTooltip="Auto-populated from the selected Department">info_outline</mat-icon>
-            </mat-form-field>
+            @if(false){
+              <mat-form-field appearance="outline">
+                <mat-label>Department–Discipline Mapping</mat-label>
+                <input matInput [value]="(isBulk ? bulkForm : form).controls.departmentDisciplineId.value" disabled />
+                <mat-icon matSuffix matTooltip="Auto-populated from the selected Department">info_outline</mat-icon>
+              </mat-form-field>
+            }
           </div>
         }
       </section>
@@ -131,11 +133,11 @@
         <section class="dlg-section">
           <h3 class="dlg-section__title">Activity Information</h3>
           <div class="dlg-grid">
-            <mat-form-field appearance="outline">
+            <!-- <mat-form-field appearance="outline">
               <mat-label>Activity Code</mat-label>
               <input matInput formControlName="code" (input)="onUppercaseInput(form.controls.code, $event)" maxlength="30" required />
               @if (err('code')) { <mat-error>{{ err('code') }}</mat-error> }
-            </mat-form-field>
+            </mat-form-field> -->
 
             <mat-form-field appearance="outline">
               <mat-label>Activity Name</mat-label>
