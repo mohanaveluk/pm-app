@@ -1,6 +1,6 @@
 export interface CreateDisciplineRequest {
   organizationId: string;
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;
@@ -10,7 +10,7 @@ export interface CreateDisciplineRequest {
 }
 
 export interface UpdateDisciplineRequest {
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;

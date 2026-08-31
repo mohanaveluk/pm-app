@@ -4,7 +4,7 @@ export interface CreateActivityRequest {
   departmentDisciplineId: string;
   departmentId: string;
   disciplineId: string;
-  code: string;
+  code?: string;
   name: string;
   shortName?: string;
   description?: string;
