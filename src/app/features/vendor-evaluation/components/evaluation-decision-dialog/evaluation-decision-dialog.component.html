@@ -1,0 +1,93 @@
+<h2 mat-dialog-title class="dlg-title" [class.dlg-title--warn]="!isApprove">
+  <mat-icon>{{ isApprove ? 'check_circle' : (data.decision === EvaluationDecision.REJECTED ? 'cancel' : 'undo') }}</mat-icon>
+  {{ title }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <p class="dlg-vendor">
+    <strong>{{ data.vendorCode }}</strong> — {{ data.vendorName }}
+  </p>
+
+  @if (isApprove) {
+    <p class="dlg-note">
+      This action records a FINAL Approved decision and activates the vendor —
+      it becomes selectable for new transactions immediately.
+    </p>
+  } @else if (data.decision === EvaluationDecision.REJECTED) {
+    <p class="dlg-note dlg-note--warn">
+      The vendor will remain Under Evaluation, but this decision is recorded
+      permanently in its approval history. It does not notify the vendor
+      automatically — share the reason with them through your usual process.
+    </p>
+  } @else {
+    <p class="dlg-note">
+      Recorded against the vendor's approval history. The vendor stays Under
+      Evaluation until it is resubmitted and a final decision is made.
+    </p>
+  }
+
+  <form [formGroup]="form" class="dlg-form" novalidate>
+    <div class="dlg-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Stage</mat-label>
+        <mat-select formControlName="stage" [disabled]="isApprove">
+          @for (opt of stageOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Score (optional)</mat-label>
+        <input matInput type="number" min="0" max="100" formControlName="score" />
+        <mat-hint>0–100</mat-hint>
+      </mat-form-field>
+
+      @if (isApprove) {
+        <mat-form-field appearance="outline">
+          <mat-label>Risk Category</mat-label>
+          <mat-select formControlName="riskCategory">
+            <mat-option [value]="null">Not set</mat-option>
+            @for (opt of riskOptions; track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Recommendation / Classification</mat-label>
+          <mat-select formControlName="vendorClassification">
+            <mat-option [value]="null">Not set</mat-option>
+            @for (opt of classificationOptions; track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="dlg-full-width">
+        <mat-label>{{ commentsLabel }}</mat-label>
+        <textarea
+          matInput
+          formControlName="comments"
+          rows="3"
+          [placeholder]="isApprove ? 'Optional notes for the record' : 'Explain what is missing or why the vendor does not qualify'"
+        ></textarea>
+        @if (err('comments')) { <mat-error>{{ err('comments') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button
+    mat-raised-button
+    type="button"
+    [color]="isApprove ? 'primary' : 'warn'"
+    (click)="confirm()"
+  >
+    <mat-icon>{{ isApprove ? 'check' : (data.decision === EvaluationDecision.REJECTED ? 'block' : 'reply') }}</mat-icon>
+    {{ confirmLabel }}
+  </button>
+</mat-dialog-actions>

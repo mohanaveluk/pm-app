@@ -1,0 +1,162 @@
+<div class="veq-page">
+
+  <div class="veq-header">
+    <div>
+      <h1>Vendor Evaluation Queue</h1>
+      <p>Vendors awaiting technical, commercial, quality/HSE and final review.</p>
+    </div>
+    @if (pendingCount(); as count) {
+      <div class="veq-header__count" [matBadge]="count" matBadgeOverlap="false" matBadgeColor="warn">
+        <mat-icon>pending_actions</mat-icon> Pending Evaluation
+      </div>
+    }
+  </div>
+
+  <mat-toolbar class="veq-toolbar">
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </mat-toolbar>
+
+  <div class="veq-filters">
+    <mat-form-field appearance="outline" class="veq-filters__search">
+      <mat-label>Search by code, name or email…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search vendors"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="veq-filters__status">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="store.filter().vendorStatus ?? 'all'" (selectionChange)="onStatusFilterChange($event.value)">
+        @for (opt of statusOptions; track opt.value) {
+          <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="veq-filters__status">
+      <mat-label>Industry Category</mat-label>
+      <mat-select [value]="store.filter().industryCategoryId" (selectionChange)="onIndustryFilterChange($event.value)">
+        <mat-option [value]="null">All categories</mat-option>
+        @for (c of industryCategories(); track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Reset Filters
+      </button>
+    }
+  </div>
+
+  <div class="veq-table-card">
+    @if (store.loading()) {
+      <div class="veq-state">
+        <mat-spinner diameter="40" />
+        <p>Loading vendors…</p>
+      </div>
+    } @else if (store.error()) {
+      <div class="veq-state veq-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      <div class="veq-state">
+        <mat-icon>fact_check</mat-icon>
+        <p class="veq-state__title">No vendors match this view</p>
+        <p class="veq-state__hint">
+          @if (store.filter().vendorStatus === VendorStatus.UNDER_EVALUATION) {
+            Nothing is currently waiting on evaluation.
+          } @else {
+            Try a different status or clear your filters.
+          }
+        </p>
+      </div>
+    } @else {
+      <div class="veq-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.vendors()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByVendorId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Vendor Code</th>
+            <td mat-cell *matCellDef="let v"><span class="veq-code">{{ v.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="vendorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Vendor Name</th>
+            <td mat-cell *matCellDef="let v">{{ v.vendorName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="vendorType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Vendor Type</th>
+            <td mat-cell *matCellDef="let v">{{ v.vendorTypeName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="industryCategory">
+            <th mat-header-cell *matHeaderCellDef>Industry Category</th>
+            <td mat-cell *matCellDef="let v">{{ v.industryCategoryName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="submittedDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted Date</th>
+            <td mat-cell *matCellDef="let v">{{ v.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let v">
+              <mat-chip [class]="statusClass(v.vendorStatus)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ label(v.vendorStatus) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let v">
+              <button mat-icon-button (click)="open(v)" matTooltip="View / Evaluate" aria-label="View or evaluate this vendor">
+                <mat-icon>{{ can(PERMISSIONS.VENDOR_EVALUATION_EVALUATE) ? 'fact_check' : 'visibility' }}</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="veq-row" (click)="open(row)"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        class="veq-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

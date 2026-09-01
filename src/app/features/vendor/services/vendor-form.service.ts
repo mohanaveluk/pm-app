@@ -9,8 +9,8 @@ import { MaterialCategoryOption } from '../../material-category/models/material-
 import { VendorService } from './vendor.service';
 import { VendorFormValue } from './vendor.mapper';
 import {
-  DeliveryCapability, PaymentMethod, PaymentTerms, ReviewCycle, RiskCategory,
-  TaxDocumentType, VendorAddressType, VendorClassification, VendorDocumentType,
+  DeliveryCapability, PaymentMethod, PaymentTerms,
+  TaxDocumentType, VendorAddressType, VendorDocumentType,
   VendorOption,
 } from '../models/vendor.model';
 import { VendorTypeService } from '../../vendor-type/services/vendor-type.service';
@@ -21,7 +21,12 @@ import {
   phoneValidator, urlValidator,
 } from '../validators/vendor.validators';
 
-/** The eleven workspace steps, in order. */
+/**
+ * The ten workspace steps, in order. Evaluation & Approval is deliberately
+ * NOT one of them — approving/rejecting/returning a vendor is a business
+ * workflow performed by an authorised evaluator after submission, not part of
+ * Vendor Master data entry. See features/vendor-evaluation/.
+ */
 export const VENDOR_STEPS = [
   { key: 'identification', label: 'Identification', icon: 'badge',              title: 'Vendor Identification' },
   { key: 'contact',        label: 'Contact',        icon: 'contact_mail',       title: 'Contact Information' },
@@ -33,7 +38,6 @@ export const VENDOR_STEPS = [
   { key: 'performance',    label: 'Performance',    icon: 'insights',           title: 'Performance History' },
   { key: 'logistics',      label: 'Logistics',      icon: 'local_shipping',     title: 'Logistics & Supply Chain' },
   { key: 'documents',      label: 'Documents',      icon: 'folder_open',        title: 'Documents' },
-  { key: 'evaluation',     label: 'Evaluation',     icon: 'fact_check',         title: 'Evaluation & Approval' },
 ] as const;
 
 export type VendorStepKey = (typeof VENDOR_STEPS)[number]['key'];
@@ -404,10 +408,10 @@ export class VendorFormService {
       // ── 8. Performance history ──────────────────────────────────────
       performance: this.fb.group({
         majorClients: [[] as string[]],
-        projectExperience: [''],
-        pastPoContractReferences: [''],
-        blacklistingHistory: [''],
         geographicalExperience: [[] as string[]],
+        // Replaces the old single projectExperience/pastPoContractReferences/
+        // blacklistingHistory blobs — see projectExperienceGroup().
+        projectExperiences: this.fb.array([] as FormGroup[]),
       }),
 
       // ── 9. Logistics & supply chain ─────────────────────────────────
@@ -428,19 +432,10 @@ export class VendorFormService {
         ),
       ),
 
-      // ── 11. Evaluation & approval ───────────────────────────────────
-      evaluation: this.fb.group(
-        {
-          vendorEvaluationScore: [null as number | null, [Validators.min(0), Validators.max(100), decimalPlacesValidator(2)]],
-          riskCategory: [null as RiskCategory | null],
-          vendorClassification: [null as VendorClassification | null],
-          approvalReference: ['', [Validators.maxLength(100)]],
-          approvalDate: [null as Date | null],
-          reviewCycle: [null as ReviewCycle | null],
-          nextReviewDate: [null as Date | null],
-        },
-        { validators: dateOrderValidator('approvalDate', 'nextReviewDate', 'reviewBeforeApproval') },
-      ),
+      // Evaluation & approval (score, risk, classification, approval date/
+      // reference, review cycle) is intentionally NOT a step here — it is a
+      // business decision made after submission, not master data the vendor's
+      // own record owns. See features/vendor-evaluation/.
     });
   }
 
@@ -541,6 +536,65 @@ export class VendorFormService {
   removeTurnover(index: number): void {
     this.turnovers.removeAt(index);
     this.form.markAsDirty();
+  }
+
+  /** Hard cap enforced by addProjectExperience() — see its own comment. */
+  readonly maxProjectExperiences = 10;
+
+  /**
+   * One vendor_project_experiences row. `id` is never rendered as a control a
+   * user edits — it just carries the loaded record's id (or null for a row
+   * added in this session) through to the remove-confirmation logic in
+   * VendorPerformanceStepComponent. It is stripped back out in
+   * buildProjectExperiences(); the update DTO has no `id` field to send, since
+   * PUT /vendors/:id replaces the whole collection rather than diffing it.
+   */
+  private projectExperienceGroup(id: string | null = null): FormGroup {
+    return this.fb.group({
+      id: [id as string | null],
+      clientName: ['', [Validators.maxLength(255)]],
+      projectName: ['', [Validators.minLength(2), Validators.maxLength(255)]], //Validators.required,
+      projectExperience: [''],
+      pastPoContractReferences: [''],
+      blacklistingHistory: [''],
+    });
+  }
+
+  get projectExperiences(): FormArray {
+    return this.form.get('performance.projectExperiences') as FormArray;
+  }
+
+  /**
+   * Appends one project-experience row, unless the collection is already at
+   * its 10-record maximum — the caller (VendorPerformanceStepComponent) also
+   * disables the Add button at that point, but the limit is enforced here too
+   * so nothing but this method can ever grow the array past it.
+   */
+  addProjectExperience(): boolean {
+    if (this.projectExperiences.length >= this.maxProjectExperiences) return false;
+    this.projectExperiences.push(this.projectExperienceGroup());
+    this.form.markAsDirty();
+    return true;
+  }
+
+  removeProjectExperience(index: number): void {
+    this.projectExperiences.removeAt(index);
+    this.form.markAsDirty();
+  }
+
+  /**
+   * Resizes the project-experience rows to match a loaded vendor, exactly like
+   * setCertificationCount/setTurnoverCount — patchValue() cannot grow a
+   * FormArray on its own, so the rows have to exist (blank) before patch()
+   * fills them in, `id` included.
+   *
+   * Never truncated to the 10-record cap: that limit governs how many MORE a
+   * user may add from here, not how many an existing record is allowed to
+   * already have — silently dropping rows on load would lose data on save.
+   */
+  setProjectExperienceCount(count: number): void {
+    while (this.projectExperiences.length > count) this.projectExperiences.removeAt(this.projectExperiences.length - 1);
+    while (this.projectExperiences.length < count) this.projectExperiences.push(this.projectExperienceGroup());
   }
 
   /**

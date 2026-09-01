@@ -18,11 +18,12 @@
     <!-- ── Success screen ─────────────────────────────────────────── -->
     <div class="vw-success">
       <mat-icon class="vw-success__icon">check_circle</mat-icon>
-      <h1>Vendor Created Successfully</h1>
+      <h1>Vendor Submitted for Evaluation</h1>
       <p class="vw-success__note">
-        {{ done.vendorName }} has been registered and is
-        <strong>Under Evaluation</strong> — it becomes selectable for transactions
-        only once an authorised user enables it.
+        <strong>{{ done.code }}</strong> — {{ done.vendorName }} has been saved and is now
+        <strong>Under Evaluation</strong>. It appears in the Vendor Evaluation Queue for an
+        authorised evaluator to review, and becomes selectable for new transactions only
+        once approved there.
       </p>
 
       <dl class="vw-success__facts">
@@ -94,7 +95,7 @@
         </div>
         <div>
           <dt>Classification</dt>
-          <dd>{{ label(formService.form.get('evaluation.vendorClassification')?.value) }}</dd>
+          <dd>{{ vendor()?.vendorClassification ? label(vendor()?.vendorClassification) : '—' }}</dd>
         </div>
         <div>
           <dt>Status</dt>
@@ -244,11 +245,6 @@
           <app-vendor-documents-step
             [existingDocuments]="vendor()?.documents ?? []"
           />
-        </mat-step>
-
-        <mat-step [stepControl]="formService.group('evaluation')" [state]="stepState('evaluation', 10)">
-          <ng-template matStepLabel>Evaluation</ng-template>
-          <app-vendor-evaluation-step [canApprove]="canApprove()" [evaluations]="evaluations()" />
         </mat-step>
       </mat-stepper>
     }

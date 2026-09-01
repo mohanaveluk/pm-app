@@ -111,6 +111,12 @@ export const routes: Routes = [
         data: { breadcrumb: 'Vendor Master', title: 'Vendor Management', icon: 'storefront', permission: PERMISSIONS.VENDORS_VIEW },
       },
       {
+        path: 'vendor-evaluation',
+        loadChildren: () => import('./features/vendor-evaluation/vendor-evaluation.routes').then(m => m.VENDOR_EVALUATION_ROUTES),
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Vendor Evaluation', title: 'Vendor Evaluation & Approval', icon: 'fact_check', permission: PERMISSIONS.VENDOR_EVALUATION_VIEW },
+      },
+      {
         path: 'purchase-orders',
         loadComponent: comingSoon,
         canActivate: [permissionGuard],

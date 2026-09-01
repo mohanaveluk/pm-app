@@ -1,0 +1,340 @@
+.vew-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vew-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+// ── Header ─────────────────────────────────────────────────────────────
+
+.vew-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  &__main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8098b8;
+  }
+
+  &__title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  &__desc {
+    font-weight: 500;
+    color: #5a7a9e;
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 10px 20px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--card);
+    margin: 0;
+
+    dt {
+      font-size: 0.7rem;
+      color: #8098b8;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+    }
+    dd {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 860px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+.vew-code {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.vew-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(25, 118, 210, 0.08);
+  color: var(--primary);
+  font-size: 0.84rem;
+  margin: 0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+// ── Two-column layout: summary | decision ───────────────────────────────
+
+.vew-layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vew-summary,
+.vew-decision,
+.vew-history {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  padding: 16px 18px;
+}
+
+.vew-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #5a7a9e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+
+.vew-section-hint {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: #8098b8;
+}
+
+.vew-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 18px;
+  margin: 0;
+  padding: 4px 0 8px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__full {
+    grid-column: 1 / -1;
+  }
+
+  dt {
+    font-size: 0.7rem;
+    color: #8098b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 2px;
+  }
+  dd {
+    margin: 0;
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.vew-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.vew-subrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  font-size: 0.84rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  &--link {
+    cursor: pointer;
+    &:hover { background: rgba(25, 118, 210, 0.06); }
+  }
+
+  &__open {
+    margin-left: auto;
+    color: #8098b8 !important;
+  }
+}
+
+.vew-empty {
+  color: #8098b8;
+  font-size: 0.82rem;
+  font-style: italic;
+  margin: 4px 0;
+}
+
+// ── Evaluation form ───────────────────────────────────────────────────
+
+.vew-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+  margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__full {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+.vew-divider {
+  margin: 18px 0;
+}
+
+.vew-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+// ── Status / decision chips ───────────────────────────────────────────
+
+.status-chip {
+  &--active      { background: #e8f5e9; color: var(--success); }
+  &--inactive    { background: #eceff1; color: #607d8b; }
+  &--blacklisted { background: #fdecea; color: var(--error); }
+  &--evaluation  { background: #fff8e1; color: #8a6100; }
+}
+
+.decision-chip {
+  &--approved { background: #e8f5e9; color: var(--success); }
+  &--rejected { background: #fdecea; color: var(--error); }
+  &--returned { background: #fff3e0; color: #e65100; }
+  &--hold     { background: #eceff1; color: #607d8b; }
+}
+
+// ── Approval history timeline ─────────────────────────────────────────
+
+.vew-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vew-timeline__item {
+  display: flex;
+  gap: 12px;
+  padding: 0 0 18px 2px;
+  position: relative;
+
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 16px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+}
+
+.vew-timeline__dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 4px;
+  background: currentColor;
+}
+
+.vew-timeline__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.vew-timeline__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vew-timeline__stage {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.vew-timeline__score {
+  font-size: 0.78rem;
+  color: #8098b8;
+}
+
+.vew-timeline__meta {
+  font-size: 0.76rem;
+  color: #8098b8;
+  margin-top: 2px;
+}
+
+.vew-timeline__comments {
+  margin: 6px 0 0;
+  font-size: 0.86rem;
+  padding: 8px 10px;
+  background: var(--body-bg);
+  border-radius: var(--r-sm);
+}
