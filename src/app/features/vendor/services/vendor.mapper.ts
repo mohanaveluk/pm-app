@@ -2,12 +2,11 @@ import { VENDOR_DOCUMENT_SLOTS } from './vendor-form.service';
 import {
   CreateVendorRequest, UpdateVendorRequest, VendorAddressRequest,
   VendorBankAccountRequest, VendorCertificationRequest, VendorDocumentRequest,
-  VendorTurnoverRequest,
+  VendorProjectExperienceRequest, VendorTurnoverRequest,
 } from '../models/vendor-request.model';
 import {
-  DeliveryCapability, PaymentMethod, PaymentTerms, ReviewCycle, RiskCategory,
+  DeliveryCapability, PaymentMethod, PaymentTerms,
   TaxDocumentType, TransportationMode, Vendor, VendorAddressType,
-  VendorClassification,
 } from '../models/vendor.model';
 import { joinPhone, splitPhone } from '../../../shared/reference/countries';
 
@@ -42,7 +41,6 @@ export interface VendorFormValue {
   performance?: any;
   logistics?: any;
   documents?: any;
-  evaluation?: any;
 }
 
 type FormValue = VendorFormValue;
@@ -181,6 +179,30 @@ function buildCertifications(quality: Section): VendorCertificationRequest[] | u
   return rows.length ? rows : undefined;
 }
 
+/**
+ * One row per project experience card. `projectName` is the only field the
+ * DTO requires, so a row without one is incomplete and dropped rather than
+ * sent — the form's own required validator is what stops the user reaching
+ * this point with one in the first place.
+ */
+function buildProjectExperiences(performance: Section): VendorProjectExperienceRequest[] | undefined {
+  const rows = (performance.projectExperiences as Section[] ?? [])
+    .map((row) => {
+      const projectName = text(row.projectName);
+      if (!projectName) return null;
+      return {
+        projectName,
+        clientName: text(row.clientName),
+        projectExperience: text(row.projectExperience),
+        pastPoContractReferences: text(row.pastPoContractReferences),
+        blacklistingHistory: text(row.blacklistingHistory),
+      } as VendorProjectExperienceRequest;
+    })
+    .filter((r): r is VendorProjectExperienceRequest => r !== null);
+
+  return rows.length ? rows : undefined;
+}
+
 /** Best-effort file name for a stored URL — vendor_documents keeps one. */
 function fileNameFromUrl(url: string): string | undefined {
   try {
@@ -239,7 +261,6 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
   const quality = v.quality ?? {};
   const performance = v.performance ?? {};
   const logistics = v.logistics ?? {};
-  const evaluation = v.evaluation ?? {};
 
   return {
     vendorDescription: text(id.vendorDescription),
@@ -302,11 +323,12 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
       antiBriberyPolicy: text(quality.antiBriberyPolicy),
     }),
 
+    // projectExperience / pastPoContractReferences / blacklistingHistory used
+    // to live here as vendor-level blobs. They are superseded by the
+    // top-level `projectExperiences` array built in toCreateRequest/
+    // toUpdateRequest — see buildProjectExperiences().
     experience: compact({
       majorClients: list(performance.majorClients),
-      projectExperience: text(performance.projectExperience),
-      pastPoContractReferences: text(performance.pastPoContractReferences),
-      blacklistingHistory: text(performance.blacklistingHistory),
       geographicalExperience: list(performance.geographicalExperience),
     }),
 
@@ -319,17 +341,11 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
       exportDocumentationCapability: !!logistics.exportDocumentationCapability,
     }),
 
-    // Sending this does NOT approve the vendor — the API always starts a new
-    // record at UNDER_EVALUATION with isActive=false.
-    evaluation: compact({
-      vendorEvaluationScore: num(evaluation.vendorEvaluationScore),
-      riskCategory: (evaluation.riskCategory as RiskCategory) ?? undefined,
-      vendorClassification: (evaluation.vendorClassification as VendorClassification) ?? undefined,
-      approvalReference: text(evaluation.approvalReference),
-      approvalDate: isoDate(evaluation.approvalDate),
-      reviewCycle: (evaluation.reviewCycle as ReviewCycle) ?? undefined,
-      nextReviewDate: isoDate(evaluation.nextReviewDate),
-    }),
+    // No `evaluation` section: score, risk, classification, approval
+    // reference/date and review cycle are no longer set from Vendor Master —
+    // a new vendor always starts UNDER_EVALUATION with isActive=false, and
+    // those fields move only through the Vendor Evaluation workflow's own
+    // POST /vendors/:id/evaluations (see features/vendor-evaluation/).
   };
 }
 
@@ -348,6 +364,7 @@ export function toCreateRequest(v: FormValue, resolveNames: CategoryNameResolver
     turnovers: buildTurnovers(v.financial ?? {}),
     certifications: buildCertifications(v.quality ?? {}),
     documents: buildDocuments(v.documents ?? {}),
+    projectExperiences: buildProjectExperiences(v.performance ?? {}),
   };
 }
 
@@ -372,6 +389,10 @@ export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver
     turnovers: buildTurnovers(v.financial ?? {}) ?? [],
     certifications: buildCertifications(v.quality ?? {}) ?? [],
     documents: buildDocuments(v.documents ?? {}) ?? [],
+    // Sent as a complete list too — the API replaces the whole collection, so
+    // Add + Modify + Remove all resolve correctly from this one array: it is
+    // the FormArray's current state, nothing diffed against what was loaded.
+    projectExperiences: buildProjectExperiences(v.performance ?? {}) ?? [],
   };
 }
 
@@ -517,10 +538,15 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
     },
     performance: {
       majorClients: vendor.majorClients ?? [],
-      projectExperience: vendor.projectExperience ?? '',
-      pastPoContractReferences: vendor.pastPoContractReferences ?? '',
-      blacklistingHistory: vendor.blacklistingHistory ?? '',
       geographicalExperience: vendor.geographicalExperience ?? [],
+      projectExperiences: (vendor.projectExperiences ?? []).map((e) => ({
+        id: e.id ?? null,
+        clientName: e.clientName ?? '',
+        projectName: e.projectName ?? '',
+        projectExperience: e.projectExperience ?? '',
+        pastPoContractReferences: e.pastPoContractReferences ?? '',
+        blacklistingHistory: e.blacklistingHistory ?? '',
+      })),
     },
     logistics: {
       standardLeadTimeDays: vendor.standardLeadTimeDays ?? null,
@@ -531,14 +557,9 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       exportDocumentationCapability: !!vendor.exportDocumentationCapability,
     },
     documents,
-    evaluation: {
-      vendorEvaluationScore: vendor.vendorEvaluationScore ?? null,
-      riskCategory: vendor.riskCategory ?? null,
-      vendorClassification: vendor.vendorClassification ?? null,
-      approvalReference: vendor.approvalReference ?? '',
-      approvalDate: vendor.approvalDate ? new Date(vendor.approvalDate) : null,
-      reviewCycle: vendor.reviewCycle ?? null,
-      nextReviewDate: vendor.nextReviewDate ? new Date(vendor.nextReviewDate) : null,
-    },
+    // No `evaluation` section here either — those fields are read from
+    // `vendor` directly wherever they are still displayed (e.g. the
+    // workspace header's Classification badge), never patched into a form
+    // control a user could edit.
   };
 }

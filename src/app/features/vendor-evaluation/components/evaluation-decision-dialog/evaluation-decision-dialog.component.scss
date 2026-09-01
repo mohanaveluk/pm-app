@@ -1,0 +1,46 @@
+.dlg-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+
+  &--warn mat-icon {
+    color: var(--error);
+  }
+}
+
+.dlg-content {
+  min-width: 320px;
+  width: 100%;
+  max-width: 640px;
+}
+
+.dlg-vendor {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+.dlg-note {
+  color: #5a7a9e;
+  font-size: 0.85rem;
+  margin: 0 0 16px;
+
+  &--warn {
+    color: #8a6100;
+  }
+}
+
+.dlg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dlg-full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+}

@@ -6,6 +6,9 @@
  * field, the UI has no field either.
  */
 
+export type { VendorProjectExperience } from './vendor-project-experience.model';
+import type { VendorProjectExperience } from './vendor-project-experience.model';
+
 // ── Enums (mirror pm-api/src/modules/vendor/enums) ─────────────────────────
 
 // Vendor Type is no longer a fixed enum — it is administrable, organization-
@@ -198,6 +201,24 @@ export const RISK_CATEGORY_OPTIONS: readonly EnumOption<RiskCategory>[] = [
 export const REVIEW_CYCLE_OPTIONS: readonly EnumOption<ReviewCycle>[] = [
   { value: ReviewCycle.ANNUAL, label: 'Annual' },
   { value: ReviewCycle.BIENNIAL, label: 'Biennial' },
+];
+
+/** Stages of the vendor qualification/approval chain — see the Vendor Evaluation workflow. */
+export const EVALUATION_STAGE_OPTIONS: readonly EnumOption<EvaluationStage>[] = [
+  { value: EvaluationStage.TECHNICAL, label: 'Technical' },
+  { value: EvaluationStage.COMMERCIAL, label: 'Commercial' },
+  { value: EvaluationStage.QUALITY_HSE, label: 'Quality / HSE' },
+  { value: EvaluationStage.FINANCE, label: 'Finance' },
+  { value: EvaluationStage.PROCUREMENT, label: 'Procurement' },
+  { value: EvaluationStage.FINAL, label: 'Final' },
+];
+
+export const EVALUATION_DECISION_OPTIONS: readonly EnumOption<EvaluationDecision>[] = [
+  { value: EvaluationDecision.SUBMITTED, label: 'Submitted', hint: 'Score recorded, no final call yet' },
+  { value: EvaluationDecision.ON_HOLD, label: 'On Hold', hint: 'Paused pending more information' },
+  { value: EvaluationDecision.APPROVED, label: 'Approved' },
+  { value: EvaluationDecision.RETURNED, label: 'Returned for Clarification' },
+  { value: EvaluationDecision.REJECTED, label: 'Rejected' },
 ];
 
 export const TAX_DOCUMENT_TYPE_OPTIONS: readonly EnumOption<TaxDocumentType>[] = [
@@ -461,10 +482,11 @@ export interface Vendor {
   ethicalSourcingPolicy?: string;
   antiBriberyPolicy?: string;
 
+  // The old single-blob columns (projectExperience, pastPoContractReferences,
+  // blacklistingHistory) are superseded by the projectExperiences child
+  // collection below — one structured row per project instead of one blob
+  // per vendor. majorClients stays for now; it is a separate, still-live field.
   majorClients?: string[];
-  projectExperience?: string;
-  pastPoContractReferences?: string;
-  blacklistingHistory?: string;
   geographicalExperience?: string[];
 
   standardLeadTimeDays?: number;
@@ -490,6 +512,7 @@ export interface Vendor {
   documents?: VendorDocument[];
   materials?: VendorMaterial[];
   turnovers?: VendorTurnover[];
+  projectExperiences?: VendorProjectExperience[];
 
   /**
    * Set while a blacklist / un-blacklist request awaits manager approval.
@@ -595,6 +618,9 @@ const LABELS: Record<string, string> = {
   ...Object.fromEntries(PAYMENT_TERMS_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(PAYMENT_METHOD_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(DELIVERY_CAPABILITY_OPTIONS.map((o) => [o.value, o.label])),
+  ...Object.fromEntries(RISK_CATEGORY_OPTIONS.map((o) => [o.value, o.label])),
+  ...Object.fromEntries(EVALUATION_STAGE_OPTIONS.map((o) => [o.value, o.label])),
+  ...Object.fromEntries(EVALUATION_DECISION_OPTIONS.map((o) => [o.value, o.label])),
 };
 
 /** Turns an enum value into its human label, falling back to the raw value. */

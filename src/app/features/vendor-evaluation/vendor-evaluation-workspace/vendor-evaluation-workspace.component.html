@@ -1,0 +1,307 @@
+<div class="vew-page">
+
+  @if (loading()) {
+    <div class="vew-state">
+      <mat-spinner diameter="40" />
+      <p>Loading vendor…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="vew-state vew-state--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="back()">
+        <mat-icon>arrow_back</mat-icon> Back to Queue
+      </button>
+    </div>
+  } @else if (vendor(); as v) {
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header class="vew-header">
+      <div class="vew-header__main">
+        <button mat-icon-button type="button" matTooltip="Back to Evaluation Queue" aria-label="Back to Evaluation Queue" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="vew-header__eyebrow">Vendor Evaluation &amp; Approval</div>
+          <h1 class="vew-header__title">
+            <span class="vew-code">{{ v.code }}</span>
+            <span class="vew-header__desc">{{ v.vendorName }}</span>
+          </h1>
+        </div>
+      </div>
+      <button mat-stroked-button type="button" (click)="viewFullRecord()">
+        <mat-icon>open_in_new</mat-icon> View Full Vendor Record
+      </button>
+    </header>
+
+    <dl class="vew-header__facts">
+      <div>
+        <dt>Vendor Type</dt>
+        <dd>{{ v.vendorType?.name || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Industry Category</dt>
+        <dd>{{ v.industryCategory?.name || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd><mat-chip [class]="statusClass(v.vendorStatus)">{{ label(v.vendorStatus) }}</mat-chip></dd>
+      </div>
+      <div>
+        <dt>Current Score / Risk</dt>
+        <dd>
+          {{ v.vendorEvaluationScore ?? '—' }}
+          @if (v.riskCategory) { · {{ label(v.riskCategory) }} risk }
+        </dd>
+      </div>
+    </dl>
+
+    @if (v.vendorStatus !== VendorStatus.UNDER_EVALUATION) {
+      <p class="vew-banner" role="status">
+        <mat-icon>info</mat-icon>
+        This vendor is no longer Under Evaluation ({{ label(v.vendorStatus) }}). You can still
+        record evaluation history, but Approve is only meaningful before a vendor is activated.
+      </p>
+    }
+
+    <div class="vew-layout">
+      <!-- ── Read-only vendor summary ───────────────────────────────── -->
+      <section class="vew-summary">
+        <h2 class="vew-section-title">Vendor Summary</h2>
+        <p class="vew-section-hint">
+          Read-only — Vendor Master fields cannot be edited from here. Use
+          "Return for Clarification" if something needs to change.
+        </p>
+
+        <mat-accordion multi displayMode="flat">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Identification</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div><dt>Trade Name</dt><dd>{{ v.tradeName || '—' }}</dd></div>
+              <div><dt>Parent Company</dt><dd>{{ v.parentCompany?.vendorName || '—' }}</dd></div>
+              <div><dt>Material Categories</dt><dd>{{ v.productCategories?.length ? v.productCategories?.join(', ') : '—' }}</dd></div>
+              <div class="vew-facts__full"><dt>Description</dt><dd>{{ v.vendorDescription || '—' }}</dd></div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Contact &amp; Addresses</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div><dt>Primary Contact</dt><dd>{{ v.primaryContactPerson || '—' }}</dd></div>
+              <div><dt>Email</dt><dd>{{ v.email || '—' }}</dd></div>
+              <div><dt>Mobile</dt><dd>{{ v.mobileNumber || '—' }}</dd></div>
+              <div><dt>Country of Registration</dt><dd>{{ country(v.countryOfRegistration) }}</dd></div>
+            </dl>
+            @if (v.addresses?.length) {
+              <div class="vew-sublist">
+                @for (a of v.addresses; track a.id) {
+                  <div class="vew-subrow">
+                    <mat-icon>location_on</mat-icon>
+                    <span>{{ label(a.addressType) }} — {{ addressLine(a) || '—' }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Statutory &amp; Legal</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div><dt>Business Registration No.</dt><dd>{{ v.businessRegistrationNumber || '—' }}</dd></div>
+              <div><dt>Tax Registration No.</dt><dd>{{ v.taxRegistrationNumber || '—' }}</dd></div>
+              <div><dt>Import/Export Code</dt><dd>{{ v.importExportCode || '—' }}</dd></div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Banking &amp; Financial</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div><dt>Bank</dt><dd>{{ v.bankAccounts?.[0]?.bankName || '—' }}</dd></div>
+              <div><dt>Payment Terms</dt><dd>{{ v.paymentTerms ? label(v.paymentTerms) : '—' }}</dd></div>
+              <div><dt>Credit Rating</dt><dd>{{ v.creditRating || '—' }}</dd></div>
+              <div><dt>Currency</dt><dd>{{ v.currency || '—' }}</dd></div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Technical Capability</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div class="vew-facts__full"><dt>Manufacturing Capabilities</dt><dd>{{ v.manufacturingCapabilities || '—' }}</dd></div>
+              <div class="vew-facts__full"><dt>Technical Expertise Areas</dt><dd>{{ v.technicalExpertiseAreas || '—' }}</dd></div>
+              <div><dt>Compliance Standards</dt><dd>{{ v.complianceStandards || '—' }}</dd></div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Quality &amp; HSE</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div class="vew-facts__full"><dt>Quality Management System</dt><dd>{{ v.qualityManagementSystemDetails || '—' }}</dd></div>
+              <div class="vew-facts__full"><dt>Incident / Accident History</dt><dd>{{ v.incidentAccidentHistory || '—' }}</dd></div>
+            </dl>
+            @if (v.certifications?.length) {
+              <div class="vew-sublist">
+                @for (c of v.certifications; track c.id) {
+                  <div class="vew-subrow">
+                    <mat-icon>workspace_premium</mat-icon>
+                    <span>{{ c.certificationName }}@if (c.expiryDate) { — expires {{ c.expiryDate | date: 'mediumDate' }} }</span>
+                  </div>
+                }
+              </div>
+            }
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Performance History</mat-panel-title></mat-expansion-panel-header>
+            @if (v.projectExperiences?.length) {
+              <div class="vew-sublist">
+                @for (e of v.projectExperiences; track e.id ?? $index) {
+                  <div class="vew-subrow">
+                    <mat-icon>engineering</mat-icon>
+                    <span>{{ e.projectName }}@if (e.clientName) { — {{ e.clientName }} }</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="vew-empty">No project experience recorded.</p>
+            }
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Logistics</mat-panel-title></mat-expansion-panel-header>
+            <dl class="vew-facts">
+              <div><dt>Standard Lead Time</dt><dd>{{ v.standardLeadTimeDays != null ? v.standardLeadTimeDays + ' days' : '—' }}</dd></div>
+              <div><dt>Delivery Capability</dt><dd>{{ v.deliveryCapability ? label(v.deliveryCapability) : '—' }}</dd></div>
+            </dl>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header><mat-panel-title>Documents ({{ v.documents?.length || 0 }})</mat-panel-title></mat-expansion-panel-header>
+            @if (v.documents?.length) {
+              <div class="vew-sublist">
+                @for (d of v.documents; track d.id) {
+                  <a class="vew-subrow vew-subrow--link" [href]="d.documentUrl" target="_blank" rel="noopener">
+                    <mat-icon>description</mat-icon>
+                    <span>{{ label(d.documentType) }}@if (d.version) { — v{{ d.version }} }</span>
+                    <mat-icon class="vew-subrow__open">open_in_new</mat-icon>
+                  </a>
+                }
+              </div>
+            } @else {
+              <p class="vew-empty">No documents attached.</p>
+            }
+          </mat-expansion-panel>
+        </mat-accordion>
+      </section>
+
+      <!-- ── Evaluation & decision ──────────────────────────────────── -->
+      <section class="vew-decision">
+        <h2 class="vew-section-title">Evaluation</h2>
+        <p class="vew-section-hint">
+          Record a score against one stage of the qualification chain — Technical,
+          Commercial, Quality/HSE, Finance or Procurement — as many times as needed
+          before a final decision.
+        </p>
+
+        <form [formGroup]="form" class="vew-form" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>Stage</mat-label>
+            <mat-select formControlName="stage">
+              @for (opt of stageOptions; track opt.value) {
+                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Score (optional)</mat-label>
+            <input matInput type="number" min="0" max="100" formControlName="score" />
+            <mat-hint>0–100</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Reference No. (optional)</mat-label>
+            <input matInput formControlName="referenceNumber" maxlength="100" placeholder="e.g. AVL-2026-0031" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="vew-form__full">
+            <mat-label>Remarks (optional)</mat-label>
+            <textarea matInput formControlName="comments" rows="2" placeholder="Notes for this stage"></textarea>
+          </mat-form-field>
+        </form>
+
+        @if (canEvaluate()) {
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="recordStageEvaluation()"
+            [disabled]="saving()"
+          >
+            @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>rate_review</mat-icon> }
+            Record Stage Evaluation
+          </button>
+        }
+
+        <mat-divider class="vew-divider" />
+
+        <h2 class="vew-section-title">Decision</h2>
+        @if (!canDecideAny()) {
+          <p class="vew-section-hint">
+            You have view-only access to this evaluation. Approving, rejecting or
+            returning a vendor requires an evaluator or procurement-manager permission.
+          </p>
+        } @else {
+          <div class="vew-decision-actions">
+            @if (canApprove()) {
+              <button mat-raised-button color="primary" type="button" (click)="approve()" [disabled]="saving()">
+                <mat-icon>check_circle</mat-icon> Approve
+              </button>
+            }
+            @if (canReturn()) {
+              <button mat-stroked-button type="button" (click)="returnForClarification()" [disabled]="saving()">
+                <mat-icon>undo</mat-icon> Return for Clarification
+              </button>
+            }
+            @if (canReject()) {
+              <button mat-stroked-button color="warn" type="button" (click)="reject()" [disabled]="saving()">
+                <mat-icon>cancel</mat-icon> Reject
+              </button>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <!-- ── Approval history ───────────────────────────────────────── -->
+    <section class="vew-history">
+      <h2 class="vew-section-title">Approval History</h2>
+
+      @if (historyLoading()) {
+        <p class="vew-empty">Loading history…</p>
+      } @else if (history().length) {
+        <ol class="vew-timeline">
+          @for (record of history(); track record.id) {
+            <li class="vew-timeline__item">
+              <span class="vew-timeline__dot" [class]="decisionClass(record.decision)"></span>
+              <div class="vew-timeline__body">
+                <div class="vew-timeline__head">
+                  <span class="vew-timeline__stage">{{ label(record.stage) }}</span>
+                  <mat-chip [class]="decisionClass(record.decision)">{{ label(record.decision) }}</mat-chip>
+                  @if (record.score != null) { <span class="vew-timeline__score">Score {{ record.score }}</span> }
+                </div>
+                <div class="vew-timeline__meta">
+                  {{ record.evaluatedBy }} · {{ record.evaluatedAt | date: 'medium' }}
+                  @if (record.referenceNumber) { · Ref {{ record.referenceNumber }} }
+                </div>
+                @if (record.comments) {
+                  <p class="vew-timeline__comments">{{ record.comments }}</p>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="vew-empty">No evaluation decisions recorded yet.</p>
+      }
+    </section>
+  }
+</div>

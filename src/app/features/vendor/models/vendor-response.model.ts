@@ -37,6 +37,8 @@ export type VendorDocumentsResponse = ApiEnvelope<VendorDocument[]>;
 export type VendorMaterialsResponse = ApiEnvelope<VendorMaterial[]>;
 export type VendorPerformanceResponse = ApiEnvelope<VendorPerformance[]>;
 export type VendorEvaluationsResponse = ApiEnvelope<VendorEvaluation[]>;
+/** Mirrors the response of POST /vendors/:id/evaluations — the row just created. */
+export type VendorEvaluationResponse = ApiEnvelope<VendorEvaluation>;
 
 /** Mirrors VendorStatusChangeRequestResponseDto. The approval token is never serialised. */
 export interface VendorStatusChangeRequest {

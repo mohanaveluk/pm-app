@@ -21,7 +21,7 @@ import { VendorService } from '../services/vendor.service';
 import { VendorFormService, VendorStepKey } from '../services/vendor-form.service';
 import { toCreateRequest, toUpdateRequest, toVendorFormValue } from '../services/vendor.mapper';
 import {
-  Vendor, VendorEvaluation, VendorPerformance, VendorStatus, enumLabel,
+  Vendor, VendorPerformance, VendorStatus, enumLabel,
 } from '../models/vendor.model';
 import { HasUnsavedChanges } from '../guards/unsaved-vendor.guard';
 import { VendorIdentificationStepComponent } from '../components/vendor-identification-step/vendor-identification-step.component';
@@ -34,7 +34,6 @@ import { VendorQualityStepComponent } from '../components/vendor-quality-step/ve
 import { VendorPerformanceStepComponent } from '../components/vendor-performance-step/vendor-performance-step.component';
 import { VendorLogisticsStepComponent } from '../components/vendor-logistics-step/vendor-logistics-step.component';
 import { VendorDocumentsStepComponent } from '../components/vendor-documents-step/vendor-documents-step.component';
-import { VendorEvaluationStepComponent } from '../components/vendor-evaluation-step/vendor-evaluation-step.component';
 
 /**
  * The Vendor creation / editing workspace.
@@ -62,7 +61,7 @@ import { VendorEvaluationStepComponent } from '../components/vendor-evaluation-s
     VendorIdentificationStepComponent, VendorContactStepComponent, VendorLegalStepComponent,
     VendorBankingStepComponent, VendorFinancialStepComponent, VendorTechnicalStepComponent,
     VendorQualityStepComponent, VendorPerformanceStepComponent, VendorLogisticsStepComponent,
-    VendorDocumentsStepComponent, VendorEvaluationStepComponent,
+    VendorDocumentsStepComponent,
   ],
   templateUrl: './vendor-workspace.component.html',
   styleUrl: './vendor-workspace.component.scss',
@@ -94,9 +93,10 @@ export class VendorWorkspaceComponent implements OnInit, HasUnsavedChanges {
   protected readonly vendorId = signal<string | null>(null);
   protected readonly lastSavedAt = signal<Date | null>(null);
 
-  /** Read-only child data for the steps that display it. */
+  /** Read-only child data for the steps that display it. Evaluation/approval
+   *  history is owned by the separate Vendor Evaluation workflow now — see
+   *  vendor-evaluation/ — so it is not loaded here. */
   protected readonly performanceHistory = signal<VendorPerformance[]>([]);
-  protected readonly evaluations = signal<VendorEvaluation[]>([]);
 
   /** Shown instead of the stepper once a vendor has been created. */
   protected readonly created = signal<Vendor | null>(null);
@@ -112,9 +112,6 @@ export class VendorWorkspaceComponent implements OnInit, HasUnsavedChanges {
     if (!ids.length) return '—';
     return this.formService.productCategoryNames(ids).join(', ');
   }
-
-
-  protected readonly canApprove = computed(() => this.can(PERMISSIONS.VENDORS_APPROVE));
 
   ngOnInit(): void {
     const mode = (this.route.snapshot.data['mode'] as 'create' | 'edit') ?? 'create';
@@ -159,20 +156,17 @@ export class VendorWorkspaceComponent implements OnInit, HasUnsavedChanges {
     this.formService.setAddressCount(value.contact?.addresses?.length ?? 0);
     this.formService.setTurnoverCount(value.financial?.turnovers?.length ?? 0);
     this.formService.setCertificationCount(value.quality?.certifications?.length ?? 0);
+    this.formService.setProjectExperienceCount(value.performance?.projectExperiences?.length ?? 0);
     this.formService.patch(value);
   }
 
-  /** Performance and evaluations are separate endpoints from the detail read. */
+  /** Performance is a separate endpoint from the detail read. */
   private async loadSubResources(id: string): Promise<void> {
     try {
-      const [performance, evaluations] = await Promise.all([
-        lastValueFrom(this.vendorService.getPerformance(id)),
-        lastValueFrom(this.vendorService.getEvaluations(id)),
-      ]);
+      const performance = await lastValueFrom(this.vendorService.getPerformance(id));
       this.performanceHistory.set(performance.data ?? []);
-      this.evaluations.set(evaluations.data ?? []);
     } catch {
-      // These sections degrade to empty; the main record is what matters here.
+      // This section degrades to empty; the main record is what matters here.
     }
   }
 

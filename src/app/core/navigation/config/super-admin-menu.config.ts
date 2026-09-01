@@ -60,8 +60,9 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
     id: 'procurement', label: 'Procurement', tooltip: 'Procurement', icon: 'shopping_cart', order: 6,
     children: [
       { id: 'procurement-vendors', label: 'Vendors', route: '/vendors', order: 1, permission: PERMISSIONS.VENDORS_VIEW },
-      { id: 'procurement-purchase-orders', label: 'Purchase Orders', route: '/purchase-orders', order: 2, permission: PERMISSIONS.PO_VIEW },
-      { id: 'procurement-rfqs', label: 'RFQs', route: '/rfqs', order: 3, permission: PERMISSIONS.RFQ_VIEW },
+      { id: 'procurement-vendor-evaluation', label: 'Vendor Evaluation', route: '/vendor-evaluation', order: 2, permission: PERMISSIONS.VENDOR_EVALUATION_VIEW },
+      { id: 'procurement-purchase-orders', label: 'Purchase Orders', route: '/purchase-orders', order: 3, permission: PERMISSIONS.PO_VIEW },
+      { id: 'procurement-rfqs', label: 'RFQs', route: '/rfqs', order: 4, permission: PERMISSIONS.RFQ_VIEW },
     ],
   },
 

@@ -1,8 +1,25 @@
 import {
-  DeliveryCapability, PaymentMethod, PaymentTerms, PendingStatusChange, ReviewCycle,
-  RiskCategory, TaxDocumentType, TransportationMode, VendorAddressType,
+  DeliveryCapability, EvaluationDecision, EvaluationStage, PaymentMethod, PaymentTerms,
+  PendingStatusChange, RiskCategory, TaxDocumentType, TransportationMode, VendorAddressType,
   VendorClassification, VendorDocumentType, VendorSortField, VendorStatus,
 } from './vendor.model';
+
+/**
+ * Mirrors AddVendorEvaluationDto (pm-api/src/modules/vendor/dto/vendor-evaluation.dto.ts)
+ * — the write side of GET /vendors/:id/evaluations. `stage` and `decision` are
+ * the only required fields; `comments` becomes mandatory when `decision` is
+ * REJECTED or RETURNED, enforced server-side (and mirrored client-side so the
+ * user sees the problem before submitting).
+ */
+export interface AddVendorEvaluationRequest {
+  stage: EvaluationStage;
+  decision: EvaluationDecision;
+  score?: number;
+  referenceNumber?: string;
+  comments?: string;
+  riskCategory?: RiskCategory;
+  vendorClassification?: VendorClassification;
+}
 
 /**
  * Request shapes mirroring pm-api's CreateVendorDto. Grouped sub-objects
@@ -121,10 +138,22 @@ export interface VendorQualityHseRequest {
 
 export interface VendorExperienceRequest {
   majorClients?: string[];
+  geographicalExperience?: string[];
+}
+
+/**
+ * Mirrors VendorProjectExperienceDto's exposed slice
+ * (pm-api/src/modules/vendor/dto/vendor-project-experience.dto.ts).
+ * `projectName` is the only field the DTO requires (`@IsNotEmpty`) —
+ * `clientName` is `@IsOptional`, so the form mirrors that exactly rather
+ * than inventing a stricter rule the API does not enforce.
+ */
+export interface VendorProjectExperienceRequest {
+  projectName?: string;
+  clientName?: string;
   projectExperience?: string;
   pastPoContractReferences?: string;
   blacklistingHistory?: string;
-  geographicalExperience?: string[];
 }
 
 export interface VendorLogisticsRequest {
@@ -134,20 +163,6 @@ export interface VendorLogisticsRequest {
   warehouseLocations?: string[];
   transportModesSupported?: TransportationMode[];
   exportDocumentationCapability?: boolean;
-}
-
-/**
- * Pre-qualification summary. Sending it does NOT approve the vendor — the API
- * always starts a new vendor at UNDER_EVALUATION.
- */
-export interface VendorEvaluationSummaryRequest {
-  vendorEvaluationScore?: number;
-  riskCategory?: RiskCategory;
-  vendorClassification?: VendorClassification;
-  approvalReference?: string;
-  approvalDate?: string;
-  reviewCycle?: ReviewCycle;
-  nextReviewDate?: string;
 }
 
 /**
@@ -180,7 +195,9 @@ export interface CreateVendorRequest {
   qualityHse?: VendorQualityHseRequest;
   experience?: VendorExperienceRequest;
   logistics?: VendorLogisticsRequest;
-  evaluation?: VendorEvaluationSummaryRequest;
+  // No `evaluation` field: score, risk, classification, approval reference/
+  // date and review cycle are set only by the separate Vendor Evaluation
+  // workflow (POST /vendors/:id/evaluations), never by Vendor Master.
 
   addresses?: VendorAddressRequest[];
   contacts?: VendorContactRequest[];
@@ -189,6 +206,7 @@ export interface CreateVendorRequest {
   documents?: VendorDocumentRequest[];
   materials?: { materialId: string; vendorPartNumber?: string }[];
   turnovers?: VendorTurnoverRequest[];
+  projectExperiences?: VendorProjectExperienceRequest[];
 }
 
 /**

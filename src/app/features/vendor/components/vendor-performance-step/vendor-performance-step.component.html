@@ -1,7 +1,7 @@
 <div class="step" [formGroup]="group">
 
   <!-- ── Declared experience ────────────────────────────────────────── -->
-  <section class="step-section">
+  <!-- <section class="step-section">
     <h3 class="step-section__title"><mat-icon>groups</mat-icon> Clients &amp; Experience</h3>
 
     <div class="step-grid">
@@ -26,32 +26,171 @@
         </mat-chip-grid>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="step-full">
-        <mat-label>Project Experience</mat-label>
-        <textarea
-          matInput
-          formControlName="projectExperience"
-          rows="4"
-          [readonly]="readonly()"
-          placeholder="One project per line — name, client, country, year, scope and outcome. e.g.&#10;Refinery revamp package 3 — ADNOC, UAE, 2024 — 1,200 MT piping spools — delivered on schedule"
-        ></textarea>
-        <mat-hint>
-          Stored as narrative text. Structured per-project rows would need a
-          project-experience child endpoint the API does not expose yet.
-        </mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="step-full">
-        <mat-label>Past PO / Contract References</mat-label>
-        <textarea matInput formControlName="pastPoContractReferences" rows="2" [readonly]="readonly()" placeholder="e.g. PO-2023-0451, PO-2024-0912"></textarea>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="step-full">
-        <mat-label>Blacklisting History</mat-label>
-        <textarea matInput formControlName="blacklistingHistory" rows="2" [readonly]="readonly()" placeholder="e.g. No prior blacklisting declared"></textarea>
-        <mat-hint>Declared by the vendor — separate from this system's own blacklist actions</mat-hint>
-      </mat-form-field>
     </div>
+  </section> -->
+
+  <!-- ── Project experience ─────────────────────────────────────────── -->
+  <section class="step-section">
+    <div class="step-section__header">
+      <h3 class="step-section__title">
+        <mat-icon>groups</mat-icon> Clients & Experience
+      </h3>
+      <span class="pe-count" [class.pe-count--max]="maxProjectExperiencesReached">
+        {{ projectExperienceCount }} / {{ maxProjectExperiences }}
+      </span>
+    </div>
+    <p class="step-section__hint">
+      Previous EPC, Oil &amp; Gas, infrastructure or other relevant project experience —
+      one record per project. Up to {{ maxProjectExperiences }} may be listed.
+    </p>
+
+    @if (!hasProjectExperiences) {
+      <div class="pe-empty">
+        <mat-icon>work_history</mat-icon>
+        <p class="pe-empty__title">No project experience has been added yet.</p>
+        <p class="pe-empty__hint">
+          Add the vendor's previous EPC, Oil &amp; Gas, infrastructure, or other
+          relevant project experience.
+        </p>
+        @if (!readonly()) {
+          <button mat-flat-button color="primary" type="button" (click)="addProjectExperience()">
+            <mat-icon>add</mat-icon> Add Project Experience
+          </button>
+        }
+      </div>
+    } @else {
+      <div formArrayName="projectExperiences" class="pe-list">
+        <mat-accordion multi displayMode="flat">
+          @for (row of projectExperiences.controls; track row; let i = $index) {
+            <mat-expansion-panel
+              #projectCard
+              class="pe-card"
+              [formGroupName]="i"
+              [expanded]="isExpanded(i)"
+              (opened)="setExpanded(i, true)"
+              (closed)="setExpanded(i, false)"
+            >
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Project Experience #{{ i + 1 }}
+                </mat-panel-title>
+                <mat-panel-description class="pe-card__preview">
+                  @if (experienceGroup(i).get('clientName')?.value || experienceGroup(i).get('projectName')?.value) {
+                    {{ experienceGroup(i).get('projectName')?.value || 'Untitled project' }}
+                    @if (experienceGroup(i).get('clientName')?.value) {
+                       — {{ experienceGroup(i).get('clientName')?.value }}
+                    }
+                  } @else {
+                    New record
+                  }
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              @if (isDuplicate(i)) {
+                <p class="step-caution pe-card__duplicate" role="status">
+                  <mat-icon>info</mat-icon>
+                  <span>Another record already uses this same Client Name and Project Name.</span>
+                </p>
+              }
+
+              <div class="step-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Client Name</mat-label>
+                  <input
+                    matInput
+                    formControlName="clientName"
+                    maxlength="255"
+                    [readonly]="readonly()"
+                    placeholder="e.g. Saudi Aramco"
+                  />
+                  @if (rowErr(i, 'clientName', 'Client Name')) {
+                    <mat-error>{{ rowErr(i, 'clientName', 'Client Name') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Project Name</mat-label>
+                  <input
+                    matInput
+                    formControlName="projectName"
+                    maxlength="255"
+                    
+                    [readonly]="readonly()"
+                    placeholder="e.g. Jubail Refinery Expansion — Package 3"
+                  />
+                  @if (rowErr(i, 'projectName', 'Project Name')) {
+                    <mat-error>{{ rowErr(i, 'projectName', 'Project Name') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="step-full">
+                  <mat-label>Project Experience</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="projectExperience"
+                    rows="3"
+                    [readonly]="readonly()"
+                    placeholder="Scope, role and outcome — e.g. EPC execution of 3 x offshore platform modules, delivered on schedule"
+                  ></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="step-full">
+                  <mat-label>Past PO / Contract References</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="pastPoContractReferences"
+                    rows="2"
+                    [readonly]="readonly()"
+                    placeholder="e.g. PO-2023-0451, PO-2024-0912"
+                  ></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="step-full">
+                  <mat-label>Blacklisting History</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="blacklistingHistory"
+                    rows="2"
+                    [readonly]="readonly()"
+                    placeholder="e.g. No prior blacklisting declared"
+                  ></textarea>
+                  <mat-hint>Declared by the vendor — separate from this system's own blacklist actions</mat-hint>
+                </mat-form-field>
+              </div>
+
+              @if (!readonly()) {
+                <mat-action-row>
+                  <button
+                    mat-button
+                    type="button"
+                    color="warn"
+                    matTooltip="Remove this project experience"
+                    aria-label="Remove project experience"
+                    (click)="removeProjectExperience(i)"
+                  >
+                    <mat-icon>delete</mat-icon> Remove
+                  </button>
+                </mat-action-row>
+              }
+            </mat-expansion-panel>
+          }
+        </mat-accordion>
+      </div>
+    }
+
+    @if (hasProjectExperiences && !readonly()) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="repeat-add"
+        [disabled]="!canAddProjectExperience"
+        [matTooltip]="canAddProjectExperience ? '' : 'Maximum of ' + maxProjectExperiences + ' project experiences reached'"
+        (click)="addProjectExperience()"
+      >
+        <mat-icon>add</mat-icon>
+        {{ canAddProjectExperience ? 'Add Project Experience' : 'Maximum of ' + maxProjectExperiences + ' project experiences reached' }}
+      </button>
+    }
   </section>
 
   <!-- ── Geography ──────────────────────────────────────────────────── -->

@@ -3,15 +3,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  CreateVendorRequest, RequestVendorStatusChangeRequest, UpdateVendorRequest,
-  VendorQueryParams,
+  AddVendorEvaluationRequest, CreateVendorRequest, RequestVendorStatusChangeRequest,
+  UpdateVendorRequest, VendorQueryParams,
 } from '../models/vendor-request.model';
 import {
   PagedVendorResponse, VendorAddressesResponse, VendorBankAccountsResponse,
   VendorCertificationsResponse, VendorContactsResponse, VendorDeleteResponse,
-  VendorDocumentUploadResponse, VendorDocumentsResponse, VendorEvaluationsResponse,
-  VendorMaterialsResponse, VendorOptionsResponse, VendorPerformanceResponse,
-  VendorResponse, VendorStatusChangeAcceptedResponse, VendorStatusChangeRequestsResponse,
+  VendorDocumentUploadResponse, VendorDocumentsResponse, VendorEvaluationResponse,
+  VendorEvaluationsResponse, VendorMaterialsResponse, VendorOptionsResponse,
+  VendorPerformanceResponse, VendorResponse, VendorStatusChangeAcceptedResponse,
+  VendorStatusChangeRequestsResponse,
 } from '../models/vendor-response.model';
 
 export interface UploadedVendorDocument {
@@ -189,6 +190,17 @@ export class VendorService {
 
   getEvaluations(id: string): Observable<VendorEvaluationsResponse> {
     return this.http.get<VendorEvaluationsResponse>(`${this.baseUrl}/${id}/evaluations`);
+  }
+
+  /**
+   * POST /vendors/:id/evaluations — the write side of getEvaluations() above.
+   * Used exclusively by the separate Vendor Evaluation workflow
+   * (features/vendor-evaluation/), never by the Vendor Master workspace: this
+   * is where Approve / Reject / Return-for-Clarification decisions actually
+   * persist, and where APPROVED activates the vendor.
+   */
+  addEvaluation(id: string, request: AddVendorEvaluationRequest): Observable<VendorEvaluationResponse> {
+    return this.http.post<VendorEvaluationResponse>(`${this.baseUrl}/${id}/evaluations`, request);
   }
 
   // ── Document upload ─────────────────────────────────────────────────

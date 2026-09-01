@@ -354,6 +354,27 @@
         }
       </mat-tab>
 
+      <mat-tab [label]="'Project Experience (' + (v.projectExperiences?.length || 0) + ')'">
+        @if (v.projectExperiences?.length) {
+          <div class="vv-cards">
+            @for (exp of v.projectExperiences; track exp.id ?? $index; let i = $index) {
+              <section class="vv-card">
+                <h3 class="vv-card__title">Project Experience #{{ i + 1 }}</h3>
+                <dl class="vv-facts">
+                  <div><dt>Client</dt><dd>{{ exp.clientName || '—' }}</dd></div>
+                  <div><dt>Project</dt><dd>{{ exp.projectName || '—' }}</dd></div>
+                  <div><dt>Experience</dt><dd>{{ exp.projectExperience || '—' }}</dd></div>
+                  <div><dt>PO / Contract References</dt><dd>{{ exp.pastPoContractReferences || '—' }}</dd></div>
+                  <div><dt>Blacklisting History</dt><dd>{{ exp.blacklistingHistory || '—' }}</dd></div>
+                </dl>
+              </section>
+            }
+          </div>
+        } @else {
+          <p class="vv-empty">No project experience recorded yet.</p>
+        }
+      </mat-tab>
+
       <mat-tab [label]="'Performance (' + performance().length + ')'">
         @if (performance().length) {
           <div class="vv-list">

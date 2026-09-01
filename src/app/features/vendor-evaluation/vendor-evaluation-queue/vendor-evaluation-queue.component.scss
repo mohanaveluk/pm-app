@@ -1,0 +1,161 @@
+.veq-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.veq-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 2px;
+  }
+  p {
+    color: #5a7a9e;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  &__count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--r-md);
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #5a7a9e;
+
+    mat-icon {
+      color: var(--primary);
+    }
+  }
+}
+
+.veq-toolbar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  gap: 8px;
+  padding: 0 12px;
+  height: 56px;
+}
+
+.veq-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__search {
+    flex: 1 1 320px;
+    min-width: 220px;
+  }
+
+  &__status {
+    width: 220px;
+  }
+}
+
+.veq-table-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.veq-table-scroll {
+  overflow-x: auto;
+  max-height: 62vh;
+  overflow-y: auto;
+}
+
+table[mat-table] {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    background: var(--card);
+  }
+}
+
+.veq-row {
+  cursor: pointer;
+  transition: background var(--ease);
+  &:hover { background: rgba(25, 118, 210, 0.05); }
+}
+
+.veq-code {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.status-chip {
+  &__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: currentColor;
+  }
+
+  &--active      { background: #e8f5e9; color: var(--success); }
+  &--inactive    { background: #eceff1; color: #607d8b; }
+  &--blacklisted { background: #fdecea; color: var(--error); }
+  &--evaluation  { background: #fff8e1; color: #8a6100; }
+}
+
+.veq-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 16px;
+  color: #5a7a9e;
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #a8bdd4;
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 4px 0 0;
+    color: #0d2137;
+  }
+
+  &__hint {
+    margin: 0 0 8px;
+    font-size: 0.88rem;
+  }
+
+  &--error mat-icon {
+    color: var(--error);
+  }
+}
+
+.veq-paginator {
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 0 0;
+}
+
+@media (max-width: 900px) {
+  .veq-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .veq-toolbar {
+    height: auto;
+    padding: 8px 12px;
+  }
+}

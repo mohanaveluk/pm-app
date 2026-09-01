@@ -131,8 +131,19 @@ export const PERMISSIONS = {
   VENDORS_ENABLE: 'vendors.enable',
   VENDORS_DISABLE: 'vendors.disable',
   VENDORS_BLACKLIST: 'vendors.blacklist',
-  VENDORS_APPROVE: 'vendors.approve',
   VENDORS_EXPORT: 'vendors.export',
+
+  // Vendor Evaluation & Approval is a separate business workflow from Vendor
+  // Master (see features/vendor-evaluation/) — deliberately its own domain
+  // rather than more `vendors.*` grants, so an organization can hand
+  // evaluation/approval to different people than data entry.
+  VENDOR_EVALUATION_VIEW: 'vendor-evaluation.view',
+  // Recording a stage score/decision that is neither a final approve nor a
+  // reject/return (SUBMITTED, ON_HOLD).
+  VENDOR_EVALUATION_EVALUATE: 'vendor-evaluation.evaluate',
+  VENDOR_EVALUATION_APPROVE: 'vendor-evaluation.approve',
+  VENDOR_EVALUATION_REJECT: 'vendor-evaluation.reject',
+  VENDOR_EVALUATION_RETURN: 'vendor-evaluation.return',
 
   PO_VIEW: 'po.view',
   PO_MANAGE: 'po.manage',
