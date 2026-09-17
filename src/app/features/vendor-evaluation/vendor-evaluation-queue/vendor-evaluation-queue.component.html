@@ -3,14 +3,26 @@
   <div class="veq-header">
     <div>
       <h1>Vendor Evaluation Queue</h1>
-      <p>Vendors awaiting technical, commercial, quality/HSE and final review.</p>
+      <p>Vendors awaiting technical, commercial, quality/HSE and final review, and blacklist / un-blacklist requests awaiting a manager's decision.</p>
     </div>
-    @if (pendingCount(); as count) {
-      <div class="veq-header__count" [matBadge]="count" matBadgeOverlap="false" matBadgeColor="warn">
-        <mat-icon>pending_actions</mat-icon> Pending Evaluation
-      </div>
-    }
+    <div class="veq-header__badges">
+      @if (pendingCount(); as count) {
+        <div class="veq-header__count" [matBadge]="count" matBadgeOverlap="false" matBadgeColor="warn">
+          <mat-icon>pending_actions</mat-icon> Pending Evaluation
+        </div>
+      }
+      @if (pendingBlacklistCount(); as count) {
+        <div class="veq-header__count" [matBadge]="count" matBadgeOverlap="false" matBadgeColor="warn">
+          <mat-icon>gavel</mat-icon> Pending Blacklist Decisions
+        </div>
+      }
+    </div>
   </div>
+
+  <mat-tab-group class="veq-tabs" animationDuration="120ms">
+
+    <!-- ── Vendor qualification ─────────────────────────────────────── -->
+    <mat-tab label="Vendor Qualification">
 
   <mat-toolbar class="veq-toolbar">
     <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
@@ -159,4 +171,103 @@
       ></mat-paginator>
     }
   </div>
+
+    </mat-tab>
+
+    <!-- ── Blacklist / un-blacklist approval requests ───────────────── -->
+    <mat-tab [label]="'Blacklist Requests (' + blacklistRequests().length + ')'">
+
+      <mat-toolbar class="veq-toolbar">
+        <button mat-stroked-button (click)="refreshBlacklistRequests()" matTooltip="Reload">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
+      </mat-toolbar>
+
+      <p class="veq-tab-hint">
+        Approving or rejecting a request requires the single-use token from the request
+        email — paste it when prompted. Only the manager who receives that email (or another
+        eligible manager/administrator) can decide; the person who raised the request can
+        only withdraw it.
+      </p>
+
+      <div class="veq-table-card">
+        @if (blacklistLoading()) {
+          <div class="veq-state">
+            <mat-spinner diameter="40" />
+            <p>Loading pending requests…</p>
+          </div>
+        } @else if (blacklistError()) {
+          <div class="veq-state veq-state--error">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ blacklistError() }}</p>
+            <button mat-stroked-button (click)="refreshBlacklistRequests()">
+              <mat-icon>refresh</mat-icon> Retry
+            </button>
+          </div>
+        } @else if (!blacklistRequests().length) {
+          <div class="veq-state">
+            <mat-icon>gavel</mat-icon>
+            <p class="veq-state__title">No pending blacklist requests</p>
+            <p class="veq-state__hint">Nothing is currently waiting on a manager's decision.</p>
+          </div>
+        } @else {
+          <div class="veq-request-list">
+            @for (r of blacklistRequests(); track trackByRequestId($index, r)) {
+              <div class="veq-request">
+                <div class="veq-request__main">
+                  <div class="veq-request__title">
+                    <span class="veq-code">{{ r.vendorCode }}</span>
+                    {{ r.vendorName }}
+                    <mat-chip [class]="r.requestType === StatusChangeRequestType.BLACKLIST ? 'status-chip status-chip--blacklisted' : 'status-chip status-chip--evaluation'">
+                      {{ r.requestType === StatusChangeRequestType.BLACKLIST ? 'Blacklist' : 'Remove Blacklist' }}
+                    </mat-chip>
+                  </div>
+                  <div class="veq-request__reason">{{ r.reason }}</div>
+                  <div class="veq-request__meta">
+                    Requested by {{ r.requestedBy }} · {{ r.requestedAt | date: 'medium' }}
+                  </div>
+                </div>
+                <div class="veq-request__actions">
+                  @if (canCancel(r)) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="blacklistBusyId() === r.id"
+                      (click)="cancelBlacklistRequest(r)"
+                    >
+                      <mat-icon>undo</mat-icon> Withdraw
+                    </button>
+                  } @else {
+                    @if (can(PERMISSIONS.VENDOR_EVALUATION_REJECT)) {
+                      <button
+                        mat-stroked-button
+                        color="warn"
+                        type="button"
+                        [disabled]="blacklistBusyId() === r.id"
+                        (click)="decideBlacklistRequest(r, 'reject')"
+                      >
+                        <mat-icon>block</mat-icon> Reject
+                      </button>
+                    }
+                    @if (can(PERMISSIONS.VENDOR_EVALUATION_APPROVE)) {
+                      <button
+                        mat-raised-button
+                        color="primary"
+                        type="button"
+                        [disabled]="blacklistBusyId() === r.id"
+                        (click)="decideBlacklistRequest(r, 'approve')"
+                      >
+                        @if (blacklistBusyId() === r.id) { <mat-spinner diameter="16" /> } @else { <mat-icon>check</mat-icon> }
+                        Approve
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 </div>

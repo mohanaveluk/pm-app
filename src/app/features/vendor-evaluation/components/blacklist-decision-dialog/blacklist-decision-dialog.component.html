@@ -1,0 +1,48 @@
+<h2 mat-dialog-title class="dlg-title" [class.dlg-title--warn]="!isApprove">
+  <mat-icon>{{ isApprove ? 'check_circle' : 'block' }}</mat-icon>
+  {{ title }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <p class="dlg-vendor">
+    <strong>{{ data.vendorCode }}</strong> — {{ data.vendorName }}
+  </p>
+  <dl class="dlg-facts">
+    <div><dt>Action Requested</dt><dd>{{ data.requestType === StatusChangeRequestType.BLACKLIST ? 'Blacklist' : 'Remove Blacklist' }}</dd></div>
+    <div><dt>Requested By</dt><dd>{{ data.requestedBy }}</dd></div>
+    <div class="dlg-facts__full"><dt>Reason</dt><dd>{{ data.reason }}</dd></div>
+  </dl>
+
+  <p class="dlg-note">
+    Deciding this request requires the single-use approval token from the request email —
+    there is no way around it, by design: it stops the decision from being made by anyone
+    who did not actually open that email. Paste it below.
+  </p>
+
+  <form [formGroup]="form" class="dlg-form" novalidate>
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>Approval Token</mat-label>
+      <input
+        matInput
+        formControlName="token"
+        placeholder="Paste the token from the approval email"
+        autocomplete="off"
+      />
+      <mat-icon matSuffix matTooltip="Found in the query string of the approval link: ?requestId=...&token=...">help_outline</mat-icon>
+      @if (err()) { <mat-error>{{ err() }}</mat-error> }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="dlg-full-width">
+      <mat-label>Comments (optional)</mat-label>
+      <textarea matInput formControlName="comments" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-raised-button type="button" [color]="isApprove ? 'primary' : 'warn'" (click)="confirm()">
+    <mat-icon>{{ isApprove ? 'check' : 'block' }}</mat-icon>
+    {{ title }}
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,104 @@
+<div class="vsa-page">
+  <div class="vsa-card">
+
+    @switch (state()) {
+
+      @case ('loading') {
+        <div class="vsa-state">
+          <mat-spinner diameter="40" />
+          <p>Loading approval request…</p>
+        </div>
+      }
+
+      @case ('ready') {
+        <mat-icon class="vsa-icon">gavel</mat-icon>
+        <h1>Manager Approval Required</h1>
+
+        @if (request(); as r) {
+          <dl class="vsa-facts">
+            <div><dt>Vendor</dt><dd>{{ r.vendorCode }} — {{ r.vendorName }}</dd></div>
+            <div><dt>Action Requested</dt><dd>{{ actionLabel(r.requestType) }}</dd></div>
+            <div><dt>Requested By</dt><dd>{{ r.requestedBy }}</dd></div>
+            <div><dt>Requested On</dt><dd>{{ r.requestedAt | date: 'medium' }}</dd></div>
+            <div class="vsa-facts__full"><dt>Reason</dt><dd>{{ r.reason }}</dd></div>
+          </dl>
+        } @else {
+          <p class="vsa-note">
+            This request could not be shown in full — it may already have been decided by
+            someone else, or the link may be older than the request history retained here.
+            You can still attempt a decision below; the link's token is what actually
+            authorises it.
+          </p>
+        }
+
+        <form [formGroup]="form" class="vsa-form" novalidate>
+          <mat-form-field appearance="outline" class="vsa-form__full">
+            <mat-label>Comments (optional)</mat-label>
+            <textarea matInput formControlName="comments" rows="2" placeholder="Recorded against this decision"></textarea>
+          </mat-form-field>
+        </form>
+
+        <div class="vsa-actions">
+          @if (canReject()) {
+            <button mat-stroked-button color="warn" type="button" (click)="reject()" [disabled]="deciding()">
+              @if (deciding()) { <mat-spinner diameter="18" /> } @else { <mat-icon>block</mat-icon> }
+              Reject
+            </button>
+          }
+          @if (canApprove()) {
+            <button mat-raised-button color="primary" type="button" (click)="approve()" [disabled]="deciding()">
+              @if (deciding()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check_circle</mat-icon> }
+              Approve
+            </button>
+          }
+        </div>
+
+        @if (!canApprove() && !canReject()) {
+          <p class="vsa-note vsa-note--warn">
+            <mat-icon>lock</mat-icon>
+            Your account does not have permission to decide vendor approval requests.
+          </p>
+        }
+      }
+
+      @case ('approved') {
+        <mat-icon class="vsa-icon vsa-icon--success">check_circle</mat-icon>
+        <h1>Request Approved</h1>
+        <p class="vsa-note">
+          {{ decidedVendor()?.code }} — {{ decidedVendor()?.vendorName }} has been updated.
+          @if (request()?.requestType === StatusChangeRequestType.BLACKLIST) {
+            The vendor is now <strong>Blacklisted</strong> and excluded from new transactions.
+          } @else {
+            The vendor has returned to <strong>Under Evaluation</strong> for re-qualification.
+          }
+        </p>
+        <div class="vsa-actions">
+          <button mat-stroked-button type="button" (click)="backToQueue()">Back to Queue</button>
+          <button mat-raised-button color="primary" type="button" (click)="viewVendor()">View Vendor</button>
+        </div>
+      }
+
+      @case ('rejected') {
+        <mat-icon class="vsa-icon vsa-icon--warn">cancel</mat-icon>
+        <h1>Request Rejected</h1>
+        <p class="vsa-note">
+          The request for {{ decidedVendor()?.code }} — {{ decidedVendor()?.vendorName }} has been
+          rejected. Nothing about the vendor's status has changed.
+        </p>
+        <div class="vsa-actions">
+          <button mat-stroked-button type="button" (click)="backToQueue()">Back to Queue</button>
+          <button mat-raised-button color="primary" type="button" (click)="viewVendor()">View Vendor</button>
+        </div>
+      }
+
+      @case ('error') {
+        <mat-icon class="vsa-icon vsa-icon--warn">error_outline</mat-icon>
+        <h1>Unable to Continue</h1>
+        <p class="vsa-note vsa-note--warn">{{ errorMessage() }}</p>
+        <div class="vsa-actions">
+          <button mat-stroked-button type="button" (click)="backToQueue()">Back to Queue</button>
+        </div>
+      }
+    }
+  </div>
+</div>

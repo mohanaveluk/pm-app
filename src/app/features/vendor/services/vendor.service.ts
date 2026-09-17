@@ -3,8 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AddVendorEvaluationRequest, CreateVendorRequest, RequestVendorStatusChangeRequest,
-  UpdateVendorRequest, VendorQueryParams,
+  AddVendorEvaluationRequest, CreateVendorRequest, DecideVendorStatusChangeRequest,
+  RequestVendorStatusChangeRequest, UpdateVendorRequest, VendorQueryParams,
 } from '../models/vendor-request.model';
 import {
   PagedVendorResponse, VendorAddressesResponse, VendorBankAccountsResponse,
@@ -150,6 +150,26 @@ export class VendorService {
   /** GET /vendors/status-requests/pending — everything awaiting a decision. */
   getPendingStatusRequests(): Observable<VendorStatusChangeRequestsResponse> {
     return this.http.get<VendorStatusChangeRequestsResponse>(`${this.baseUrl}/status-requests/pending`);
+  }
+
+  /**
+   * PATCH /vendors/status-requests/:requestId/approve — applies the request.
+   * `token` is the single-use credential from the approval email; there is no
+   * in-app bypass for it (see DecideVendorStatusChangeRequest). The requester
+   * cannot approve their own request — the API returns 403 if they try.
+   */
+  approveStatusChange(requestId: string, request: DecideVendorStatusChangeRequest): Observable<VendorResponse> {
+    return this.http.patch<VendorResponse>(`${this.baseUrl}/status-requests/${requestId}/approve`, request);
+  }
+
+  /** PATCH /vendors/status-requests/:requestId/reject — clears the pending flag; nothing else moves. */
+  rejectStatusChange(requestId: string, request: DecideVendorStatusChangeRequest): Observable<VendorResponse> {
+    return this.http.patch<VendorResponse>(`${this.baseUrl}/status-requests/${requestId}/reject`, request);
+  }
+
+  /** PATCH /vendors/status-requests/:requestId/cancel — only the original requester may call this; no token needed. */
+  cancelStatusChange(requestId: string): Observable<VendorResponse> {
+    return this.http.patch<VendorResponse>(`${this.baseUrl}/status-requests/${requestId}/cancel`, {});
   }
 
   // ── Sub-resources (read-only) ───────────────────────────────────────

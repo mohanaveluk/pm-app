@@ -14,14 +14,26 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { AuthService } from '../../../services';
 import { PermissionService } from '../../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../../core/rbac/permissions.const';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { IndustryCategoryService } from '../../industry-category/services/industry-category.service';
 import { IndustryCategoryOption } from '../../industry-category/models/industry-category.model';
+import { VendorService } from '../../vendor/services/vendor.service';
 import { VendorListStore } from '../../vendor/store/vendor-list.store';
 import {
-  VendorListItem, VendorSortField, VendorStatus, enumLabel,
+  StatusChangeRequestType, VendorListItem, VendorSortField, VendorStatus, enumLabel,
 } from '../../vendor/models/vendor.model';
+import { VendorStatusChangeRequest } from '../../vendor/models/vendor-response.model';
+import {
+  BlacklistDecisionDialogComponent, BlacklistDecisionDialogData, BlacklistDecisionDialogResult,
+} from '../components/blacklist-decision-dialog/blacklist-decision-dialog.component';
 
 interface ColumnDef {
   key: string;
@@ -59,7 +71,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   imports: [
     CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatTooltipModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatSortModule,
-    MatPaginatorModule, MatChipsModule, MatProgressSpinnerModule, MatBadgeModule,
+    MatPaginatorModule, MatChipsModule, MatProgressSpinnerModule, MatBadgeModule, MatTabsModule,
   ],
   templateUrl: './vendor-evaluation-queue.component.html',
   styleUrl: './vendor-evaluation-queue.component.scss',
@@ -68,6 +80,10 @@ export class VendorEvaluationQueueComponent implements OnInit {
   protected readonly store = inject(VendorListStore);
   private readonly permissionService = inject(PermissionService);
   private readonly industryCategoryService = inject(IndustryCategoryService);
+  private readonly vendorService = inject(VendorService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
   private readonly router = inject(Router);
 
   protected readonly PERMISSIONS = PERMISSIONS;
@@ -91,6 +107,18 @@ export class VendorEvaluationQueueComponent implements OnInit {
     this.store.filter().vendorStatus === VendorStatus.UNDER_EVALUATION ? this.store.totalCount() : null,
   );
 
+  // ── Blacklist / un-blacklist approval requests ──────────────────────
+  // A separate list (GET /vendors/status-requests/pending), not the
+  // VendorListStore above: this is request-centric (reason, requestedBy,
+  // requestedAt), not vendor-centric, and pm-api does not paginate it.
+  protected readonly StatusChangeRequestType = StatusChangeRequestType;
+  protected readonly blacklistRequests = signal<VendorStatusChangeRequest[]>([]);
+  protected readonly blacklistLoading = signal(true);
+  protected readonly blacklistError = signal('');
+  protected readonly blacklistBusyId = signal<string | null>(null);
+
+  protected readonly pendingBlacklistCount = computed(() => this.blacklistRequests().length);
+
   can(permission: string): boolean {
     return this.permissionService.hasPermission(permission);
   }
@@ -110,6 +138,129 @@ export class VendorEvaluationQueueComponent implements OnInit {
       next: (res) => this.industryCategories.set(res.data ?? []),
       error: () => this.industryCategories.set([]),
     });
+
+    void this.loadBlacklistRequests();
+  }
+
+  private async loadBlacklistRequests(): Promise<void> {
+    this.blacklistLoading.set(true);
+    this.blacklistError.set('');
+    try {
+      const res = await lastValueFrom(this.vendorService.getPendingStatusRequests());
+      this.blacklistRequests.set(res.data ?? []);
+    } catch (err) {
+      this.blacklistError.set(this.messageForStatus(err as HttpErrorResponse));
+      this.blacklistRequests.set([]);
+    } finally {
+      this.blacklistLoading.set(false);
+    }
+  }
+
+  refreshBlacklistRequests(): void {
+    void this.loadBlacklistRequests();
+  }
+
+  /** Only the person who raised a request may withdraw it — no token needed. */
+  canCancel(request: VendorStatusChangeRequest): boolean {
+    const email = this.auth.user()?.email;
+    return !!email && request.requestedBy?.toLowerCase() === email.toLowerCase();
+  }
+
+  trackByRequestId(_index: number, request: VendorStatusChangeRequest): string {
+    return request.id;
+  }
+
+  async decideBlacklistRequest(request: VendorStatusChangeRequest, decision: 'approve' | 'reject'): Promise<void> {
+    const ref = this.dialog.open<BlacklistDecisionDialogComponent, BlacklistDecisionDialogData, BlacklistDecisionDialogResult>(
+      BlacklistDecisionDialogComponent,
+      {
+        width: '520px',
+        maxWidth: '95vw',
+        data: {
+          decision,
+          vendorCode: request.vendorCode ?? '',
+          vendorName: request.vendorName ?? '',
+          requestType: request.requestType,
+          reason: request.reason,
+          requestedBy: request.requestedBy,
+        },
+      },
+    );
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result) return;
+
+    this.blacklistBusyId.set(request.id);
+    try {
+      const res = await lastValueFrom(
+        decision === 'approve'
+          ? this.vendorService.approveStatusChange(request.id, result)
+          : this.vendorService.rejectStatusChange(request.id, result),
+      );
+      this.snack.open(
+        decision === 'approve'
+          ? `${res.data.code} approved — ${this.label(res.data.vendorStatus)}.`
+          : `${res.data.code} request rejected — no change made.`,
+        'OK',
+        { duration: 5000 },
+      );
+      void this.loadBlacklistRequests();
+      this.store.refresh();
+    } catch (err) {
+      this.snack.open(this.decisionErrorMessage(err as HttpErrorResponse, decision), 'Close', {
+        duration: 7000, panelClass: ['error-snackbar'],
+      });
+    } finally {
+      this.blacklistBusyId.set(null);
+    }
+  }
+
+  async cancelBlacklistRequest(request: VendorStatusChangeRequest): Promise<void> {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      width: '460px',
+      maxWidth: '95vw',
+      data: {
+        title: 'Withdraw This Request?',
+        message: `Your ${request.requestType === StatusChangeRequestType.BLACKLIST ? 'blacklist' : 'un-blacklist'} ` +
+          `request for ${request.vendorCode} — ${request.vendorName} will be withdrawn. No manager decision will be recorded.`,
+        confirmText: 'Withdraw Request',
+        color: 'warn',
+        icon: 'undo',
+      },
+    });
+    if (!(await firstValueFrom(ref.afterClosed()))) return;
+
+    this.blacklistBusyId.set(request.id);
+    try {
+      await lastValueFrom(this.vendorService.cancelStatusChange(request.id));
+      this.snack.open('Request withdrawn.', 'OK', { duration: 4000 });
+      void this.loadBlacklistRequests();
+    } catch (err) {
+      this.snack.open(this.decisionErrorMessage(err as HttpErrorResponse, 'cancel'), 'Close', {
+        duration: 6000, panelClass: ['error-snackbar'],
+      });
+    } finally {
+      this.blacklistBusyId.set(null);
+    }
+  }
+
+  private decisionErrorMessage(err: HttpErrorResponse, action: 'approve' | 'reject' | 'cancel'): string {
+    switch (err?.status) {
+      case 403: return err.error?.message || (action === 'cancel'
+        ? 'Only the person who raised this request may withdraw it.'
+        : 'You raised this request yourself, so you cannot decide it — a different manager must review it.');
+      case 404: return 'This request could not be found. It may have already been decided.';
+      case 409: return err.error?.message || 'This request has already been decided, or the approval link has expired.';
+      default:  return err?.error?.message || `The request could not be ${action === 'cancel' ? 'withdrawn' : action + 'd'}.`;
+    }
+  }
+
+  private messageForStatus(err: HttpErrorResponse): string {
+    switch (err?.status) {
+      case 0:   return 'Cannot reach the server. Check your connection and try again.';
+      case 401: return 'Your session has expired. Please sign in again.';
+      case 403: return 'You do not have permission to view pending approval requests.';
+      default:  return err?.error?.message || 'Unable to load pending approval requests.';
+    }
   }
 
   label(value: string | null | undefined): string {

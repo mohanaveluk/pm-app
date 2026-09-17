@@ -229,6 +229,19 @@ export interface RequestVendorStatusChangeRequest {
   approverUserId?: string;
 }
 
+/**
+ * Mirrors DecideVendorStatusChangeDto. `token` is the single-use credential
+ * from the approval email — mandatory on every decision, with no bypass for
+ * privileged in-app roles. This is deliberate (see vendor.controller.ts's
+ * "Manager decisions" section): a bare in-app button with no token would let
+ * a mail scanner or link-preview crawler pre-fetch the emailed link and
+ * approve a request nobody actually clicked.
+ */
+export interface DecideVendorStatusChangeRequest {
+  token: string;
+  comments?: string;
+}
+
 /** Mirrors VendorQueryDto — note `limit`/`sortOrder`, and 1-based `page`. */
 export interface VendorQueryParams {
   page: number;

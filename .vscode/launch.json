@@ -3,6 +3,23 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Edge",
+      "request": "launch",
+      "type": "msedge",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "trace": true,
+      "userDataDir": "${workspaceFolder}/.vscode/edge",
+      "preLaunchTask": "npm: start",
+      "sourceMapPathOverrides": {
+          "webpack:/./*": "${webRoot}/*",
+          "webpack:/src/*": "${webRoot}/src/*",
+          "webpack:/*": "*",
+          "webpack:/./~/*": "${webRoot}/node_modules/*"
+      },
+    },
+    {
       "name": "ng serve",
       "type": "chrome",
       "request": "launch",
