@@ -18,6 +18,10 @@
             "regexp": "bundle generation (complete|failed)"
           }
         }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
       }
     },
     {

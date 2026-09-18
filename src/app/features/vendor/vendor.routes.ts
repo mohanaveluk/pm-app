@@ -25,6 +25,22 @@ export const VENDOR_ROUTES: Routes = [
     canDeactivate: [unsavedVendorGuard],
     data: { breadcrumb: 'New Vendor', mode: 'create', permission: PERMISSIONS.VENDORS_CREATE },
   },
+  // Static path — must be declared before the `:id` routes below, or a
+  // navigation here would be swallowed by `:id` with id="status-approval".
+  // This is the exact path pm-api's VendorService.sendApprovalEmail hard-codes
+  // into the emailed blacklist/un-blacklist approval link
+  // (`${FRONTEND_URL}/vendors/status-approval?requestId=&token=`) — changing
+  // it here without changing it there would break every email already sent.
+  {
+    path: 'status-approval',
+    loadComponent: () =>
+      import('./components/vendor-status-approval/vendor-status-approval.component').then((m) => m.VendorStatusApprovalComponent),
+    canActivate: [permissionGuard],
+    data: {
+      breadcrumb: 'Approval Decision',
+      permission: [PERMISSIONS.VENDOR_EVALUATION_APPROVE, PERMISSIONS.VENDOR_EVALUATION_REJECT],
+    },
+  },
   {
     path: ':id/edit',
     loadComponent: () =>
