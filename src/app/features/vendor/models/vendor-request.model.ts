@@ -75,13 +75,25 @@ export interface VendorCertificationRequest {
   scopeOfCertification?: string;
 }
 
-export interface VendorDocumentRequest {
+/**
+ * Mirrors AddVendorDocumentDto (pm-api/src/modules/vendor/dto/vendor-document.dto.ts)
+ * — the write side of POST /vendors/:id/documents. Documents are managed
+ * entirely through this dedicated endpoint (plus DELETE /vendors/:id/documents/:documentId),
+ * independently of the create/update wizard: add/replace/delete take effect
+ * immediately and are never bundled into CreateVendorRequest/UpdateVendorRequest.
+ */
+export interface AddVendorDocumentRequest {
   documentType: VendorDocumentType;
   documentUrl: string;
   fileName?: string;
+  mimeType?: string;
+  fileSizeBytes?: number;
   effectiveFrom?: string;
   effectiveTo?: string;
   expiryDate?: string;
+  remarks?: string;
+  /** Supply to file this as the next version of an existing document. */
+  supersedesId?: string;
 }
 
 export interface VendorTurnoverRequest {
@@ -203,7 +215,8 @@ export interface CreateVendorRequest {
   contacts?: VendorContactRequest[];
   bankAccounts?: VendorBankAccountRequest[];
   certifications?: VendorCertificationRequest[];
-  documents?: VendorDocumentRequest[];
+  // No `documents` field: documents are filed through the dedicated
+  // POST /vendors/:id/documents endpoint — see AddVendorDocumentRequest.
   materials?: { materialId: string; vendorPartNumber?: string }[];
   turnovers?: VendorTurnoverRequest[];
   projectExperiences?: VendorProjectExperienceRequest[];

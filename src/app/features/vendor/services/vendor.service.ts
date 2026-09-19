@@ -3,17 +3,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AddVendorEvaluationRequest, CreateVendorRequest, DecideVendorStatusChangeRequest,
-  RequestVendorStatusChangeRequest, UpdateVendorRequest, VendorQueryParams,
+  AddVendorDocumentRequest, AddVendorEvaluationRequest, CreateVendorRequest,
+  DecideVendorStatusChangeRequest, RequestVendorStatusChangeRequest,
+  UpdateVendorRequest, VendorQueryParams,
 } from '../models/vendor-request.model';
 import {
   PagedVendorResponse, VendorAddressesResponse, VendorBankAccountsResponse,
   VendorCertificationsResponse, VendorContactsResponse, VendorDeleteResponse,
-  VendorDocumentUploadResponse, VendorDocumentsResponse, VendorEvaluationResponse,
-  VendorEvaluationsResponse, VendorMaterialsResponse, VendorOptionsResponse,
-  VendorPerformanceResponse, VendorResponse, VendorStatusChangeAcceptedResponse,
-  VendorStatusChangeRequestsResponse,
+  VendorDocumentResponse, VendorDocumentUploadResponse, VendorDocumentsResponse,
+  VendorEvaluationResponse, VendorEvaluationsResponse, VendorMaterialsResponse,
+  VendorOptionsResponse, VendorPerformanceResponse, VendorResponse,
+  VendorStatusChangeAcceptedResponse, VendorStatusChangeRequestsResponse,
 } from '../models/vendor-response.model';
+import { VendorDocumentType } from '../models/vendor.model';
 
 export interface UploadedVendorDocument {
   url: string;
@@ -196,8 +198,33 @@ export class VendorService {
     return this.http.get<VendorCertificationsResponse>(`${this.baseUrl}/${id}/certifications`);
   }
 
-  getDocuments(id: string): Observable<VendorDocumentsResponse> {
-    return this.http.get<VendorDocumentsResponse>(`${this.baseUrl}/${id}/documents`);
+  /**
+   * GET /vendors/:id/documents — the current version of each document by
+   * default. Pass includeSuperseded to fetch the full version history, as the
+   * Documents step does so it can render every chain.
+   */
+  getDocuments(
+    id: string,
+    query?: { documentType?: VendorDocumentType; includeSuperseded?: boolean },
+  ): Observable<VendorDocumentsResponse> {
+    let params = new HttpParams();
+    if (query?.documentType) params = params.set('documentType', query.documentType);
+    if (query?.includeSuperseded) params = params.set('includeSuperseded', 'true');
+    return this.http.get<VendorDocumentsResponse>(`${this.baseUrl}/${id}/documents`, { params });
+  }
+
+  /**
+   * POST /vendors/:id/documents — files a new document, or (with
+   * supersedesId) the next version of an existing one. Takes effect
+   * immediately; independent of the create/update wizard's Save/Submit.
+   */
+  addDocument(id: string, request: AddVendorDocumentRequest): Observable<VendorDocumentResponse> {
+    return this.http.post<VendorDocumentResponse>(`${this.baseUrl}/${id}/documents`, request);
+  }
+
+  /** DELETE /vendors/:id/documents/:documentId — soft, unconditional. */
+  removeDocument(id: string, documentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}/documents/${documentId}`);
   }
 
   getMaterials(id: string): Observable<VendorMaterialsResponse> {

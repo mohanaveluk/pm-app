@@ -33,6 +33,8 @@ export interface OrgUser {
   report_to?: string;
   profile_image?: string;
   is_active: number;
+  /** 1 = internal staff (default), 0 = external (vendor-side) account. */
+  is_internal?: number;
   is_email_verified: boolean;
   organizationId: string;
   role?: { id: number; guid: string; name: string };
@@ -159,5 +161,10 @@ export class UserListComponent implements OnInit {
 
   addUser(): void {
     this.router.navigate(['/admin/users/create']);
+  }
+
+  editUser(u: OrgUser, event?: Event): void {
+    event?.stopPropagation();
+    this.router.navigate(['/admin/users', u.uguid, 'edit']);
   }
 }

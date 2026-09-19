@@ -14,6 +14,12 @@
         <h2 class="user-name">{{ user().first_name }} {{ user().last_name }}</h2>
         <p class="user-role">{{ user().role?.name ?? '—' }}</p>
         <mat-chip [color]="statusColor()" highlighted class="status-chip">{{ statusLabel() }}</mat-chip>
+        @if (user().is_internal === 0) {
+          <mat-chip color="accent" highlighted class="status-chip"
+                    matTooltip="Scoped to only the Vendor Master records this account creates">
+            External
+          </mat-chip>
+        }
       </div>
     </div>
     <button mat-icon-button class="close-btn" (click)="close()">
@@ -140,6 +146,10 @@
         </button>
       }
     }
+    <button mat-stroked-button color="primary" (click)="editUser()">
+      <mat-icon>edit</mat-icon>
+      Edit User
+    </button>
     <button mat-flat-button color="primary" (click)="close()">Close</button>
   </div>
 </div>

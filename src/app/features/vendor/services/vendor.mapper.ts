@@ -1,7 +1,6 @@
-import { VENDOR_DOCUMENT_SLOTS } from './vendor-form.service';
 import {
   CreateVendorRequest, UpdateVendorRequest, VendorAddressRequest,
-  VendorBankAccountRequest, VendorCertificationRequest, VendorDocumentRequest,
+  VendorBankAccountRequest, VendorCertificationRequest,
   VendorProjectExperienceRequest, VendorTurnoverRequest,
 } from '../models/vendor-request.model';
 import {
@@ -203,37 +202,6 @@ function buildProjectExperiences(performance: Section): VendorProjectExperienceR
   return rows.length ? rows : undefined;
 }
 
-/** Best-effort file name for a stored URL — vendor_documents keeps one. */
-function fileNameFromUrl(url: string): string | undefined {
-  try {
-    const path = new URL(url).pathname;
-    return decodeURIComponent(path.split('/').filter(Boolean).pop() ?? '') || undefined;
-  } catch {
-    return url.split('/').filter(Boolean).pop() || undefined;
-  }
-}
-
-/**
- * One request row per filled document slot. The slot's own `documentType`
- * decides the classification — the file name never does.
- */
-function buildDocuments(documents: Section): VendorDocumentRequest[] | undefined {
-  const rows = VENDOR_DOCUMENT_SLOTS
-    .map((slot) => {
-      const url = text(documents?.[slot.key]);
-      if (!url) return null;
-      const row: VendorDocumentRequest = {
-        documentType: slot.documentType,
-        documentUrl: url,
-        fileName: fileNameFromUrl(url),
-      };
-      return row;
-    })
-    .filter((r): r is VendorDocumentRequest => r !== null);
-
-  return rows.length ? rows : undefined;
-}
-
 // ── Form → API ─────────────────────────────────────────────────────────────
 
 /**
@@ -363,16 +331,18 @@ export function toCreateRequest(v: FormValue, resolveNames: CategoryNameResolver
     bankAccounts: buildBankAccounts(v.banking ?? {}),
     turnovers: buildTurnovers(v.financial ?? {}),
     certifications: buildCertifications(v.quality ?? {}),
-    documents: buildDocuments(v.documents ?? {}),
+    // No `documents`: they are filed through POST /vendors/:id/documents once
+    // the vendor exists — see VendorDocumentsStepComponent.
     projectExperiences: buildProjectExperiences(v.performance ?? {}),
   };
 }
 
 /**
- * Update payload. Child collections are omitted on purpose: the API's update
- * path drops them, so sending them would imply a save that never happens.
- * `industryCategoryId` is excluded too — the issued vendor code encodes it, and
- * the API rejects the field with 409.
+ * Update payload. `industryCategoryId` is excluded — the issued vendor code
+ * encodes it, and the API rejects the field with 409. `documents` is excluded
+ * too: sending it would wholesale-replace the vendor's entire document
+ * register on every save, discarding version history the dedicated
+ * POST/DELETE /vendors/:id/documents endpoints are built to preserve.
  */
 export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver = passThroughNames): UpdateVendorRequest {
   const id = v.identification ?? {};
@@ -388,7 +358,6 @@ export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver
     bankAccounts: buildBankAccounts(v.banking ?? {}) ?? [],
     turnovers: buildTurnovers(v.financial ?? {}) ?? [],
     certifications: buildCertifications(v.quality ?? {}) ?? [],
-    documents: buildDocuments(v.documents ?? {}) ?? [],
     // Sent as a complete list too — the API replaces the whole collection, so
     // Add + Modify + Remove all resolve correctly from this one array: it is
     // the FormArray's current state, nothing diffed against what was loaded.
@@ -434,16 +403,6 @@ function addressesToForm(addresses: Vendor['addresses']): Section[] {
 export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver = passThroughIds): FormValue {
   const mobile = splitPhone(vendor.mobileNumber);
   const landline = splitPhone(vendor.landlineNumber);
-
-  const documents = Object.fromEntries(
-    VENDOR_DOCUMENT_SLOTS.map((slot) => {
-      // Newest active document of this type wins the slot.
-      const match = vendor.documents
-        ?.filter((d) => d.documentType === slot.documentType && d.isActive !== false)
-        .sort((a, b) => (b.version ?? 0) - (a.version ?? 0))[0];
-      return [slot.key, match?.documentUrl ?? ''];
-    }),
-  );
 
   const bank = vendor.bankAccounts?.find((b) => b.isPrimary) ?? vendor.bankAccounts?.[0];
 
@@ -556,7 +515,8 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       transportModesSupported: vendor.transportModesSupported ?? [],
       exportDocumentationCapability: !!vendor.exportDocumentationCapability,
     },
-    documents,
+    // No `documents` section: the Documents step reads/writes them directly
+    // against GET/POST/DELETE /vendors/:id/documents, not through this form.
     // No `evaluation` section here either — those fields are read from
     // `vendor` directly wherever they are still displayed (e.g. the
     // workspace header's Classification badge), never patched into a form
