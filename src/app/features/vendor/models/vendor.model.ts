@@ -97,6 +97,7 @@ export enum VendorAddressType {
 }
 
 export enum VendorDocumentType {
+  PRE_QUALIFICATION = 'PRE_QUALIFICATION',
   COMPANY_PROFILE = 'COMPANY_PROFILE',
   TRADE_LICENSE = 'TRADE_LICENSE',
   TAX_REGISTRATION = 'TAX_REGISTRATION',
@@ -353,6 +354,9 @@ export interface VendorDocument {
   effectiveTo?: string;
   expiryDate?: string;
   isActive: boolean;
+  /** Derived server-side. */
+  isExpired?: boolean;
+  remarks?: string;
   uploadedBy?: string;
   uploadedAt?: string;
 }

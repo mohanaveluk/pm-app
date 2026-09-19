@@ -30,6 +30,8 @@ export class ApiService {
     updated_at: string | null;
     role_guid: string;
     organizationId: string;
+    /** True (default) for internal staff; false for an external, vendor-side account. */
+    is_internal?: boolean;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/v1/auth/register`, data);
   }
@@ -134,6 +136,24 @@ export class ApiService {
 
   toggleUserStatus(uguid: string, isActive: boolean): Observable<any> {
     return this.http.patch(`${this.baseUrl}/v1/auth/${uguid}/status`, { isActive });
+  }
+
+  /** PUT /auth/:uguid — admin edit of any field except password (role, is_internal included). */
+  updateUser(uguid: string, data: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    mobile?: string;
+    dob?: string;
+    position?: string;
+    location?: string;
+    report_to?: string;
+    worksWith?: string;
+    projectsWorkedOn?: string;
+    role_guid?: string;
+    is_internal?: boolean;
+  }): Observable<any> {
+    return this.http.put(`${this.baseUrl}/v1/auth/${uguid}`, data);
   }
 
 }

@@ -43,31 +43,41 @@ export const VENDOR_STEPS = [
 export type VendorStepKey = (typeof VENDOR_STEPS)[number]['key'];
 
 /**
- * The ten document slots from the Vendor Master spec, each bound to a
- * VendorDocumentType. The slot — never the file name — decides where an
- * uploaded URL lands.
+ * One document *type*, backed by the versioned register (vendor_documents)
+ * rather than a single flat URL. A type can hold several concurrent chains —
+ * three separate ISO certificates is normal — and each chain can carry
+ * several versions, so `type` maps to a whole list in the UI, not one slot.
+ * Purely display metadata: unlike the old per-slot FormControls, nothing here
+ * is form-bound — VendorDocumentsStepComponent drives everything from
+ * GET/POST/DELETE /vendors/:id/documents directly.
  */
-export interface VendorDocumentSlot {
+export interface VendorTypedDocumentSlot {
   key: string;
-  label: string;
-  description: string;
   documentType: VendorDocumentType;
+  label: string;
+  icon: string;
+  hint: string;
   accept: string;
 }
 
-const DOC_TYPES = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg';
+const DOC_TYPES = '.pdf,.doc,.docx,.xls,.xlsx';
+const IMAGE_TYPES = '.png,.jpg,.jpeg';
 
-export const VENDOR_DOCUMENT_SLOTS: readonly VendorDocumentSlot[] = [
-  { key: 'companyProfile',    label: 'Company Profile',            description: 'Corporate profile or capability statement', documentType: VendorDocumentType.COMPANY_PROFILE,     accept: DOC_TYPES },
-  { key: 'tradeLicense',      label: 'Trade License Copy',         description: 'Valid trade or commercial licence',         documentType: VendorDocumentType.TRADE_LICENSE,       accept: DOC_TYPES },
-  { key: 'taxRegistration',   label: 'Tax Registration Certificate', description: 'VAT / GST / national tax certificate',    documentType: VendorDocumentType.TAX_REGISTRATION,    accept: DOC_TYPES },
-  { key: 'bankLetter',        label: 'Bank Letter / Cancelled Cheque', description: 'Bank account verification',             documentType: VendorDocumentType.BANK_LETTER,         accept: DOC_TYPES },
-  { key: 'isoCertificate',    label: 'ISO Certificates',           description: 'ISO 9001 / 14001 / 45001 certificates',     documentType: VendorDocumentType.ISO_CERTIFICATE,     accept: DOC_TYPES },
-  { key: 'productCatalogue',  label: 'Product Catalogues',         description: 'Catalogues or technical datasheets',        documentType: VendorDocumentType.PRODUCT_CATALOGUE,   accept: DOC_TYPES },
-  { key: 'financialStatement',label: 'Financial Statements',       description: 'Audited financial statements',              documentType: VendorDocumentType.FINANCIAL_STATEMENT, accept: DOC_TYPES },
-  { key: 'hsePolicy',         label: 'HSE Policy Documents',       description: 'Health, safety and environment policy',     documentType: VendorDocumentType.HSE_POLICY,          accept: DOC_TYPES },
-  { key: 'pastPo',            label: 'Past PO Copies',             description: 'Reference purchase orders or contracts',    documentType: VendorDocumentType.PAST_PO,             accept: DOC_TYPES },
-  { key: 'clientTestimonial', label: 'Client Testimonials',        description: 'Performance or completion certificates',    documentType: VendorDocumentType.CLIENT_TESTIMONIAL,  accept: DOC_TYPES },
+export const VENDOR_DOCUMENT_SLOTS: readonly VendorTypedDocumentSlot[] = [
+  { key: 'preQualification',    documentType: VendorDocumentType.PRE_QUALIFICATION,   label: 'Pre-Qualification',            icon: 'fact_check',    hint: 'Initial qualification documents',           accept: DOC_TYPES },
+  { key: 'companyProfile',      documentType: VendorDocumentType.COMPANY_PROFILE,     label: 'Company Profile',              icon: 'business',       hint: 'Corporate profile or capability statement', accept: DOC_TYPES },
+  { key: 'tradeLicense',        documentType: VendorDocumentType.TRADE_LICENSE,       label: 'Trade License',                icon: 'badge',          hint: 'Valid trade or commercial licence',         accept: DOC_TYPES },
+  { key: 'taxRegistration',     documentType: VendorDocumentType.TAX_REGISTRATION,    label: 'Tax Registration Certificate', icon: 'receipt_long',   hint: 'VAT / GST / national tax certificate',      accept: DOC_TYPES },
+  { key: 'bankLetter',          documentType: VendorDocumentType.BANK_LETTER,         label: 'Bank Letter',                  icon: 'account_balance', hint: 'Bank account verification letter',          accept: `${DOC_TYPES},${IMAGE_TYPES}` },
+  { key: 'cancelledCheque',     documentType: VendorDocumentType.CANCELLED_CHEQUE,    label: 'Cancelled Cheque',              icon: 'money_off',      hint: 'Cancelled cheque for account verification', accept: `${DOC_TYPES},${IMAGE_TYPES}` },
+  { key: 'isoCertificate',      documentType: VendorDocumentType.ISO_CERTIFICATE,     label: 'ISO Certificates',             icon: 'verified',       hint: 'ISO 9001 / 14001 / 45001 certificates',     accept: DOC_TYPES },
+  { key: 'productCatalogue',    documentType: VendorDocumentType.PRODUCT_CATALOGUE,   label: 'Product Catalogues',           icon: 'menu_book',      hint: 'Catalogues or technical datasheets',        accept: DOC_TYPES },
+  { key: 'financialStatement',  documentType: VendorDocumentType.FINANCIAL_STATEMENT, label: 'Financial Statements',         icon: 'payments',       hint: 'Audited financial statements',              accept: DOC_TYPES },
+  { key: 'hsePolicy',           documentType: VendorDocumentType.HSE_POLICY,          label: 'HSE Policy',                   icon: 'health_and_safety', hint: 'Health, safety and environment policy',  accept: DOC_TYPES },
+  { key: 'pastPo',              documentType: VendorDocumentType.PAST_PO,             label: 'Past PO Copies',               icon: 'description',    hint: 'Reference purchase orders or contracts',    accept: DOC_TYPES },
+  { key: 'clientTestimonial',   documentType: VendorDocumentType.CLIENT_TESTIMONIAL,  label: 'Client Testimonials',          icon: 'reviews',        hint: 'Performance or completion certificates',    accept: DOC_TYPES },
+  { key: 'insurance',           documentType: VendorDocumentType.INSURANCE,           label: 'Insurance',                    icon: 'shield',         hint: 'Liability, workers\' comp or other cover',  accept: DOC_TYPES },
+  { key: 'other',               documentType: VendorDocumentType.OTHER,               label: 'Other',                        icon: 'folder',         hint: 'Anything not covered above',                accept: `${DOC_TYPES},${IMAGE_TYPES}` },
 ];
 
 /**
@@ -425,12 +435,11 @@ export class VendorFormService {
       }),
 
       // ── 10. Documents ───────────────────────────────────────────────
-      // One control per slot, keyed by slot.key — never by file name.
-      documents: this.fb.group(
-        Object.fromEntries(
-          VENDOR_DOCUMENT_SLOTS.map((slot) => [slot.key, this.fb.control('')]),
-        ),
-      ),
+      // Empty — kept only so stepState()/sectionStatus() have a group to read.
+      // Documents themselves are managed entirely outside the reactive form,
+      // directly against GET/POST/DELETE /vendors/:id/documents, exactly like
+      // Material's Documents step. See VendorDocumentsStepComponent.
+      documents: this.fb.group({}),
 
       // Evaluation & approval (score, risk, classification, approval date/
       // reference, review cycle) is intentionally NOT a step here — it is a

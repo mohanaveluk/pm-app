@@ -34,6 +34,7 @@ export type VendorAddressesResponse = ApiEnvelope<VendorAddress[]>;
 export type VendorBankAccountsResponse = ApiEnvelope<VendorBankAccount[]>;
 export type VendorCertificationsResponse = ApiEnvelope<VendorCertification[]>;
 export type VendorDocumentsResponse = ApiEnvelope<VendorDocument[]>;
+export type VendorDocumentResponse = ApiEnvelope<VendorDocument>;
 export type VendorMaterialsResponse = ApiEnvelope<VendorMaterial[]>;
 export type VendorPerformanceResponse = ApiEnvelope<VendorPerformance[]>;
 export type VendorEvaluationsResponse = ApiEnvelope<VendorEvaluation[]>;

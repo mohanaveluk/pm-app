@@ -3,12 +3,12 @@
   <!-- ── Page header ────────────────────────────────────────────── -->
   <div class="cu-header">
     <div class="cu-header__inner">
-      <a mat-icon-button routerLink="/admin/dashboard" class="back-btn" aria-label="Back">
+      <a mat-icon-button routerLink="/admin/users" class="back-btn" aria-label="Back">
         <span class="material-icons">arrow_back</span>
       </a>
       <div>
-        <h1 class="cu-title">Create New User</h1>
-        <p class="cu-sub">Add a team member to your organisation</p>
+        <h1 class="cu-title">{{ pageTitle() }}</h1>
+        <p class="cu-sub">{{ pageSubtitle() }}</p>
       </div>
     </div>
   </div>
@@ -107,40 +107,42 @@
           </div>
 
           <div class="form-grid">
-            <!-- Password with strength indicator -->
-            <div class="password-col">
-              <mat-form-field appearance="outline">
-                <mat-label>Password *</mat-label>
-                <mat-icon matPrefix>lock</mat-icon>
-                <input matInput
-                       [type]="showPassword() ? 'text' : 'password'"
-                       formControlName="password"
-                       placeholder="Min 10 chars, upper + lower + number"
-                       autocomplete="new-password" />
-                <button mat-icon-button matSuffix type="button"
-                        (click)="showPassword.set(!showPassword())"
-                        [matTooltip]="showPassword() ? 'Hide password' : 'Show password'">
-                  <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-                @if (err('password')) { <mat-error>{{ err('password') }}</mat-error> }
-              </mat-form-field>
+            <!-- Password with strength indicator — create only; editing never touches it -->
+            @if (!isEdit()) {
+              <div class="password-col">
+                <mat-form-field appearance="outline">
+                  <mat-label>Password *</mat-label>
+                  <mat-icon matPrefix>lock</mat-icon>
+                  <input matInput
+                         [type]="showPassword() ? 'text' : 'password'"
+                         formControlName="password"
+                         placeholder="Min 10 chars, upper + lower + number"
+                         autocomplete="new-password" />
+                  <button mat-icon-button matSuffix type="button"
+                          (click)="showPassword.set(!showPassword())"
+                          [matTooltip]="showPassword() ? 'Hide password' : 'Show password'">
+                    <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                  @if (err('password')) { <mat-error>{{ err('password') }}</mat-error> }
+                </mat-form-field>
 
-              @if (form.get('password')?.value) {
-                <div class="strength-bar">
-                  <div class="strength-track">
-                    <div class="strength-fill"
-                         [style.width.%]="passwordStrength * 25"
-                         [style.background]="strengthColor"></div>
+                @if (form.get('password')?.value) {
+                  <div class="strength-bar">
+                    <div class="strength-track">
+                      <div class="strength-fill"
+                           [style.width.%]="passwordStrength * 25"
+                           [style.background]="strengthColor"></div>
+                    </div>
+                    <span class="strength-label" [style.color]="strengthColor">
+                      {{ strengthLabel }}
+                    </span>
                   </div>
-                  <span class="strength-label" [style.color]="strengthColor">
-                    {{ strengthLabel }}
-                  </span>
-                </div>
-              }
-              <p class="field-hint">
-                Minimum 10 characters — must include uppercase, lowercase and a digit.
-              </p>
-            </div>
+                }
+                <p class="field-hint">
+                  Minimum 10 characters — must include uppercase, lowercase and a digit.
+                </p>
+              </div>
+            }
 
             <!-- Role dropdown loaded from API -->
             <mat-form-field appearance="outline" style="height: 79px;">
@@ -156,6 +158,22 @@
               </mat-select>
               @if (err('role_guid')) { <mat-error>{{ err('role_guid') }}</mat-error> }
             </mat-form-field>
+          </div>
+
+          <!-- Account type — internal staff vs external (vendor-side) account -->
+          <div class="account-type">
+            <mat-slide-toggle formControlName="isExternal" color="primary">
+              External user
+            </mat-slide-toggle>
+            <p class="field-hint">
+              @if (form.get('isExternal')?.value) {
+                External accounts (vendor-side contacts) only ever see and manage the Vendor
+                Master records they themselves create — nothing else in the organisation.
+              } @else {
+                Internal staff. Leave off for anyone on your own team — they can see every
+                vendor in the organisation they're granted access to.
+              }
+            </p>
           </div>
         </section>
 
@@ -258,16 +276,16 @@
           <button mat-button type="button" class="reset-btn" (click)="onReset()">
             <span class="material-icons">refresh</span> Reset
           </button>
-          <a mat-stroked-button routerLink="/admin/dashboard" class="cancel-btn">Cancel</a>
+          <a mat-stroked-button routerLink="/admin/users" class="cancel-btn">Cancel</a>
           <button mat-raised-button type="submit" class="submit-btn" [disabled]="loading()">
             @if (loading()) {
               <mat-spinner diameter="20" />
-              <span>Creating…</span>
+              <span>{{ isEdit() ? 'Saving…' : 'Creating…' }}</span>
             } @else {
             <ng-container>
-              <mat-icon>person_add</mat-icon>
-              <span>Create User</span>
-            </ng-container>              
+              <mat-icon>{{ isEdit() ? 'save' : 'person_add' }}</mat-icon>
+              <span>{{ submitLabel() }}</span>
+            </ng-container>
             }
           </button>
         </div>

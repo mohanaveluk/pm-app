@@ -136,6 +136,11 @@
     width: 12px;
     height: 12px;
   }
+
+  &--active {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
 }
 
 // Caution banner for hazardous classifications — informative, not alarming.
@@ -337,6 +342,11 @@
   &__sub {
     font-size: 0.74rem;
     color: #8098b8;
+  }
+
+  &__expired {
+    color: var(--error);
+    font-weight: 600;
   }
 }
 

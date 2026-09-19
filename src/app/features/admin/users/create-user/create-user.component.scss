@@ -7,7 +7,7 @@
 // ── Page header ───────────────────────────────────────────────────
 .cu-header {
   background: linear-gradient(135deg, #0F4C81 0%, #1565C0 100%);
-  padding: 80px 32px 28px;
+  padding: 20px 32px 28px;
 
   @media(max-width: 600px) { padding: 16px 16px 22px; }
 
@@ -129,6 +129,16 @@ mat-divider { margin: 0 !important; border-color: #e8eef4 !important; }
   @media(max-width: 620px) { grid-template-columns: 1fr; }
 
   mat-form-field { width: 100%; }
+}
+
+.account-type {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 8px;
+  background: rgba(103, 58, 183, .03);
+
+  .field-hint { margin: 6px 0 0; }
 }
 
 .span-2 {

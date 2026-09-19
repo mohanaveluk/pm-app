@@ -339,9 +339,13 @@ export class VendorWorkspaceComponent implements OnInit, HasUnsavedChanges {
 
       if (draft) {
         // The vendor now exists, so child sections lock. Say so plainly rather
-        // than letting the user discover it by silent no-op.
+        // than letting the user discover it by silent no-op. Documents are the
+        // deliberate exception — they stay addable/replaceable/deletable for
+        // the vendor's entire lifecycle, which is exactly why saving a draft
+        // is what unlocks the Documents step in the first place.
         this.snack.open(
-          `Draft saved as ${res.data.code}. Addresses, banking, certificates and documents are fixed at creation and are now read-only.`,
+          `Draft saved as ${res.data.code}. Addresses, banking and certificates are fixed at creation and are now read-only. `
+          + `Documents can now be attached — add, replace or delete them any time.`,
           'OK',
           { duration: 8000 },
         );

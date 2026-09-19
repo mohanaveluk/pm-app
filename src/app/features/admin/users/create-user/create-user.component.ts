@@ -1,6 +1,6 @@
-import { Component, signal, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, signal, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, computed } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -13,12 +13,15 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ApiService } from '../../../../services/api.service';
 import { AuthService } from '../../../../services';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 interface RoleOption  { guid: string; name: string; }
 interface UserOption  { uguid: string; fullName: string; email: string; }
+
+type FormMode = 'create' | 'edit';
 
 const POSITIONS = [
   'Project Manager', 'Site Engineer', 'Civil Engineer', 'Structural Engineer',
@@ -50,6 +53,7 @@ const PROJECTS_PLACEHOLDER = [
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
     MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
     MatDatepickerModule, MatNativeDateModule, MatDividerModule, MatTooltipModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './create-user.component.html',
   styleUrl:    './create-user.component.scss',
@@ -67,6 +71,7 @@ export class CreateUserComponent implements OnInit {
   private readonly api    = inject(ApiService);
   private readonly auth   = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route  = inject(ActivatedRoute);
   private readonly snack  = inject(MatSnackBar);
   private readonly cdr    = inject(ChangeDetectorRef);
 
@@ -75,6 +80,17 @@ export class CreateUserComponent implements OnInit {
   readonly showPassword = signal(false);
   readonly serverError  = signal('');
   readonly organizationId  = signal('');
+
+  /** 'create' registers a brand-new account; 'edit' updates an existing one — see app.routes.ts. */
+  readonly mode = signal<FormMode>('create');
+  readonly targetUguid = signal<string | null>(null);
+  readonly isEdit = computed(() => this.mode() === 'edit');
+
+  readonly pageTitle = computed(() => this.isEdit() ? 'Edit User' : 'Create New User');
+  readonly pageSubtitle = computed(() => this.isEdit()
+    ? 'Update role, profile and work details at any time'
+    : 'Add a team member to your organisation');
+  readonly submitLabel = computed(() => this.isEdit() ? 'Save Changes' : 'Create User');
 
   roles:    RoleOption[] = [];
   orgUsers: UserOption[] = [];
@@ -94,6 +110,10 @@ export class CreateUserComponent implements OnInit {
     mobile:           ['', [Validators.pattern(/^\+?[\d\s\-()]{7,20}$/)]],
     dob:              [null as Date | null],
     role_guid:        ['', Validators.required],
+    // Internal (default) vs external — see AccountType hint in the template.
+    // An external account is scoped server-side to only the Vendor Master
+    // records it itself creates; internal accounts see the whole organization.
+    isExternal:       [false],
     position:         [''],
     location:         [''],
     reportTo:         [[] as string[]],      // dropdown of org users (single)
@@ -102,7 +122,18 @@ export class CreateUserComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadMeta();
+    const mode = (this.route.snapshot.data['mode'] as FormMode) ?? 'create';
+    this.mode.set(mode);
+    this.targetUguid.set(this.route.snapshot.paramMap.get('uguid'));
+
+    if (mode === 'edit') {
+      // Editing never touches the password — the field isn't shown, so it
+      // shouldn't block form validity either.
+      this.form.get('password')?.clearValidators();
+      this.form.get('password')?.updateValueAndValidity({ emitEvent: false });
+    }
+
+    void this.loadMeta();
   }
 
   private async loadMeta(): Promise<void> {
@@ -129,11 +160,47 @@ export class CreateUserComponent implements OnInit {
           fullName: `${u.first_name} ${u.last_name}`.trim(),
           email:    u.email,
         }));
+
+      if (this.isEdit() && this.targetUguid()) {
+        await this.loadTargetUser(myOrgId ?? '', this.targetUguid()!);
+      }
     } catch {
       // roles/users load failure is non-fatal — form still usable with static data
     } finally {
       this.initLoading.set(false);
       this.cdr.markForCheck();
+    }
+  }
+
+  /** Prefills the form from the account being edited. */
+  private async loadTargetUser(organizationId: string, uguid: string): Promise<void> {
+    try {
+      const res: any = await this.api.getOrganizationUserById(organizationId, uguid).toPromise();
+      const u = res?.data ?? res;
+      if (!u) {
+        this.serverError.set('This user could not be found.');
+        return;
+      }
+
+      const splitList = (value: string | null | undefined): string[] =>
+        (value ?? '').split(',').map(v => v.trim()).filter(Boolean);
+
+      this.form.patchValue({
+        firstName:        u.first_name ?? '',
+        lastName:         u.last_name ?? '',
+        email:            u.email ?? '',
+        mobile:           u.mobile ?? '',
+        dob:              u.dob ? new Date(u.dob) : null,
+        role_guid:        u.role?.guid ?? '',
+        isExternal:       u.is_internal === 0,
+        position:         u.position ?? '',
+        location:         u.location ?? '',
+        reportTo:         u.report_to ?? '',
+        worksWith:        splitList(u.worksWith),
+        projectsWorkedOn: splitList(u.projectsWorkedOn),
+      });
+    } catch {
+      this.serverError.set('Unable to load this user\'s details. Please try again.');
     }
   }
 
@@ -156,44 +223,82 @@ export class CreateUserComponent implements OnInit {
     this.loading.set(true);
     this.serverError.set('');
     try {
-      const v = this.form.value;
-
-      // Convert multi-select arrays to comma-separated strings for the backend
-      const worksWithStr        = (v.worksWith        ?? []).join(', ');
-      const projectsWorkedOnStr = (v.projectsWorkedOn ?? []).join(', ');
-
-      // report_to: single user's fullName or email stored as a string
-      const reportToStr = (v.reportTo as any) ?? ''; //(v.reportTo as any)?.[0] ?? '';
-
-      const dobStr = v.dob ? (v.dob as Date).toISOString().split('T')[0] : undefined;
-
-      await this.api.register({
-        first_name:        v.firstName!,
-        last_name:         v.lastName!,
-        email:             v.email!,
-        password:          v.password!,
-        mobile:            v.mobile || undefined,
-        dob:               dobStr,
-        position:          v.position || undefined,
-        location:          v.location || undefined,
-        report_to:         reportToStr || undefined,
-        worksWith:         worksWithStr || undefined,
-        projectsWorkedOn:  projectsWorkedOnStr || undefined,
-        created_at:        new Date().toISOString(),
-        updated_at:        null,
-        role_guid:         v.role_guid!,
-        organizationId: this.organizationId()
-      }).toPromise();
-
-      this.snack.open('User created successfully! A verification email has been sent.', 'OK', { duration: 5000 });
-      setTimeout(() => this.router.navigate(['/admin/users']), 1500);
+      if (this.isEdit()) {
+        await this.submitEdit();
+      } else {
+        await this.submitCreate();
+      }
     } catch (err: any) {
-      const msg = err?.error?.message || err?.error?.detail || 'Failed to create user. Please try again.';
+      const msg = err?.error?.message || err?.error?.detail || `Failed to ${this.isEdit() ? 'update' : 'create'} user. Please try again.`;
       this.serverError.set(Array.isArray(msg) ? msg.join(' · ') : msg);
     } finally {
       this.loading.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  private async submitCreate(): Promise<void> {
+    const v = this.form.value;
+
+    // Convert multi-select arrays to comma-separated strings for the backend
+    const worksWithStr        = (v.worksWith        ?? []).join(', ');
+    const projectsWorkedOnStr = (v.projectsWorkedOn ?? []).join(', ');
+
+    // report_to: single user's fullName or email stored as a string
+    const reportToStr = (v.reportTo as any) ?? ''; //(v.reportTo as any)?.[0] ?? '';
+
+    const dobStr = v.dob ? (v.dob as Date).toISOString().split('T')[0] : undefined;
+
+    await this.api.register({
+      first_name:        v.firstName!,
+      last_name:         v.lastName!,
+      email:             v.email!,
+      password:          v.password!,
+      mobile:            v.mobile || undefined,
+      dob:               dobStr,
+      position:          v.position || undefined,
+      location:          v.location || undefined,
+      report_to:         reportToStr || undefined,
+      worksWith:         worksWithStr || undefined,
+      projectsWorkedOn:  projectsWorkedOnStr || undefined,
+      created_at:        new Date().toISOString(),
+      updated_at:        null,
+      role_guid:         v.role_guid!,
+      organizationId: this.organizationId(),
+      is_internal:       !v.isExternal,
+    }).toPromise();
+
+    this.snack.open('User created successfully! A verification email has been sent.', 'OK', { duration: 5000 });
+    setTimeout(() => this.router.navigate(['/admin/users']), 1500);
+  }
+
+  private async submitEdit(): Promise<void> {
+    const uguid = this.targetUguid();
+    if (!uguid) return;
+    const v = this.form.value;
+
+    const worksWithStr        = (v.worksWith        ?? []).join(', ');
+    const projectsWorkedOnStr = (v.projectsWorkedOn ?? []).join(', ');
+    const reportToStr = (v.reportTo as any) ?? '';
+    const dobStr = v.dob ? (v.dob as Date).toISOString().split('T')[0] : undefined;
+
+    await this.api.updateUser(uguid, {
+      first_name:        v.firstName!,
+      last_name:         v.lastName!,
+      email:             v.email!,
+      mobile:            v.mobile || undefined,
+      dob:               dobStr,
+      position:          v.position || undefined,
+      location:          v.location || undefined,
+      report_to:         reportToStr || undefined,
+      worksWith:         worksWithStr || undefined,
+      projectsWorkedOn:  projectsWorkedOnStr || undefined,
+      role_guid:         v.role_guid!,
+      is_internal:       !v.isExternal,
+    }).toPromise();
+
+    this.snack.open('User updated successfully', 'OK', { duration: 4000 });
+    setTimeout(() => this.router.navigate(['/admin/users']), 800);
   }
 
   onReset(): void {

@@ -85,6 +85,9 @@
 
             <div class="card-footer">
               <mat-chip [color]="statusColor(user)" highlighted>{{ statusLabel(user) }}</mat-chip>
+              @if (user.is_internal === 0) {
+                <mat-chip color="accent" matTooltip="Scoped to only the Vendor Master records this account creates">External</mat-chip>
+              }
 
               <div class="action-icons" (click)="$event.stopPropagation()">
                 @if (!user.is_email_verified) {
@@ -106,6 +109,9 @@
                     </button>
                   }
                 }
+                <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
+                  <mat-icon>edit</mat-icon>
+                </button>
                 <button mat-icon-button matTooltip="View details"
                         (click)="openDetail(user); $event.stopPropagation()">
                   <mat-icon>open_in_new</mat-icon>
@@ -185,6 +191,12 @@
               <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
                 {{ statusLabel(user) }}
               </mat-chip>
+              @if (user.is_internal === 0) {
+                <mat-chip color="accent" highlighted class="status-chip-sm"
+                          matTooltip="Scoped to only the Vendor Master records this account creates">
+                  External
+                </mat-chip>
+              }
             </td>
           </ng-container>
 
@@ -211,6 +223,9 @@
                     </button>
                   }
                 }
+                <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
+                  <mat-icon>edit</mat-icon>
+                </button>
                 <button mat-icon-button matTooltip="View details" (click)="openDetail(user)">
                   <mat-icon>open_in_new</mat-icon>
                 </button>

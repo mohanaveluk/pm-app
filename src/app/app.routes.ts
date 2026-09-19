@@ -170,7 +170,12 @@ export const routes: Routes = [
           {
             path: 'users/create',
             loadComponent: () => import('./features/admin/users/create-user/create-user.component').then(m => m.CreateUserComponent),
-            data: { breadcrumb: 'Create User', permission: PERMISSIONS.USERS_MANAGE },
+            data: { breadcrumb: 'Create User', permission: PERMISSIONS.USERS_MANAGE, mode: 'create' },
+          },
+          {
+            path: 'users/:uguid/edit',
+            loadComponent: () => import('./features/admin/users/create-user/create-user.component').then(m => m.CreateUserComponent),
+            data: { breadcrumb: 'Edit User', permission: PERMISSIONS.USERS_MANAGE, mode: 'edit' },
           },
           {
             path: 'organization/profile',

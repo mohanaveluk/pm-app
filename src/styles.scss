@@ -29,6 +29,8 @@ html.dark-theme {
     ),
   ));
   --mat-chip-label-text-color: #414752 !important;
+  --mat-sys-on-surface-variant: #4e5566;
+  --mat-sys-on-surface: #4e5566;
 }
 
 // Bridge from the app's pre-existing custom properties (used throughout

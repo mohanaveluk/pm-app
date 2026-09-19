@@ -1,5 +1,6 @@
 import { Component, inject, Inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,10 +24,11 @@ import { OrgUser } from '../user-list/user-list.component';
   styleUrl: './user-detail-dialog.component.scss',
 })
 export class UserDetailDialogComponent {
-  private readonly api   = inject(ApiService);
-  private readonly snack = inject(MatSnackBar);
-  private readonly cdr   = inject(ChangeDetectorRef);
-  readonly dialogRef     = inject(MatDialogRef<UserDetailDialogComponent>);
+  private readonly api    = inject(ApiService);
+  private readonly snack  = inject(MatSnackBar);
+  private readonly cdr    = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+  readonly dialogRef      = inject(MatDialogRef<UserDetailDialogComponent>);
 
   user!: ReturnType<typeof signal<OrgUser>>;
 
@@ -78,6 +80,12 @@ export class UserDetailDialogComponent {
     } catch {
       this.snack.open(`Failed to ${action} user`, 'Close', { duration: 3000 });
     }
+  }
+
+  editUser(): void {
+    const uguid = this.user().uguid;
+    this.dialogRef.close(this.user());
+    this.router.navigate(['/admin/users', uguid, 'edit']);
   }
 
   close(): void { this.dialogRef.close(this.user()); }

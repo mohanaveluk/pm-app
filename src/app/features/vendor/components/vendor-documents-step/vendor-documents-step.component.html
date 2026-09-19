@@ -1,54 +1,135 @@
-<div class="step" [formGroup]="group">
+<div class="step">
 
   <section class="step-section">
     <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Vendor Documents</h3>
     <p class="step-section__hint">
-      Each card uploads into its own document type. Drop a file on the card you
-      want — file names are never used to work out where a document belongs, so
-      you can upload anything named anything.
+      Each card holds every version of that document type. Add a new one at any
+      time, replace the active version, or delete one you no longer need —
+      nothing here is limited to a single file per type, and changes are saved
+      immediately.
     </p>
+
+    @if (!vendorId()) {
+      <p class="step-derived">
+        <mat-icon>info_outline</mat-icon>
+        Save this vendor as a draft first — documents can be attached once it exists.
+      </p>
+    }
+
+    @if (vendorId() && documentsError()) {
+      <p class="step-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        {{ documentsError() }}
+        <button mat-button type="button" (click)="refreshDocuments()">Retry</button>
+      </p>
+    }
 
     <div class="doc-slot-grid">
       @for (slot of slots; track slot.key) {
-        <app-vendor-file-upload
-          [control]="control(slot)"
-          [label]="slot.label"
-          [description]="slot.description"
-          [accept]="slot.accept"
-          [readonly]="readonly()"
-        />
+        <div class="doc-slot">
+          <div class="doc-slot__head">
+            <mat-icon class="doc-slot__icon">{{ slot.icon }}</mat-icon>
+            <div class="doc-slot__meta">
+              <div class="doc-slot__label">{{ slot.label }}</div>
+              <div class="doc-slot__hint">{{ slot.hint }}</div>
+            </div>
+          </div>
+
+          <!-- One hidden input per slot; Add and every row's Replace funnel
+               through it — the pending target is recorded just before it opens. -->
+          <input
+            #typedInput
+            type="file"
+            hidden
+            aria-hidden="true"
+            [accept]="slot.accept"
+            (change)="onTypedFileSelected($event)"
+          />
+
+          @if (isUploading(slot.key)) {
+            <div class="doc-slot__uploading">
+              <mat-spinner diameter="22" />
+              <span>Uploading…</span>
+            </div>
+          } @else if (!readonly() && vendorId()) {
+            <div
+              class="doc-dropzone doc-dropzone--compact"
+              [class.doc-dropzone--active]="dragSlot() === slot.key"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="'Add ' + slot.label"
+              (dragover)="onTypedDragOver($event, slot)"
+              (dragleave)="onTypedDragLeave()"
+              (drop)="onTypedDrop($event, slot)"
+              (click)="addDocument(slot, typedInput)"
+              (keydown.enter)="addDocument(slot, typedInput)"
+              (keydown.space)="addDocument(slot, typedInput); $event.preventDefault()"
+            >
+              <mat-icon>add_circle_outline</mat-icon>
+              <p class="doc-dropzone__title">Add New Document</p>
+              <p class="doc-dropzone__hint">Drop a file, or click · {{ slot.accept }}</p>
+            </div>
+          }
+
+          @if (documentsLoading() && !documents().length) {
+            <p class="doc-empty">Loading…</p>
+          } @else {
+            <div class="doc-list">
+              @for (doc of documentsFor(slot); track doc.id) {
+                <div class="doc-row">
+                  <mat-icon class="doc-row__icon">
+                    {{ doc.isActive ? 'check_circle' : 'history' }}
+                  </mat-icon>
+                  <div class="doc-row__meta">
+                    <div class="doc-row__name" [matTooltip]="doc.documentUrl">
+                      {{ documentName(doc) }}
+                    </div>
+                    <div class="doc-row__sub">
+                      v{{ doc.version }}
+                      <span class="step-derived-badge" [class.step-derived-badge--active]="doc.isActive">
+                        {{ doc.isActive ? 'Active' : 'Superseded' }}
+                      </span>
+                      @if (sizeLabel(doc.fileSizeBytes)) { · {{ sizeLabel(doc.fileSizeBytes) }} }
+                      @if (doc.uploadedAt) { · {{ doc.uploadedAt | date: 'mediumDate' }} }
+                      @if (doc.expiryDate) { · expires {{ doc.expiryDate | date: 'mediumDate' }} }
+                      @if (doc.isExpired) { · <span class="doc-row__expired">Expired</span> }
+                    </div>
+                  </div>
+
+                  <button mat-icon-button type="button" matTooltip="View" (click)="openUrl(doc.documentUrl)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+
+                  @if (!readonly() && vendorId() && doc.isActive) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Replace with a new version"
+                      (click)="replaceDocument(slot, doc, typedInput)"
+                    >
+                      <mat-icon>swap_horiz</mat-icon>
+                    </button>
+                  }
+                  @if (!readonly() && vendorId()) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      color="warn"
+                      matTooltip="Delete"
+                      (click)="deleteDocument(slot, doc)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
+              @if (vendorId() && !documentsLoading() && !documentsFor(slot).length) {
+                <p class="doc-empty">No documents uploaded yet.</p>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
   </section>
-
-  <!-- ── Documents already on the record ────────────────────────────── -->
-  @if (existingDocuments().length) {
-    <section class="step-section">
-      <h3 class="step-section__title"><mat-icon>inventory_2</mat-icon> Stored Documents</h3>
-      <p class="step-section__hint">
-        Every version held against this vendor, newest first.
-      </p>
-
-      <div class="doc-list">
-        @for (doc of existingDocuments(); track doc.id) {
-          <div class="doc-row">
-            <mat-icon class="doc-row__icon">description</mat-icon>
-            <div class="doc-row__meta">
-              <div class="doc-row__name">{{ doc.fileName || label(doc.documentType) }}</div>
-              <div class="doc-row__sub">
-                {{ label(doc.documentType) }}
-                @if (doc.version) { · v{{ doc.version }} }
-                @if (sizeLabel(doc.fileSizeBytes)) { · {{ sizeLabel(doc.fileSizeBytes) }} }
-                @if (doc.uploadedAt) { · {{ doc.uploadedAt | date: 'mediumDate' }} }
-                @if (doc.expiryDate) { · expires {{ doc.expiryDate | date: 'mediumDate' }} }
-              </div>
-            </div>
-            <button mat-icon-button type="button" matTooltip="Open" [attr.aria-label]="'Open ' + label(doc.documentType)" (click)="open(doc.documentUrl)">
-              <mat-icon>open_in_new</mat-icon>
-            </button>
-          </div>
-        }
-      </div>
-    </section>
-  }
 </div>

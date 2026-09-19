@@ -243,7 +243,7 @@
         <mat-step [stepControl]="formService.group('documents')" [state]="stepState('documents', 9)">
           <ng-template matStepLabel>Documents</ng-template>
           <app-vendor-documents-step
-            [existingDocuments]="vendor()?.documents ?? []"
+            [vendorId]="vendorId()"
           />
         </mat-step>
       </mat-stepper>
