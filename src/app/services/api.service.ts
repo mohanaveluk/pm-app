@@ -78,7 +78,7 @@ export class ApiService {
   }
 
   verifyEmail(userGuid: string, verificationCode: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/v1/auth/verify-email`, { userGuid, code: verificationCode });
+    return this.http.post(`${this.baseUrl}/v1/auth/verify-email`, { uguid: userGuid, code: verificationCode });
   }
 
   resendVerificationMail(userGuid: string): Observable<any> {

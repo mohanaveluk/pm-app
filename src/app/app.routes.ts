@@ -45,6 +45,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
           },
           {
+            path: 'verifyemail/:userGuid/:code',
+            loadComponent: () => import('./features/auth/verify-email/verify-email.component').then(m => m.VerifyEmailComponent),
+          },
+          {
             path: 'register-organization',
             loadComponent: () => import('./features/auth/register-organization/register-organization.component').then(m => m.RegisterOrganizationComponent),
           },
