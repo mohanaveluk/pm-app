@@ -1,0 +1,41 @@
+<div class="verify-page">
+  <div class="verify-card" role="status" aria-live="polite">
+
+    <div class="verify-brand">
+      <span class="material-icons">dashboard</span>
+      <span>PM <strong>Portal</strong></span>
+    </div>
+
+    @switch (state()) {
+      @case ('verifying') {
+        <mat-spinner diameter="48" />
+        <h1>Verifying your email…</h1>
+        <p>Please wait a moment.</p>
+      }
+      @case ('success') {
+        <div class="verify-icon verify-icon--success">
+          <span class="material-icons">check_circle</span>
+        </div>
+        <h1>Email verified</h1>
+        <p>{{ message() }} You can now sign in to your workspace.</p>
+        <a mat-raised-button class="verify-btn" routerLink="/auth/login">
+          <mat-icon>login</mat-icon> Go to Sign In
+        </a>
+      }
+      @case ('error') {
+        <div class="verify-icon verify-icon--error">
+          <span class="material-icons">error_outline</span>
+        </div>
+        <h1>Verification failed</h1>
+        <div class="error-banner" role="alert">
+          <span class="material-icons">error_outline</span>
+          {{ message() }}
+        </div>
+        <a mat-stroked-button class="verify-btn verify-btn--outline" routerLink="/auth/login">
+          Back to Sign In
+        </a>
+      }
+    }
+
+  </div>
+</div>
