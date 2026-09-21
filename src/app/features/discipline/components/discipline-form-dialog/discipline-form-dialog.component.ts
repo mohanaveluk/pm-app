@@ -6,11 +6,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../../services';
+import { DepartmentService } from '../../../department/services/department.service';
 import { OrganizationService } from '../../../../services/organization.service';
 import { DisciplineStore } from '../../store/discipline.store';
 import { Discipline } from '../../models/discipline.model';
@@ -31,7 +33,7 @@ const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
   selector: 'app-discipline-form-dialog',
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatIconModule, MatSlideToggleModule, MatProgressSpinnerModule,
+    MatButtonModule, MatIconModule, MatSelectModule, MatSlideToggleModule, MatProgressSpinnerModule,
     MatDividerModule, MatTooltipModule,
   ],
   templateUrl: './discipline-form-dialog.component.html',
@@ -42,6 +44,7 @@ export class DisciplineFormDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<DisciplineFormDialogComponent, DisciplineFormDialogResult>);
   private readonly auth = inject(AuthService);
   private readonly organizationService = inject(OrganizationService);
+  private readonly departmentService = inject(DepartmentService);
   private readonly dialog = inject(MatDialog);
   protected readonly store = inject(DisciplineStore);
   protected readonly data = inject<DisciplineFormDialogData>(MAT_DIALOG_DATA);
@@ -53,12 +56,15 @@ export class DisciplineFormDialogComponent implements OnInit {
 
   private currentDiscipline: Discipline | null = null;
 
+  protected readonly departments = signal<{ id: string; name: string }[]>([]);
+  protected readonly departmentsLoading = signal(true);
+
   protected readonly organizationName = signal(this.auth.user()?.organizationId ?? '—');
 
   protected readonly form = this.fb.nonNullable.group({
     code: [''], //, [Validators.required, Validators.maxLength(20)]
     name: ['', [Validators.required, Validators.maxLength(255)]],
-    shortName: ['', [Validators.maxLength(50)]],
+    departmentId: ['', [Validators.required]],
     displayOrder: [1, [Validators.required, Validators.pattern(POSITIVE_INTEGER_PATTERN)]],
     isActive: [true],
     description: [''],
@@ -77,9 +83,33 @@ export class DisciplineFormDialogComponent implements OnInit {
       error: () => {},
     });
 
+    this.loadDepartments();
+
     if (this.data.mode === 'edit' && this.data.disciplineId) {
       this.loadDiscipline(this.data.disciplineId);
     }
+  }
+
+  private loadDepartments(): void {
+    this.departmentService.getActiveDepartments(this.auth.user()?.organizationId ?? undefined).subscribe({
+      next: (res: any) => {
+        const list: { id: string; name: string }[] = res?.data ?? res ?? [];
+        this.departments.set(this.withCurrentDepartment(list));
+        this.departmentsLoading.set(false);
+      },
+      error: () => {
+        this.departments.set(this.withCurrentDepartment([]));
+        this.departmentsLoading.set(false);
+      },
+    });
+  }
+
+  /** Keeps a since-deactivated department selectable-as-displayed when editing an existing discipline. */
+  private withCurrentDepartment(list: { id: string; name: string }[]): { id: string; name: string }[] {
+    const current = this.currentDiscipline?.department;
+    return current && !list.some((d) => d.id === current.id)
+      ? [{ id: current.id, name: `${current.name ?? current.id} (inactive)` }, ...list]
+      : list;
   }
 
   private async loadDiscipline(id: string): Promise<void> {
@@ -91,12 +121,13 @@ export class DisciplineFormDialogComponent implements OnInit {
       this.form.patchValue({
         code: discipline.code,
         name: discipline.name,
-        shortName: discipline.shortName ?? '',
+        departmentId: discipline.departmentId ?? '',
         displayOrder: discipline.displayOrder,
         isActive: discipline.isActive,
         description: discipline.description ?? '',
         remarks: discipline.remarks ?? '',
       });
+      this.departments.set(this.withCurrentDepartment(this.departments()));
       this.form.markAsPristine();
     } catch {
       this.loadError.set('Unable to load discipline details. Please try again.');
@@ -115,7 +146,7 @@ export class DisciplineFormDialogComponent implements OnInit {
     const payload = {
       code: v.code.trim().toUpperCase(),
       name: v.name.trim(),
-      shortName: v.shortName.trim() || undefined,
+      departmentId: v.departmentId,
       displayOrder: Number(v.displayOrder),
       isActive: v.isActive,
       description: v.description.trim() || undefined,
@@ -149,7 +180,7 @@ export class DisciplineFormDialogComponent implements OnInit {
     this.form.reset({
       code: '',
       name: '',
-      shortName: '',
+      departmentId: '',
       displayOrder: 1,
       isActive: true,
       description: '',

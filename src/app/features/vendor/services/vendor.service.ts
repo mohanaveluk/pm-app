@@ -53,6 +53,7 @@ export class VendorService {
       ['businessRegistrationNumber', params.businessRegistrationNumber],
       ['taxRegistrationNumber', params.taxRegistrationNumber],
       ['industryCategoryId', params.industryCategoryId],
+      ['materialCategoryId', params.materialCategoryId],
       ['parentCompanyId', params.parentCompanyId],
       ['vendorTypeId', params.vendorTypeId],
       ['vendorStatus', params.vendorStatus],

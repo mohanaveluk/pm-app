@@ -41,29 +41,13 @@ export interface ActivityDropdownItem {
   displayOrder: number;
 }
 
-/** One department mapped to a discipline — from GET /department-disciplines/discipline/{disciplineId}.
- * `id` is the DepartmentDiscipline mapping UUID the Activity form needs as departmentDisciplineId. */
-export interface MappedDepartmentOption {
-  id: string;
-  departmentId: string;
-  departmentName: string;
-  departmentCode?: string;
-  displayOrder: number;
-  isDefault: boolean;
-  isActive: boolean;
-}
-
 /** Minimal shape for the Discipline/Department pickers in the form and filter dialogs. */
 export interface ReferenceOption {
   id: string;
   code: string;
   name: string;
-}
-
-/** Department–Discipline Mapping option for the advanced filter dialog. */
-export interface MappingOption {
-  id: string;
-  label: string;
+  /** Present on Disciplines (GET /disciplines/active) - the one department it belongs to. */
+  department?: { id: string; name?: string; code?: string };
 }
 
 export type ActivitySortField = 'name' | 'code' | 'displayOrder' | 'createdAt' | 'moduleGroup';
@@ -74,7 +58,6 @@ export interface ActivityFilter {
   organizationId: string | null;
   departmentId: string | null;
   disciplineId: string | null;
-  departmentDisciplineId: string | null;
   moduleGroup: string | null;
   status: 'all' | 'active' | 'inactive';
   createdFrom: Date | null;
@@ -89,7 +72,6 @@ export const DEFAULT_ACTIVITY_FILTER: ActivityFilter = {
   organizationId: null,
   departmentId: null,
   disciplineId: null,
-  departmentDisciplineId: null,
   moduleGroup: null,
   status: 'all',
   createdFrom: null,

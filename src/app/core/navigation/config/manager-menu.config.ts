@@ -12,6 +12,7 @@ export const MANAGER_MENU: MenuItem[] = [
   { id: 'projects', label: 'Projects', icon: 'folder_open', route: '/projects', order: 2, permission: PERMISSIONS.PROJECTS_VIEW },
   { id: 'materials', label: 'Materials', icon: 'inventory_2', route: '/materials', order: 3, permission: PERMISSIONS.MATERIALS_VIEW },
   { id: 'vendors', label: 'Vendors', icon: 'storefront', route: '/vendors', order: 4, permission: PERMISSIONS.VENDORS_VIEW },
+  { id: 'vendors-evaluation', label: 'Vendors Evaluation', icon: 'storefront', route: '/vendor-evaluation', order: 4, permission: PERMISSIONS.VENDOR_EVALUATION_VIEW },
   { id: 'purchase-orders', label: 'Purchase Orders', icon: 'receipt_long', route: '/purchase-orders', order: 5, permission: PERMISSIONS.PO_VIEW },
   { id: 'rfqs', label: 'RFQs', icon: 'request_quote', route: '/rfqs', order: 6, permission: PERMISSIONS.RFQ_VIEW },
   { id: 'warehouse', label: 'Warehouse', icon: 'warehouse', route: '/warehouse', order: 7, permission: PERMISSIONS.WAREHOUSE_VIEW },

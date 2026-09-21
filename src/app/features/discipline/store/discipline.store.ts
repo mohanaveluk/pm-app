@@ -150,7 +150,7 @@ export class DisciplineStore {
         this.disciplineService.updateDiscipline(discipline.id, {
           code: discipline.code,
           name: discipline.name,
-          shortName: discipline.shortName,
+          departmentId: discipline.departmentId,
           description: discipline.description,
           displayOrder: discipline.displayOrder,
           remarks: discipline.remarks,

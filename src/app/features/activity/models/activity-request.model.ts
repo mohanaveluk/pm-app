@@ -1,8 +1,7 @@
 import { ActivitySortField } from './activity.model';
 
+/** The department (and its mapping) is derived server-side from the discipline. */
 export interface CreateActivityRequest {
-  departmentDisciplineId: string;
-  departmentId: string;
   disciplineId: string;
   code?: string;
   name: string;
@@ -48,9 +47,9 @@ export interface BulkActivityItem {
   featureKey?: string;
 }
 
-/** One DepartmentDiscipline mapping, many activities in a single transaction. */
+/** One Discipline, many activities in a single transaction. */
 export interface BulkCreateActivityRequest {
-  departmentDisciplineId: string;
+  disciplineId: string;
   activities: BulkActivityItem[];
 }
 
@@ -62,7 +61,6 @@ export interface ActivityQueryParams {
   search?: string;
   departmentId?: string;
   disciplineId?: string;
-  departmentDisciplineId?: string;
   moduleGroup?: string;
   isActive?: boolean;
 }

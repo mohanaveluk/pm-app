@@ -238,6 +238,79 @@
         </div>
       </section>
 
+      <mat-divider class="section-divider" />
+
+      <!-- ── Section: Documents (saved together with the profile) ─── -->
+      <section class="form-section docs-section">
+        <div class="section-label">
+          <div class="section-icon" style="background:rgba(2,136,209,.1)">
+            <span class="material-icons" style="color:#0288D1">folder_open</span>
+          </div>
+          <div>
+            <h2>Documents</h2>
+            <p>Registration certificates, licences, tax letters and other company paperwork. Attach, replace or remove files, then click Save Changes.</p>
+          </div>
+        </div>
+
+        <input #docInput type="file" hidden aria-hidden="true" multiple [accept]="docAccept" (change)="onFilesPicked($event)" />
+        <input #replaceInput type="file" hidden aria-hidden="true" [accept]="docAccept" (change)="onReplacePicked($event)" />
+
+        @if (uploading()) {
+          <div class="doc-uploading"><mat-spinner diameter="22" /><span>Uploading…</span></div>
+        } @else {
+          <div class="doc-dropzone" [class.doc-dropzone--active]="dragging()"
+               role="button" tabindex="0" aria-label="Attach documents"
+               (click)="docInput.click()" (keydown.enter)="docInput.click()"
+               (keydown.space)="docInput.click(); $event.preventDefault()"
+               (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+            <mat-icon>cloud_upload</mat-icon>
+            <p class="doc-dropzone__title">Drop files here, or click to attach documents</p>
+            <p class="doc-dropzone__hint">You can select several at once · {{ docAccept }} · max {{ maxDocMb }} MB each</p>
+          </div>
+        }
+
+        @if (docsError()) {
+          <p class="doc-error" role="alert">
+            <mat-icon>error_outline</mat-icon> {{ docsError() }}
+            <button mat-button type="button" (click)="loadDocuments()">Retry</button>
+          </p>
+        }
+
+        @if (docsLoading() && !documents().length) {
+          <p class="doc-empty">Loading documents…</p>
+        } @else if (!documents().length && !docsError()) {
+          <p class="doc-empty">No documents attached.</p>
+        } @else {
+          <div class="doc-list">
+            @for (doc of documents(); track doc.documentUrl; let i = $index) {
+              <div class="doc-row" [class.doc-row--busy]="busyKey() === i">
+                <mat-icon class="doc-row__icon">{{ docIcon(doc) }}</mat-icon>
+                <div class="doc-row__meta">
+                  <input class="doc-row__title" [value]="doc.title" maxlength="255"
+                         aria-label="Document title" matTooltip="Click to rename"
+                         (blur)="renameDocument(i, $any($event.target).value)"
+                         (keydown.enter)="$any($event.target).blur(); $event.preventDefault()" />
+                  <div class="doc-row__sub">
+                    {{ doc.fileName }}
+                    @if (sizeLabel(doc.fileSizeBytes)) { · {{ sizeLabel(doc.fileSizeBytes) }} }
+                    @if (doc.createdAt) { · {{ doc.createdAt | date: 'mediumDate' }} } @else { · <span class="doc-row__new">not saved yet</span> }
+                    @if (doc.uploadedBy) { · {{ doc.uploadedBy }} }
+                  </div>
+                </div>
+                @if (busyKey() === i) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  <button mat-icon-button type="button" matTooltip="View" (click)="viewDocument(i)"><mat-icon>visibility</mat-icon></button>
+                  <button mat-icon-button type="button" matTooltip="Download" (click)="downloadDocument(i)"><mat-icon>download</mat-icon></button>
+                  <button mat-icon-button type="button" matTooltip="Replace file" (click)="startReplace(i, replaceInput)"><mat-icon>swap_horiz</mat-icon></button>
+                  <button mat-icon-button type="button" color="warn" matTooltip="Remove" (click)="deleteDocument(i)"><mat-icon>delete</mat-icon></button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+
       <!-- ── Sticky bottom action bar ──────────────────────────── -->
       <div class="bottom-bar">
         <button mat-button class="cancel-btn" type="button"
@@ -270,6 +343,7 @@
       </div>
 
     </form>
+
   }
 
 </div>

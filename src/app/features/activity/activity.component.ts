@@ -237,7 +237,7 @@ export class ActivityComponent {
         maxWidth: '95vw',
         disableClose: true,
         viewContainerRef: this.viewContainerRef,
-        data: { mode: 'create', presetDisciplineId: activity.disciplineId, presetDepartmentId: activity.departmentId },
+        data: { mode: 'create', presetDisciplineId: activity.disciplineId },
       },
     );
     ref.componentInstance.prefill({

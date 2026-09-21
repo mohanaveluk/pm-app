@@ -18,7 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../../services';
 import { OrganizationService } from '../../../../services/organization.service';
 import { ActivityStore } from '../../store/activity.store';
-import { Activity, MappedDepartmentOption } from '../../models/activity.model';
+import { Activity } from '../../models/activity.model';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 export interface ActivityFormDialogData {
@@ -27,7 +27,6 @@ export interface ActivityFormDialogData {
   activityId?: string;
   /** Pre-selects the discipline in create/bulk mode, e.g. from a "Duplicate" action. */
   presetDisciplineId?: string;
-  presetDepartmentId?: string;
 }
 
 export type ActivityFormDialogResult = { action: 'saved'; saveAndNew: boolean } | undefined;
@@ -68,9 +67,6 @@ export class ActivityFormDialogComponent implements OnInit {
 
   protected readonly organizationName = signal(this.auth.user()?.organizationId ?? '—');
 
-  protected readonly mappedDepartments = signal<MappedDepartmentOption[]>([]);
-  protected readonly loadingDepartments = signal(false);
-
   private currentActivity: Activity | null = null;
   private readonly currentActivitySignal = signal<Activity | null>(null);
   protected readonly currentActivityDiscipline = computed(() => {
@@ -85,8 +81,6 @@ export class ActivityFormDialogComponent implements OnInit {
   // ── Single create/edit form ───────────────────────────────────────
   protected readonly form = this.fb.nonNullable.group({
     disciplineId: ['', Validators.required],
-    departmentId: ['', Validators.required],
-    departmentDisciplineId: ['', Validators.required],
     code: [''], //, [Validators.required, Validators.maxLength(30)]
     name: ['', [Validators.required, Validators.maxLength(255)]],
     shortName: ['', Validators.maxLength(80)],
@@ -105,8 +99,6 @@ export class ActivityFormDialogComponent implements OnInit {
   // ── Bulk create form ───────────────────────────────────────────────
   protected readonly bulkForm = this.fb.nonNullable.group({
     disciplineId: ['', Validators.required],
-    departmentId: ['', Validators.required],
-    departmentDisciplineId: ['', Validators.required],
     items: this.fb.array<ReturnType<typeof this.buildBulkRow>>([]),
   });
 
@@ -119,6 +111,16 @@ export class ActivityFormDialogComponent implements OnInit {
   });
   private readonly bulkDisciplineIdValue = toSignal(this.bulkForm.controls.disciplineId.valueChanges, {
     initialValue: this.bulkForm.controls.disciplineId.value,
+  });
+
+  /** The Discipline picked in whichever form is showing - it carries its own department. */
+  protected readonly selectedDiscipline = computed(() => {
+    const id = this.isBulk ? this.bulkDisciplineIdValue() : this.disciplineIdValue();
+    return this.store.activeDisciplines().find((d) => d.id === id) ?? null;
+  });
+  protected readonly selectedDepartmentLabel = computed(() => {
+    const dept = this.selectedDiscipline()?.department;
+    return dept ? `${dept.name}${dept.code ? ' (' + dept.code + ')' : ''}` : '';
   });
 
   protected readonly iconPreview = toSignal(this.form.controls.icon.valueChanges, { initialValue: '' });
@@ -134,47 +136,12 @@ export class ActivityFormDialogComponent implements OnInit {
       return;
     }
 
-    // Cascading: Discipline -> Departments mapped to it -> Department-Discipline mapping.
-    this.form.controls.disciplineId.valueChanges.subscribe((disciplineId) => this.onDisciplineChange(disciplineId, this.form));
-    this.form.controls.departmentId.valueChanges.subscribe((departmentId) => this.onDepartmentChange(departmentId, this.form));
-    this.bulkForm.controls.disciplineId.valueChanges.subscribe((disciplineId) => this.onDisciplineChange(disciplineId, this.bulkForm));
-    this.bulkForm.controls.departmentId.valueChanges.subscribe((departmentId) => this.onDepartmentChange(departmentId, this.bulkForm));
-
     if (this.isBulk) {
       this.addBulkRow();
       if (this.data.presetDisciplineId) this.bulkForm.controls.disciplineId.setValue(this.data.presetDisciplineId);
     } else if (this.data.presetDisciplineId) {
       this.form.controls.disciplineId.setValue(this.data.presetDisciplineId);
     }
-  }
-
-  private onDisciplineChange(disciplineId: string, group: typeof this.form | typeof this.bulkForm): void {
-    group.controls.departmentId.setValue('');
-    group.controls.departmentDisciplineId.setValue('');
-    this.mappedDepartments.set([]);
-    if (!disciplineId) return;
-
-    this.loadingDepartments.set(true);
-    this.store.getDepartmentsForDiscipline(disciplineId).subscribe({
-      next: (departments) => {
-        this.mappedDepartments.set(departments);
-        this.loadingDepartments.set(false);
-        if (departments.length === 1) {
-          group.controls.departmentId.setValue(departments[0].departmentId);
-        } else if (this.data.presetDepartmentId && departments.some((d) => d.departmentId === this.data.presetDepartmentId)) {
-          group.controls.departmentId.setValue(this.data.presetDepartmentId);
-        }
-      },
-      error: () => {
-        this.mappedDepartments.set([]);
-        this.loadingDepartments.set(false);
-      },
-    });
-  }
-
-  private onDepartmentChange(departmentId: string, group: typeof this.form | typeof this.bulkForm): void {
-    const match = this.mappedDepartments().find((d) => d.departmentId === departmentId);
-    group.controls.departmentDisciplineId.setValue(match?.id ?? '');
   }
 
   private async loadActivity(id: string): Promise<void> {
@@ -186,8 +153,6 @@ export class ActivityFormDialogComponent implements OnInit {
       this.currentActivitySignal.set(activity);
       this.form.patchValue({
         disciplineId: activity.disciplineId,
-        departmentId: activity.departmentId,
-        departmentDisciplineId: activity.departmentDisciplineId,
         code: activity.code,
         name: activity.name,
         shortName: activity.shortName ?? '',
@@ -204,8 +169,6 @@ export class ActivityFormDialogComponent implements OnInit {
       });
       // Engineering Hierarchy is immutable after creation — lock it.
       this.form.controls.disciplineId.disable();
-      this.form.controls.departmentId.disable();
-      this.form.controls.departmentDisciplineId.disable();
       this.form.markAsPristine();
     } catch {
       this.loadError.set('Unable to load activity details. Please try again.');
@@ -243,11 +206,16 @@ export class ActivityFormDialogComponent implements OnInit {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
 
+    if (!this.isEdit && !this.selectedDiscipline()?.department) {
+      this.loadError.set('The selected Discipline has no Department assigned. Assign one on the Discipline first.');
+      return;
+    }
+    this.loadError.set('');
+
     const v = this.form.getRawValue();
     try {
       if (this.isEdit && this.currentActivity) {
         await this.store.updateActivity(this.currentActivity.id, {
-          code: v.code,
           name: v.name,
           shortName: v.shortName.trim() || undefined,
           description: v.description.trim() || undefined,
@@ -263,8 +231,6 @@ export class ActivityFormDialogComponent implements OnInit {
         });
       } else {
         await this.store.createActivity({
-          departmentDisciplineId: v.departmentDisciplineId,
-          departmentId: v.departmentId,
           disciplineId: v.disciplineId,
           //code: v.code,
           name: v.name,
@@ -299,6 +265,11 @@ export class ActivityFormDialogComponent implements OnInit {
     this.bulkItems.controls.forEach((row) => row.markAllAsTouched());
     if (this.bulkForm.invalid) return;
 
+    if (!this.selectedDiscipline()?.department) {
+      this.loadError.set('The selected Discipline has no Department assigned. Assign one on the Discipline first.');
+      return;
+    }
+
     const v = this.bulkForm.getRawValue();
     const codes = v.items.map((item) => item.code);
     const duplicates = codes.filter((code, i) => codes.indexOf(code) !== i);
@@ -310,7 +281,7 @@ export class ActivityFormDialogComponent implements OnInit {
 
     try {
       await this.store.bulkCreateActivities({
-        departmentDisciplineId: v.departmentDisciplineId,
+        disciplineId: v.disciplineId,
         activities: v.items.map((item) => ({
           code: item.code,
           name: item.name,
@@ -331,16 +302,13 @@ export class ActivityFormDialogComponent implements OnInit {
 
   resetForm(): void {
     if (this.isBulk) {
-      this.bulkForm.reset({ disciplineId: '', departmentId: '', departmentDisciplineId: '' });
+      this.bulkForm.reset({ disciplineId: '' });
       while (this.bulkItems.length > 1) this.bulkItems.removeAt(0);
       this.bulkItems.at(0)?.reset({ code: '', name: '', shortName: '', moduleGroup: '' });
-      this.mappedDepartments.set([]);
       return;
     }
     this.form.reset({
       disciplineId: '',
-      departmentId: '',
-      departmentDisciplineId: '',
       code: '',
       name: '',
       shortName: '',
@@ -355,7 +323,6 @@ export class ActivityFormDialogComponent implements OnInit {
       isDefault: false,
       isActive: true,
     });
-    this.mappedDepartments.set([]);
     this.currentActivity = null;
   }
 

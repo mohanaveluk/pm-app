@@ -26,16 +26,6 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="dlg-full-width">
-        <mat-label>Department–Discipline Mapping</mat-label>
-        <mat-select formControlName="departmentDisciplineId">
-          <mat-option [value]="null">All</mat-option>
-          @for (mapping of store.activeMappings(); track mapping.id) {
-            <mat-option [value]="mapping.id">{{ mapping.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
       <mat-form-field appearance="outline">
         <mat-label>Module Group</mat-label>
         <mat-select formControlName="moduleGroup">

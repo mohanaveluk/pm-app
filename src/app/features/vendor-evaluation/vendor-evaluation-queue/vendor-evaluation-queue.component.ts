@@ -23,8 +23,8 @@ import { AuthService } from '../../../services';
 import { PermissionService } from '../../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../../core/rbac/permissions.const';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { IndustryCategoryService } from '../../industry-category/services/industry-category.service';
-import { IndustryCategoryOption } from '../../industry-category/models/industry-category.model';
+import { MaterialCategoryService } from '../../material-category/services/material-category.service';
+import { MaterialCategoryOption } from '../../material-category/models/material-category.model';
 import { VendorService } from '../../vendor/services/vendor.service';
 import { VendorListStore } from '../../vendor/store/vendor-list.store';
 import {
@@ -41,7 +41,7 @@ interface ColumnDef {
   sortField?: VendorSortField;
 }
 
-// Vendor Code / Name / Type / Industry Category / Submitted Date / Status /
+// Vendor Code / Name / Type / Material Categories / Submitted Date / Status /
 // Actions — exactly the columns pm-api's vendor list can actually populate.
 // "Assigned To", "Current Stage" and "Priority" from the original spec have
 // no backing column anywhere (Vendor and VendorEvaluation carry neither an
@@ -51,7 +51,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'code', label: 'Vendor Code', sortField: 'code' },
   { key: 'vendorName', label: 'Vendor Name', sortField: 'vendorName' },
   { key: 'vendorType', label: 'Vendor Type', sortField: 'vendorTypeId' },
-  { key: 'industryCategory', label: 'Industry Category' },
+  { key: 'materialCategories', label: 'Material Categories' },
   { key: 'submittedDate', label: 'Submitted Date', sortField: 'createdAt' },
   { key: 'status', label: 'Status', sortField: 'vendorStatus' },
   { key: 'actions', label: 'Actions' },
@@ -79,7 +79,7 @@ const COLUMN_DEFS: ColumnDef[] = [
 export class VendorEvaluationQueueComponent implements OnInit {
   protected readonly store = inject(VendorListStore);
   private readonly permissionService = inject(PermissionService);
-  private readonly industryCategoryService = inject(IndustryCategoryService);
+  private readonly materialCategoryService = inject(MaterialCategoryService);
   private readonly vendorService = inject(VendorService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -92,7 +92,7 @@ export class VendorEvaluationQueueComponent implements OnInit {
   protected readonly displayedColumns = COLUMN_DEFS.map((c) => c.key);
 
   protected readonly searchTerm = signal('');
-  protected readonly industryCategories = signal<IndustryCategoryOption[]>([]);
+  protected readonly materialCategories = signal<MaterialCategoryOption[]>([]);
 
   /** Every status the queue can be scoped to — a real vendorStatus value, never a fabricated one. */
   protected readonly statusOptions: { value: VendorStatus | 'all'; label: string }[] = [
@@ -134,9 +134,9 @@ export class VendorEvaluationQueueComponent implements OnInit {
     // empty — the list endpoint hides blacklisted vendors unless asked.
     this.store.setFilter({ vendorStatus: VendorStatus.UNDER_EVALUATION, includeBlacklisted: true });
 
-    this.industryCategoryService.getActiveIndustryCategories().subscribe({
-      next: (res) => this.industryCategories.set(res.data ?? []),
-      error: () => this.industryCategories.set([]),
+    this.materialCategoryService.getActiveMaterialCategories().subscribe({
+      next: (res) => this.materialCategories.set(res.data ?? []),
+      error: () => this.materialCategories.set([]),
     });
 
     void this.loadBlacklistRequests();
@@ -301,14 +301,14 @@ export class VendorEvaluationQueueComponent implements OnInit {
     });
   }
 
-  onIndustryFilterChange(industryCategoryId: string | null): void {
-    this.store.setFilter({ industryCategoryId });
+  onMaterialCategoryFilterChange(materialCategoryId: string | null): void {
+    this.store.setFilter({ materialCategoryId });
   }
 
   resetFilters(): void {
     this.searchTerm.set('');
     this.onStatusFilterChange(VendorStatus.UNDER_EVALUATION);
-    this.store.setFilter({ industryCategoryId: null, search: '' });
+    this.store.setFilter({ materialCategoryId: null, search: '' });
   }
 
   onSortChange(sort: Sort): void {

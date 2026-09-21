@@ -37,7 +37,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', alwaysVisible: true },
   { key: 'code', label: 'Code', alwaysVisible: true, sortField: 'code' },
   { key: 'name', label: 'Name', alwaysVisible: true, sortField: 'name' },
-  { key: 'shortName', label: 'Short Name' },
+  { key: 'department', label: 'Department' },
   { key: 'description', label: 'Description' },
   { key: 'displayOrder', label: 'Display Order', sortField: 'displayOrder' },
   { key: 'organization', label: 'Organization' },
@@ -154,11 +154,11 @@ export class DisciplineComponent {
       this.snack.open('No data to export', 'Close', { duration: 3000 });
       return;
     }
-    const header = ['Code', 'Name', 'Short Name', 'Display Order', 'Organization', 'Status', 'Created Date', 'Updated Date'];
+    const header = ['Code', 'Name', 'Department', 'Display Order', 'Organization', 'Status', 'Created Date', 'Updated Date'];
     const lines = rows.map((d) => [
       d.code,
       d.name,
-      d.shortName ?? '',
+      d.department?.name ?? '',
       String(d.displayOrder),
       d.organization?.name ?? d.organizationId,
       d.isActive ? 'Active' : 'Inactive',
@@ -204,7 +204,7 @@ export class DisciplineComponent {
     );
     ref.componentInstance.prefill({
       name: `${discipline.name} (Copy)`,
-      shortName: discipline.shortName ?? '',
+      departmentId: discipline.departmentId ?? '',
       displayOrder: discipline.displayOrder,
       isActive: discipline.isActive,
       description: discipline.description ?? '',
