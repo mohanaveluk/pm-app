@@ -593,6 +593,8 @@ export interface VendorFilter {
   pendingStatusChange: PendingStatusChange | null;
   riskCategory: RiskCategory | null;
   industryCategoryId: string | null;
+  /** Matches vendors whose productCategories include this Material Category. */
+  materialCategoryId: string | null;
   countryOfRegistration: string | null;
   /** null = both; true/false filter the technical availability flag. */
   isActive: boolean | null;
@@ -608,6 +610,7 @@ export const DEFAULT_VENDOR_FILTER: VendorFilter = {
   pendingStatusChange: null,
   riskCategory: null,
   industryCategoryId: null,
+  materialCategoryId: null,
   countryOfRegistration: null,
   isActive: null,
   includeBlacklisted: false,

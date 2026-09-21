@@ -24,7 +24,6 @@ export class ActivityService {
     if (params.search) httpParams = httpParams.set('search', params.search);
     if (params.departmentId) httpParams = httpParams.set('departmentId', params.departmentId);
     if (params.disciplineId) httpParams = httpParams.set('disciplineId', params.disciplineId);
-    if (params.departmentDisciplineId) httpParams = httpParams.set('departmentDisciplineId', params.departmentDisciplineId);
     if (params.moduleGroup) httpParams = httpParams.set('moduleGroup', params.moduleGroup);
     if (params.isActive !== undefined) httpParams = httpParams.set('isActive', params.isActive);
 
@@ -63,7 +62,4 @@ export class ActivityService {
     return this.http.get<ActivityDropdownListResponse>(`${this.baseUrl}/discipline/${disciplineId}`);
   }
 
-  getActivitiesByDepartmentDiscipline(departmentDisciplineId: string): Observable<ActivityDropdownListResponse> {
-    return this.http.get<ActivityDropdownListResponse>(`${this.baseUrl}/department-discipline/${departmentDisciplineId}`);
-  }
 }

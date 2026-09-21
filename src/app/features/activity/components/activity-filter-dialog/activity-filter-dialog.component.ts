@@ -37,7 +37,6 @@ export class ActivityFilterDialogComponent {
   protected readonly form = this.fb.group({
     departmentId: this.fb.control<string | null>(this.data.filter.departmentId),
     disciplineId: this.fb.control<string | null>(this.data.filter.disciplineId),
-    departmentDisciplineId: this.fb.control<string | null>(this.data.filter.departmentDisciplineId),
     moduleGroup: this.fb.control<string | null>(this.data.filter.moduleGroup),
     status: this.fb.nonNullable.control<'all' | 'active' | 'inactive'>(this.data.filter.status),
     displayOrder: this.fb.control<number | null>(this.data.filter.displayOrder),
@@ -53,7 +52,6 @@ export class ActivityFilterDialogComponent {
       ...this.data.filter,
       departmentId: v.departmentId || null,
       disciplineId: v.disciplineId || null,
-      departmentDisciplineId: v.departmentDisciplineId || null,
       moduleGroup: v.moduleGroup || null,
       status: v.status,
       displayOrder: v.displayOrder ?? null,
@@ -68,7 +66,6 @@ export class ActivityFilterDialogComponent {
     this.form.reset({
       departmentId: null,
       disciplineId: null,
-      departmentDisciplineId: null,
       moduleGroup: null,
       status: DEFAULT_ACTIVITY_FILTER.status,
       displayOrder: null,

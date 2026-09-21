@@ -5,6 +5,13 @@ export interface DisciplineOrganization {
   code?: string;
 }
 
+/** Lightweight department reference embedded in a Discipline record. */
+export interface DisciplineDepartment {
+  id: string;
+  name?: string;
+  code?: string;
+}
+
 export interface Discipline {
   id: string;
   dguid: string;
@@ -12,7 +19,8 @@ export interface Discipline {
   organization?: DisciplineOrganization;
   code: string;
   name: string;
-  shortName?: string;
+  departmentId?: string;
+  department?: DisciplineDepartment;
   description?: string;
   displayOrder: number;
   remarks?: string;

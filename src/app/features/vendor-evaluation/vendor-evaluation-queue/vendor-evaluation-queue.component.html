@@ -58,10 +58,10 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="veq-filters__status">
-      <mat-label>Industry Category</mat-label>
-      <mat-select [value]="store.filter().industryCategoryId" (selectionChange)="onIndustryFilterChange($event.value)">
+      <mat-label>Material Category</mat-label>
+      <mat-select [value]="store.filter().materialCategoryId" (selectionChange)="onMaterialCategoryFilterChange($event.value)">
         <mat-option [value]="null">All categories</mat-option>
-        @for (c of industryCategories(); track c.id) {
+        @for (c of materialCategories(); track c.id) {
           <mat-option [value]="c.id">{{ c.name }}</mat-option>
         }
       </mat-select>
@@ -126,9 +126,9 @@
             <td mat-cell *matCellDef="let v">{{ v.vendorTypeName || '—' }}</td>
           </ng-container>
 
-          <ng-container matColumnDef="industryCategory">
-            <th mat-header-cell *matHeaderCellDef>Industry Category</th>
-            <td mat-cell *matCellDef="let v">{{ v.industryCategoryName || '—' }}</td>
+          <ng-container matColumnDef="materialCategories">
+            <th mat-header-cell *matHeaderCellDef>Material Categories</th>
+            <td mat-cell *matCellDef="let v">{{ v.productCategories?.length ? v.productCategories.join(', ') : '—' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="submittedDate">

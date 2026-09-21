@@ -268,6 +268,7 @@ export interface VendorQueryParams {
   businessRegistrationNumber?: string;
   taxRegistrationNumber?: string;
   industryCategoryId?: string;
+  materialCategoryId?: string;
   parentCompanyId?: string;
   vendorTypeId?: string;
   vendorStatus?: VendorStatus;

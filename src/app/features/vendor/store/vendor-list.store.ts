@@ -53,7 +53,7 @@ export class VendorListStore {
     const f = this.filter();
     return !!(
       f.search || f.vendorTypeId || f.vendorStatus || f.vendorClassification ||
-      f.riskCategory || f.industryCategoryId || f.countryOfRegistration || f.pendingStatusChange ||
+      f.riskCategory || f.industryCategoryId || f.materialCategoryId || f.countryOfRegistration || f.pendingStatusChange ||
       f.isActive !== null || f.includeBlacklisted
     );
   });
@@ -252,6 +252,7 @@ export class VendorListStore {
       riskCategory: f.riskCategory ?? undefined,
       pendingStatusChange: f.pendingStatusChange ?? undefined,
       industryCategoryId: f.industryCategoryId ?? undefined,
+      materialCategoryId: f.materialCategoryId ?? undefined,
       countryOfRegistration: f.countryOfRegistration ?? undefined,
       isActive: f.isActive ?? undefined,
       includeBlacklisted: f.includeBlacklisted || undefined,

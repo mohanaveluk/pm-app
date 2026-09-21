@@ -34,9 +34,19 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Short Name</mat-label>
-            <input matInput formControlName="shortName" maxlength="50" placeholder="e.g. Engg" />
-            @if (err('shortName')) { <mat-error>{{ err('shortName') }}</mat-error> }
+            <mat-label>Department</mat-label>
+            <mat-select formControlName="departmentId" required>
+              @if (departmentsLoading()) {
+                <mat-option disabled>Loading departments…</mat-option>
+              } @else if (!departments().length) {
+                <mat-option disabled>No active departments available</mat-option>
+              }
+              @for (d of departments(); track d.id) {
+                <mat-option [value]="d.id">{{ d.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-icon matSuffix matTooltip="A discipline belongs to exactly one active department">info_outline</mat-icon>
+            @if (err('departmentId')) { <mat-error>{{ err('departmentId') }}</mat-error> }
           </mat-form-field>
 
           <mat-form-field appearance="outline">

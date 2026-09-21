@@ -9,7 +9,7 @@ import { AuthService } from '../../../services';
 import { OrganizationService } from '../../../services/organization.service';
 import { ActivityService } from '../services/activity.service';
 import {
-  Activity, ActivityFilter, ActivitySortField, DEFAULT_ACTIVITY_FILTER, MappedDepartmentOption, MappingOption, ReferenceOption, SortDirection,
+  Activity, ActivityFilter, ActivitySortField, DEFAULT_ACTIVITY_FILTER, ReferenceOption, SortDirection,
 } from '../models/activity.model';
 import {
   BulkCreateActivityRequest, CreateActivityRequest, ActivityQueryParams, UpdateActivityRequest,
@@ -22,8 +22,8 @@ const SEARCH_DEBOUNCE_MS = 350;
  * Page-level signal store for the Activity master module. Provided by
  * ActivityComponent (not root) so state resets on each visit. Reference-data
  * lookups (active disciplines, discipline->department cascade) call their
- * own endpoints directly rather than depending on Discipline/DepartmentDiscipline
- * services, keeping this module self-contained.
+ * own endpoints directly rather than depending on the Discipline
+ * service - GET /disciplines/active already carries each discipline's department, keeping this module self-contained.
  */
 @Injectable()
 export class ActivityStore {
@@ -51,7 +51,6 @@ export class ActivityStore {
 
   readonly activeDisciplines = signal<ReferenceOption[]>([]);
   readonly activeDepartments = signal<ReferenceOption[]>([]);
-  readonly activeMappings = signal<MappingOption[]>([]);
   readonly organizationName = signal('—');
   /** Distinct module groups seen across the active-activity dropdown source, for the filter picker. */
   readonly moduleGroups = signal<string[]>([]);
@@ -61,7 +60,7 @@ export class ActivityStore {
   readonly hasActiveFilters = computed(() => {
     const f = this.filter();
     return !!(
-      f.search || f.organizationId || f.departmentId || f.disciplineId || f.departmentDisciplineId ||
+      f.search || f.organizationId || f.departmentId || f.disciplineId ||
       f.moduleGroup || f.status !== 'all' || f.createdFrom || f.createdTo || f.updatedFrom || f.updatedTo ||
       f.displayOrder !== null
     );
@@ -126,15 +125,6 @@ export class ActivityStore {
     this.reload$.next();
   }
 
-  /** Departments actually mapped to the given discipline — drives the cascading
-   * Department picker in the form dialog. Each item carries the DepartmentDiscipline
-   * mapping id the Activity form needs as departmentDisciplineId. */
-  getDepartmentsForDiscipline(disciplineId: string): Observable<MappedDepartmentOption[]> {
-    return this.http
-      .get<ApiEnvelope<MappedDepartmentOption[]>>(`${environment.apiUrl}/v1/department-disciplines/discipline/${disciplineId}`)
-      .pipe(map((res) => res.data ?? []));
-  }
-
   async createActivity(request: CreateActivityRequest): Promise<Activity> {
     this.saving.set(true);
     try {
@@ -196,7 +186,6 @@ export class ActivityStore {
     try {
       await lastValueFrom(
         this.activityService.updateActivity(activity.id, {
-          code: activity.code,
           name: activity.name,
           shortName: activity.shortName,
           description: activity.description,
@@ -236,7 +225,6 @@ export class ActivityStore {
       search: f.search || undefined,
       departmentId: f.departmentId ?? undefined,
       disciplineId: f.disciplineId ?? undefined,
-      departmentDisciplineId: f.departmentDisciplineId ?? undefined,
       moduleGroup: f.moduleGroup ?? undefined,
       isActive: f.status === 'all' ? undefined : f.status === 'active',
     };
@@ -276,20 +264,6 @@ export class ActivityStore {
       .subscribe({
         next: (res) => this.activeDepartments.set(res.data ?? []),
         error: () => this.activeDepartments.set([]),
-      });
-
-    interface MappingListItem {
-      id: string;
-      departmentName: string;
-      disciplineName: string;
-    }
-    this.http
-      .get<ApiEnvelope<MappingListItem[]>>(`${environment.apiUrl}/v1/department-disciplines/active`, { params })
-      .subscribe({
-        next: (res) => this.activeMappings.set(
-          (res.data ?? []).map((m) => ({ id: m.id, label: `${m.departmentName} / ${m.disciplineName}` })),
-        ),
-        error: () => this.activeMappings.set([]),
       });
 
     this.activityService.getActiveActivities().subscribe({

@@ -235,3 +235,59 @@ mat-divider { margin: 0 !important; border-color: #e8eef4 !important; }
   color: #2e7d32;
   .material-icons { font-size: 16px; }
 }
+
+// ── Documents ─────────────────────────────────────────────────────
+.docs-section { margin-top: 20px; }
+
+.doc-dropzone {
+  border: 2px dashed #c8d6e5;
+  border-radius: 12px;
+  padding: 26px 16px;
+  text-align: center;
+  color: #5a7a9e;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+
+  &:hover, &--active { border-color: var(--primary, #0F4C81); background: rgba(15,76,129,.04); color: var(--primary, #0F4C81); }
+  &:focus-visible { outline: 2px solid var(--primary, #0F4C81); outline-offset: 2px; }
+  mat-icon { font-size: 36px; width: 36px; height: 36px; }
+  &__title { font-weight: 600; margin: 6px 0 2px; }
+  &__hint  { font-size: .8rem; margin: 0; }
+}
+
+.doc-uploading { display: flex; align-items: center; gap: 10px; padding: 26px 12px; color: #5a7a9e; }
+
+.doc-error { display: flex; align-items: center; gap: 8px; color: #c62828; font-size: .85rem; margin: 12px 0 0; }
+.doc-empty { color: #8098b8; font-style: italic; font-size: .85rem; margin: 14px 0 0; }
+
+.doc-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid #e2eaf4;
+  border-radius: 10px;
+  background: var(--surface, #fff);
+
+  &--busy { opacity: .7; }
+  &__icon { color: var(--primary, #0F4C81); flex-shrink: 0; }
+  &__meta { flex: 1 1 auto; min-width: 0; }
+  &__title {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    font-size: .92rem;
+    color: var(--text-primary, #1a2942);
+    padding: 2px 6px;
+    margin-left: -6px;
+    &:hover { border-color: #e2eaf4; }
+    &:focus { outline: none; border-color: var(--primary, #0F4C81); background: #fff; }
+  }
+  &__new { color: #ED6C02; font-weight: 600; }
+  &__sub { font-size: .76rem; color: #8098b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
