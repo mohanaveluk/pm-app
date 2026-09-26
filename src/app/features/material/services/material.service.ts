@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { MaterialImportResult } from '../models/material-import.model';
+import { ApiEnvelope } from '../models/material-response.model';
 import { environment } from '../../../../environments/environment';
 import {
   AddMaterialDocumentRequest, CreateMaterialRequest, MaterialDocumentQueryParams,
@@ -56,6 +58,18 @@ export class MaterialService {
   /** GET /materials/:id — full detail, returned flat (see material.mapper.ts). */
   getMaterialById(id: string): Observable<MaterialResponse> {
     return this.http.get<MaterialResponse>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * POST /materials/import — multipart .xlsx/.csv/.json (max 5 MB). The API reads and
+   * validates the whole file and saves in a single transaction: it either imports
+   * everything (creating new materials, updating ones whose name already exists) or
+   * nothing. A 422 carries per-row `errors`.
+   */
+  importMaterials(file: File): Observable<ApiEnvelope<MaterialImportResult>> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ApiEnvelope<MaterialImportResult>>(`${this.baseUrl}/import`, form);
   }
 
   /** POST /materials — code auto-generated server-side. */

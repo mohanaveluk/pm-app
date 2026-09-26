@@ -31,6 +31,7 @@ import { IndustryCategoryOption } from '../../industry-category/models/industry-
 import { VendorTypeService } from '../../vendor-type/services/vendor-type.service';
 import { VendorType } from '../../vendor-type/models/vendor-type.model';
 import { VendorListStore } from '../store/vendor-list.store';
+import { VendorImportDialogComponent } from '../components/vendor-import-dialog/vendor-import-dialog.component';
 import {
   EnumOption, PENDING_STATUS_OPTIONS, PendingStatusChange, RISK_CATEGORY_OPTIONS,
   RiskCategory, VENDOR_CLASSIFICATION_OPTIONS, VENDOR_STATUS_OPTIONS,
@@ -259,6 +260,20 @@ export class VendorListComponent implements OnInit {
 
   toggleFilters(): void {
     this.showFilters.update((v) => !v);
+  }
+
+  openImportDialog(): void {
+    this.dialog
+      .open<VendorImportDialogComponent, void, boolean>(VendorImportDialogComponent, {
+        width: '720px',
+        maxWidth: '95vw',
+        disableClose: true,
+        viewContainerRef: this.viewContainerRef,
+      })
+      .afterClosed()
+      .subscribe((changed) => {
+        if (changed) this.store.refresh();
+      });
   }
 
   onSortChange(sort: Sort): void {

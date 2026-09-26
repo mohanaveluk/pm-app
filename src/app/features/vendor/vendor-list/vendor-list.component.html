@@ -54,6 +54,12 @@
       <mat-icon>filter_alt</mat-icon> Filters
     </button>
 
+    @if (can(PERMISSIONS.VENDORS_CREATE)) {
+      <button mat-stroked-button type="button" (click)="openImportDialog()" matTooltip="Import vendors from Excel, CSV or JSON">
+        <mat-icon>upload_file</mat-icon> Import
+      </button>
+    }
+
     <span class="vl-toolbar__spacer"></span>
 
     <button

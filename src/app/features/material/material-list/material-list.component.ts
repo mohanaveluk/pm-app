@@ -25,6 +25,7 @@ import { PermissionService } from '../../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../../core/rbac/permissions.const';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MaterialListStore } from '../store/material-list.store';
+import { MaterialImportDialogComponent } from '../components/material-import-dialog/material-import-dialog.component';
 import {
   CRITICALITY_OPTIONS, CriticalityLevel, MATERIAL_STATUS_OPTIONS,
   MaterialListItem, MaterialSortField, MaterialStatus,
@@ -133,6 +134,20 @@ export class MaterialListComponent {
 
   onPageChange(event: PageEvent): void {
     this.store.setPage(event.pageIndex, event.pageSize);
+  }
+
+  openImportDialog(): void {
+    this.dialog
+      .open<MaterialImportDialogComponent, void, boolean>(MaterialImportDialogComponent, {
+        width: '720px',
+        maxWidth: '95vw',
+        disableClose: true,
+        viewContainerRef: this.viewContainerRef,
+      })
+      .afterClosed()
+      .subscribe((changed) => {
+        if (changed) this.store.refresh();
+      });
   }
 
   toggleFilters(): void {
