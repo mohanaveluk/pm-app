@@ -1,0 +1,89 @@
+.imp-title { display: flex; align-items: center; gap: 8px; }
+.imp-content { min-width: min(640px, 80vw); }
+
+.imp-hint { color: #5a7a9e; font-size: .85rem; line-height: 1.5; margin: 0 0 14px; }
+
+.imp-drop {
+  border: 2px dashed #c8d6e5;
+  border-radius: 12px;
+  padding: 30px 16px;
+  text-align: center;
+  color: #5a7a9e;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+
+  &:hover, &--active { border-color: var(--primary, #0F4C81); background: rgba(15, 76, 129, .04); color: var(--primary, #0F4C81); }
+  &:focus-visible { outline: 2px solid var(--primary, #0F4C81); outline-offset: 2px; }
+  mat-icon { font-size: 40px; width: 40px; height: 40px; }
+  &__title { font-weight: 600; margin: 6px 0 2px; }
+  &__sub { font-size: .8rem; margin: 0; }
+}
+
+.imp-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #e2eaf4;
+  border-radius: 10px;
+
+  mat-icon { color: var(--primary, #0F4C81); }
+  &__meta { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  &__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__size { font-size: .78rem; color: #8098b8; }
+}
+
+.imp-error { display: flex; align-items: center; gap: 6px; color: #c62828; font-size: .85rem; margin: 10px 0 0; }
+
+.imp-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 12px 12px;
+  text-align: center;
+
+  &__title { font-size: 1.05rem; font-weight: 600; margin: 4px 0 0; }
+  &__sub { color: #5a7a9e; font-size: .88rem; margin: 0; }
+  &__icon { font-size: 56px; width: 56px; height: 56px; }
+  &--ok .imp-state__icon { color: #2e7d32; }
+  &--fail .imp-state__icon { color: #c62828; }
+}
+
+.imp-stats {
+  display: flex;
+  gap: 28px;
+  margin-top: 8px;
+
+  div { display: flex; flex-direction: column; align-items: center; }
+  strong { font-size: 1.5rem; }
+  span { font-size: .78rem; color: #5a7a9e; }
+}
+
+.imp-table-wrap {
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 14px;
+  border: 1px solid #e2eaf4;
+  border-radius: 10px;
+}
+
+.imp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
+
+  th, td { padding: 7px 12px; text-align: left; border-bottom: 1px solid #eef2f8; }
+  th { position: sticky; top: 0; background: #f6f9fc; font-weight: 600; }
+}
+
+.imp-tag {
+  padding: 1px 9px;
+  border-radius: 10px;
+  font-size: .72rem;
+  text-transform: uppercase;
+  background: rgba(46, 125, 50, .12);
+  color: #2e7d32;
+
+  &--upd { background: rgba(2, 136, 209, .12); color: #0277bd; }
+}

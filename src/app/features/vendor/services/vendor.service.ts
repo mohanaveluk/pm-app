@@ -16,6 +16,8 @@ import {
   VendorStatusChangeAcceptedResponse, VendorStatusChangeRequestsResponse,
 } from '../models/vendor-response.model';
 import { VendorDocumentType } from '../models/vendor.model';
+import { VendorImportResult } from '../models/vendor-import.model';
+import { ApiEnvelope } from '../models/vendor-response.model';
 
 export interface UploadedVendorDocument {
   url: string;
@@ -273,5 +275,18 @@ export class VendorService {
           uploadedAt: new Date().toISOString(),
         })),
       );
+  }
+
+  /**
+   * POST /vendors/import — multipart .xlsx/.csv/.json (max 5 MB). The API reads and
+   * validates the whole file and saves in a single transaction: it either imports
+   * everything (creating new vendors, updating ones whose Vendor Name + Vendor Type +
+   * Material Category already match, and creating any missing Vendor Type along the
+   * way) or nothing. A 422 carries per-row `errors`.
+   */
+  importVendors(file: File): Observable<ApiEnvelope<VendorImportResult>> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ApiEnvelope<VendorImportResult>>(`${this.baseUrl}/import`, form);
   }
 }

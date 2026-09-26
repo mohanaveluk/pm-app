@@ -1,0 +1,134 @@
+<h2 mat-dialog-title class="imp-title">
+  <mat-icon>upload_file</mat-icon> Import Materials
+</h2>
+
+<mat-dialog-content class="imp-content">
+
+  @switch (phase()) {
+
+    @case ('select') {
+      <p class="imp-hint">
+        Upload an <strong>.xlsx</strong>, <strong>.csv</strong> or <strong>.json</strong> file (max 5 MB) with the columns
+        <em>Code, Short Description, Long Description, UOM, Material Category, Material Group</em>.
+        Category, group and UOM are matched by name (case-insensitive). A material whose Short Description
+        already exists is updated; otherwise it is added with a generated code. The import is all-or-nothing.
+      </p>
+
+      <input #picker type="file" hidden aria-hidden="true" [accept]="accept" (change)="onPicked($event)" />
+
+      @if (!file()) {
+        <div class="imp-drop" [class.imp-drop--active]="dragging()"
+             role="button" tabindex="0" aria-label="Choose a file to import"
+             (click)="picker.click()" (keydown.enter)="picker.click()"
+             (keydown.space)="picker.click(); $event.preventDefault()"
+             (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+          <mat-icon>cloud_upload</mat-icon>
+          <p class="imp-drop__title">Drop a file here, or click to browse</p>
+          <p class="imp-drop__sub">{{ accept }} · up to 5 MB</p>
+        </div>
+      } @else {
+        <div class="imp-file">
+          <mat-icon>description</mat-icon>
+          <div class="imp-file__meta">
+            <span class="imp-file__name">{{ file()!.name }}</span>
+            <span class="imp-file__size">{{ sizeLabel(file()!.size) }}</span>
+          </div>
+          <button mat-icon-button type="button" aria-label="Remove file" (click)="clearFile()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+
+      @if (fileError()) {
+        <p class="imp-error" role="alert"><mat-icon>error_outline</mat-icon> {{ fileError() }}</p>
+      }
+    }
+
+    @case ('importing') {
+      <div class="imp-state" role="status" aria-live="polite">
+        <mat-spinner diameter="48" />
+        <p class="imp-state__title">Importing {{ file()?.name }}…</p>
+        <p class="imp-state__sub">Reading the file, validating rows and saving. Please keep this window open.</p>
+      </div>
+    }
+
+    @case ('success') {
+      <div class="imp-state imp-state--ok" role="status">
+        <mat-icon class="imp-state__icon">check_circle</mat-icon>
+        <p class="imp-state__title">Import completed successfully</p>
+        <div class="imp-stats">
+          <div><strong>{{ result()?.total }}</strong><span>rows processed</span></div>
+          <div><strong>{{ result()?.created }}</strong><span>added</span></div>
+          <div><strong>{{ result()?.updated }}</strong><span>updated</span></div>
+        </div>
+      </div>
+
+      @if (result()?.items?.length) {
+        <div class="imp-table-wrap">
+          <table class="imp-table">
+            <thead><tr><th>Row</th><th>Code</th><th>Material</th><th>Result</th></tr></thead>
+            <tbody>
+              @for (item of result()!.items; track item.row) {
+                <tr>
+                  <td>{{ item.row }}</td>
+                  <td>{{ item.code }}</td>
+                  <td>{{ item.name }}</td>
+                  <td><span class="imp-tag" [class.imp-tag--upd]="item.action === 'updated'">{{ item.action }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    @case ('failed') {
+      <div class="imp-state imp-state--fail" role="alert">
+        <mat-icon class="imp-state__icon">error</mat-icon>
+        <p class="imp-state__title">Import failed</p>
+        <p class="imp-state__sub">{{ failureMessage() }}</p>
+        <p class="imp-state__sub"><strong>No data was added or changed.</strong></p>
+      </div>
+
+      @if (rowErrors().length) {
+        <div class="imp-table-wrap">
+          <table class="imp-table">
+            <thead><tr><th>Row</th><th>Problem</th></tr></thead>
+            <tbody>
+              @for (e of rowErrors(); track e.row) {
+                <tr><td>{{ e.row }}</td><td>{{ e.message }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (totalErrors() > rowErrors().length) {
+          <p class="imp-hint">Showing the first {{ rowErrors().length }} of {{ totalErrors() }} problem rows.</p>
+        }
+      }
+    }
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @switch (phase()) {
+    @case ('select') {
+      <button mat-button type="button" (click)="close()">Cancel</button>
+      <button mat-raised-button color="primary" type="button" [disabled]="!file()" (click)="startImport()">
+        <mat-icon>upload</mat-icon> Import
+      </button>
+    }
+    @case ('importing') {
+      <button mat-button type="button" disabled>Importing…</button>
+    }
+    @case ('success') {
+      <button mat-raised-button color="primary" type="button" (click)="close()">Done</button>
+    }
+    @case ('failed') {
+      <button mat-button type="button" (click)="close()">Close</button>
+      <button mat-raised-button color="primary" type="button" (click)="tryAgain()">
+        <mat-icon>refresh</mat-icon> Choose another file
+      </button>
+    }
+  }
+</mat-dialog-actions>
