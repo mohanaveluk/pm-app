@@ -17,6 +17,10 @@ import { firstErrorMessage } from '../../validators/vendor.validators';
 /**
  * Step 2 — Contact Information.
  *
+ * Contacts are a repeatable child collection (vendor_contacts): a vendor may
+ * have several people supporting the business, one flagged primary. Website and
+ * country of registration belong to the vendor itself, so they stay single.
+ *
  * Phone numbers are captured as country code + number and joined by the mapper;
  * the flag is display-only and never reaches the API, which stores one string.
  *
@@ -53,6 +57,40 @@ export class VendorContactStepComponent {
 
   protected get addresses(): FormArray {
     return this.formService.addresses;
+  }
+
+  protected get contacts(): FormArray {
+    return this.formService.contacts;
+  }
+
+  protected contactGroup(index: number): FormGroup {
+    return this.contacts.at(index) as FormGroup;
+  }
+
+  protected contactErr(index: number, control: string, label: string): string {
+    return firstErrorMessage(this.contactGroup(index).get(control), label);
+  }
+
+  /** Search keys are per row so two open dropdowns never share a filter. */
+  protected dialKey(index: number, kind: 'mobile' | 'landline'): string {
+    return `contact-${kind}-${index}`;
+  }
+
+  protected addContact(): void {
+    this.formService.addContact();
+  }
+
+  protected removeContact(index: number): void {
+    this.formService.removeContact(index);
+  }
+
+  protected setPrimaryContact(index: number): void {
+    this.formService.setPrimaryContact(index);
+  }
+
+  protected contactLabel(index: number): string {
+    const name = (this.contactGroup(index).get('contactPerson')?.value as string)?.trim();
+    return name || `Contact ${index + 1}`;
   }
 
   protected addressGroup(index: number): FormGroup {

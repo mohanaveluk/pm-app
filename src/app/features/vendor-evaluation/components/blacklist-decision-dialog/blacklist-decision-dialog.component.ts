@@ -51,7 +51,7 @@ export class BlacklistDecisionDialogComponent {
   protected readonly StatusChangeRequestType = StatusChangeRequestType;
 
   protected readonly form = this.fb.nonNullable.group({
-    token: ['', [Validators.required, Validators.minLength(32)]],
+    token: ['', [Validators.required, Validators.minLength(6)]],
     comments: [''],
   });
 

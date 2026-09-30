@@ -103,57 +103,16 @@
           <input matInput formControlName="swiftCode" maxlength="20" [readonly]="readonly()" placeholder="e.g. EBILAEAD" />
           @if (err('swiftCode', 'SWIFT code')) { <mat-error>{{ err('swiftCode', 'SWIFT code') }}</mat-error> }
         </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Preferred Payment Method</mat-label>
+          <mat-select formControlName="preferredPaymentMethod" [disabled]="readonly()">
+            <mat-option [value]="null">—</mat-option>
+            @for (option of paymentMethodOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>How this account is paid — the vendor's overall payment terms are on the Financial tab</mat-hint>
+        </mat-form-field>
       </div>
-  </section>
-
-  <!-- ── Payment terms (vendor-level scalars) ───────────────────────── -->
-  <section class="step-section">
-    <h3 class="step-section__title"><mat-icon>payments</mat-icon> Payment Terms</h3>
-
-    <div class="step-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Payment Terms</mat-label>
-        <mat-select formControlName="paymentTerms" [disabled]="readonly()">
-          <mat-option class="select-search-option">
-            <input
-              class="select-search"
-              type="text"
-              placeholder="Search payment terms…"
-              aria-label="Search payment terms"
-              [ngModel]="optionSearch.term('paymentTerms')"
-              (ngModelChange)="optionSearch.set('paymentTerms', $event)"
-              [ngModelOptions]="{ standalone: true }"
-              (click)="$event.stopPropagation()"
-              (keydown)="$event.stopPropagation()"
-            />
-          </mat-option>
-          <mat-option [value]="null">—</mat-option>
-          @for (option of optionSearch.options('paymentTerms', paymentTermsOptions); track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Preferred Payment Method</mat-label>
-        <mat-select formControlName="preferredPaymentMethod" [disabled]="readonly()">
-          <mat-option [value]="null">—</mat-option>
-          @for (option of paymentMethodOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="step-full">
-        <mat-label>Payment Milestones</mat-label>
-        <textarea
-          matInput
-          formControlName="paymentMilestones"
-          rows="2"
-          [readonly]="readonly()"
-          placeholder="e.g. 30% advance, 60% on delivery, 10% on commissioning"
-        ></textarea>
-      </mat-form-field>
-    </div>
   </section>
 </div>

@@ -2,7 +2,7 @@
 
   <!-- ── Categories ─────────────────────────────────────────────────── -->
   <section class="step-section">
-    <h3 class="step-section__title"><mat-icon>category</mat-icon> Service Categories</h3>
+    <h3 class="step-section__title"><mat-icon>category</mat-icon> Items</h3>
     <p class="step-section__hint">
       Material categories are chosen on the Identification step. Service
       categories are free text, so scopes no master covers yet are still accepted.
@@ -10,7 +10,7 @@
 
     <div class="step-grid">
       <mat-form-field appearance="outline" class="chip-field">
-        <mat-label>Service Categories</mat-label>
+        <mat-label>Items</mat-label>
         <mat-chip-grid #serviceGrid [disabled]="readonly()">
           @for (value of values('serviceCategories'); track value) {
             <mat-chip-row (removed)="removeValue('serviceCategories', value)" [removable]="!readonly()">

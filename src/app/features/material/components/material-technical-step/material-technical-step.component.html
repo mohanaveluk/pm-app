@@ -52,30 +52,6 @@
   </section>
 
   <section class="step-section">
-    <h3 class="step-section__title"><mat-icon>straighten</mat-icon> Physical Properties</h3>
-    <div class="step-grid step-grid--three">
-      <mat-form-field appearance="outline">
-        <mat-label>Dimensions (L × W × H)</mat-label>
-        <input matInput formControlName="dimensions" maxlength="500" placeholder='e.g. 6" NB × 6000mm, SCH 40' [readonly]="readonly()" />
-        @if (err('dimensions')) { <mat-error>{{ err('dimensions') }}</mat-error> }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Weight</mat-label>
-        <input matInput formControlName="weight" maxlength="100" placeholder="e.g. 28.26 kg/m" [readonly]="readonly()" />
-        <mat-icon matSuffix matTooltip="Free text so you can record per-metre, per-piece or total weight">info_outline</mat-icon>
-        @if (err('weight')) { <mat-error>{{ err('weight') }}</mat-error> }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Color / Finish</mat-label>
-        <input matInput formControlName="colorFinish" maxlength="100" placeholder="e.g. Black / Mill Finish" [readonly]="readonly()" />
-        @if (err('colorFinish')) { <mat-error>{{ err('colorFinish') }}</mat-error> }
-      </mat-form-field>
-    </div>
-  </section>
-
-  <section class="step-section">
     <h3 class="step-section__title"><mat-icon>thermostat</mat-icon> Operating Properties</h3>
     <div class="step-grid step-grid--three">
       <mat-form-field appearance="outline">

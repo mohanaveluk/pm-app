@@ -535,9 +535,9 @@
           <mat-icon>edit</mat-icon> Edit Vendor
         </button>
       }
-      <button mat-menu-item type="button" (click)="copyCode(vendor)">
+      <!-- <button mat-menu-item type="button" (click)="copyCode(vendor)">
         <mat-icon>content_copy</mat-icon> Copy Vendor Code
-      </button>
+      </button> -->
       @if (can(PERMISSIONS.VENDORS_CREATE)) {
         <button mat-menu-item type="button" (click)="cloneVendor(vendor)">
           <mat-icon>file_copy</mat-icon> Clone
@@ -556,7 +556,7 @@
       } @else if (vendor.vendorStatus === VendorStatus.BLACKLISTED) {
         @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
           <button mat-menu-item type="button" (click)="removeBlacklist(vendor)">
-            <mat-icon>restart_alt</mat-icon> Request Removal from Blacklist
+            <mat-icon>restart_alt</mat-icon> Remove Blacklist Vendor
           </button>
         }
       } @else {
@@ -572,7 +572,7 @@
         }
         @if (can(PERMISSIONS.VENDORS_BLACKLIST)) {
           <button mat-menu-item type="button" class="vl-danger" (click)="blacklist(vendor)">
-            <mat-icon>block</mat-icon> Request Blacklisting
+            <mat-icon>block</mat-icon> Blacklist Vendor
           </button>
         }
       }
@@ -580,7 +580,7 @@
       @if (can(PERMISSIONS.VENDORS_DELETE)) {
         <mat-divider />
         <button mat-menu-item type="button" class="vl-danger" (click)="deleteVendor(vendor)">
-          <mat-icon>delete</mat-icon> Delete
+          <mat-icon>delete</mat-icon> Delete/Hold
         </button>
       }
     </ng-template>

@@ -12,9 +12,6 @@ export interface MaterialTechnicalSpecRequest {
   manufacturerPartNumber?: string;
   brand?: string;
   materialComposition?: string;
-  dimensions?: string;
-  weight?: string;
-  colorFinish?: string;
   operatingTemperatureRange?: string;
   pressureRating?: string;
   voltageCurrentRating?: string;
@@ -26,9 +23,6 @@ export interface MaterialProcurementRequest {
   preferredVendorId?: string;
   vendorPartNumber?: string;
   leadTimeDays?: number;
-  minimumOrderQuantity?: number;
-  reorderLevel?: number;
-  reorderQuantity?: number;
   purchaseUomId?: string;
   lastPurchasePrice?: number;
   currency?: string;
@@ -45,6 +39,9 @@ export interface MaterialInventoryRequest {
   stockingStrategy?: StockingStrategy;
   safetyStock?: number;
   maximumStockLevel?: number;
+  minimumOrderQuantity?: number;
+  reorderLevel?: number;
+  reorderQuantity?: number;
 }
 
 export interface MaterialQualityRequest {
@@ -78,6 +75,9 @@ export interface MaterialSafetyRequest {
 }
 
 export interface MaterialLogisticsRequest {
+  dimensions?: string;
+  weight?: string;
+  colorFinish?: string;
   packagingType?: PackagingType;
   packagingDimensions?: string;
   packagingWeight?: string;

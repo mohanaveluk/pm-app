@@ -28,7 +28,7 @@ import {
  * Vendor Master data entry. See features/vendor-evaluation/.
  */
 export const VENDOR_STEPS = [
-  { key: 'identification', label: 'Identification', icon: 'badge',              title: 'Vendor Identification' },
+  { key: 'identification', label: 'General Information', icon: 'badge',              title: 'General Information' },
   { key: 'contact',        label: 'Contact',        icon: 'contact_mail',       title: 'Contact Information' },
   { key: 'legal',          label: 'Legal',          icon: 'gavel',              title: 'Statutory & Legal' },
   { key: 'banking',        label: 'Banking',        icon: 'account_balance',    title: 'Banking Information' },
@@ -331,13 +331,9 @@ export class VendorFormService {
       // Phone numbers are split into dial code + number for entry and rejoined
       // by the mapper; the API stores a single string.
       contact: this.fb.group({
-        primaryContactPerson: ['', [Validators.required, Validators.maxLength(255)]],
-        designation: ['', [Validators.maxLength(150)]],
-        email: ['', [Validators.email, Validators.maxLength(255)]],
-        mobileDialCode: [''],
-        mobileNumber: ['', [phoneValidator]],
-        landlineDialCode: [''],
-        landlineNumber: ['', [phoneValidator]],
+        // vendor_contacts is a repeatable child table: several people may
+        // support the vendor's business, exactly one flagged primary.
+        contacts: this.fb.array([this.contactGroup(true)]),
         website: ['', [urlValidator, Validators.maxLength(500)]],
         countryOfRegistration: [''],
         // vendor_addresses is a repeatable child table keyed by addressType,
@@ -369,8 +365,8 @@ export class VendorFormService {
         iban: ['', [Validators.maxLength(50), Validators.pattern(/^[A-Za-z0-9]*$/)]],
         swiftCode: ['', [Validators.maxLength(20), Validators.pattern(/^[A-Za-z0-9]*$/)]],
         bankCurrency: ['', [Validators.maxLength(10)]],
-        paymentTerms: [null as PaymentTerms | null],
-        paymentMilestones: [''],
+        // Per-account preferred payment method — separate from the vendor-level
+        // one on the Financial tab, even though they share a default.
         preferredPaymentMethod: [null as PaymentMethod | null],
       }),
 
@@ -380,6 +376,9 @@ export class VendorFormService {
         creditLimitRequested: [null as number | null, [nonNegativeValidator, decimalPlacesValidator(4)]],
         creditRating: ['', [Validators.maxLength(50)]],
         auditedFinancialStatementsUrl: ['', [urlValidator]],
+        paymentTerms: [null as PaymentTerms | null],
+        paymentMilestones: [''],
+        preferredPaymentMethod: [null as PaymentMethod | null],
         priceStructure: [''],
         discountTerms: [''],
         contractReferenceNumbers: [[] as string[]],
@@ -446,6 +445,53 @@ export class VendorFormService {
       // business decision made after submission, not master data the vendor's
       // own record owns. See features/vendor-evaluation/.
     });
+  }
+
+  /** One vendor_contacts row. Field lengths mirror the entity's columns. */
+  private contactGroup(isPrimary = false): FormGroup {
+    return this.fb.group({
+      contactPerson: ['', [Validators.required, Validators.maxLength(255)]],
+      designation: ['', [Validators.maxLength(150)]],
+      email: ['', [Validators.email, Validators.maxLength(255)]],
+      mobileDialCode: [''],
+      mobileNumber: ['', [phoneValidator]],
+      landlineDialCode: [''],
+      landlineNumber: ['', [phoneValidator]],
+      isPrimary: [isPrimary],
+    });
+  }
+
+  get contacts(): FormArray {
+    return this.form.get('contact.contacts') as FormArray;
+  }
+
+  addContact(): void {
+    this.contacts.push(this.contactGroup(this.contacts.length === 0));
+    this.form.markAsDirty();
+  }
+
+  /** Always keeps at least one row, and re-flags a primary if it was removed. */
+  removeContact(index: number): void {
+    if (this.contacts.length <= 1) return;
+    const wasPrimary = !!this.contacts.at(index).get('isPrimary')?.value;
+    this.contacts.removeAt(index);
+    if (wasPrimary) this.setPrimaryContact(0);
+    this.form.markAsDirty();
+  }
+
+  /** Exactly one contact may be primary; selecting one clears the others. */
+  setPrimaryContact(index: number): void {
+    this.contacts.controls.forEach((control, i) => {
+      control.get('isPrimary')?.setValue(i === index, { emitEvent: false });
+    });
+    this.form.markAsDirty();
+  }
+
+  /** Resizes the contact array to match a loaded vendor before patching. */
+  setContactCount(count: number): void {
+    const target = Math.max(count, 1);
+    while (this.contacts.length > target) this.contacts.removeAt(this.contacts.length - 1);
+    while (this.contacts.length < target) this.addContact();
   }
 
   /** One vendor_addresses row. Field lengths mirror the entity's columns. */
@@ -641,7 +687,6 @@ export class VendorFormService {
 
   /** Defaults applied to a brand-new vendor, matching the API's own defaults. */
   applyCreateDefaults(): void {
-    this.form.get('contact.mobileDialCode')?.setValue('');
     this.form.get('logistics.exportDocumentationCapability')?.setValue(false);
     this.form.get('identification.vendorTypeId')?.setValue(null);
     this.form.markAsPristine();
