@@ -153,6 +153,7 @@ export class VendorWorkspaceComponent implements OnInit, HasUnsavedChanges {
     // Stored names come back as the ids the category multi-select binds to.
     const value = toVendorFormValue(vendor, (names) => this.formService.productCategoryIds(names));
     // patchValue cannot grow a FormArray, so the rows have to exist first.
+    this.formService.setContactCount(value.contact?.contacts?.length ?? 0);
     this.formService.setAddressCount(value.contact?.addresses?.length ?? 0);
     this.formService.setTurnoverCount(value.financial?.turnovers?.length ?? 0);
     this.formService.setCertificationCount(value.quality?.certifications?.length ?? 0);

@@ -4,6 +4,7 @@ export interface VendorImportResult {
   created: number;
   updated: number;
   vendorTypesCreated: string[];
+  materialCategoriesCreated?: string[];
   items: { row: number; name: string; code: string; action: 'created' | 'updated' }[];
 }
 

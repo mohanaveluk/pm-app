@@ -186,7 +186,7 @@
           [hasError]="isStepInvalid('identification')"
           errorMessage="Required information missing"
         >
-          <ng-template matStepLabel>Identification</ng-template>
+          <ng-template matStepLabel>General Information</ng-template>
           <app-vendor-identification-step
             [vendorCode]="vendor()?.code ?? null"
             [vendorStatus]="statusValue"

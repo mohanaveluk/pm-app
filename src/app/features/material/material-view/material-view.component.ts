@@ -96,7 +96,7 @@ export class MaterialViewComponent implements OnInit {
         { label: 'Datasheet Reference', value: m.datasheetReference ?? '' },
       ]),
       build('procurement', 'Procurement Data', 'shopping_cart', [
-        { label: 'Vendor Part Number', value: m.vendorPartNumber ?? '' },
+        { label: 'Manufacturer Part Number', value: m.vendorPartNumber ?? '' },
         { label: 'Lead Time', value: m.leadTimeDays != null ? `${m.leadTimeDays} days` : '' },
         { label: 'Minimum Order Quantity', value: m.minimumOrderQuantity?.toString() ?? '' },
         { label: 'Reorder Level', value: m.reorderLevel?.toString() ?? '' },

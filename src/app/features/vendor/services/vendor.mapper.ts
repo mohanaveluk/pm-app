@@ -1,5 +1,5 @@
 import {
-  CreateVendorRequest, UpdateVendorRequest, VendorAddressRequest,
+  CreateVendorRequest, UpdateVendorRequest, VendorAddressRequest, VendorContactRequest,
   VendorBankAccountRequest, VendorCertificationRequest,
   VendorProjectExperienceRequest, VendorTurnoverRequest,
 } from '../models/vendor-request.model';
@@ -115,6 +115,33 @@ function buildAddresses(contact: Section): VendorAddressRequest[] | undefined {
 
   // Exactly one address may be primary; the API mirrors it onto the vendor.
   if (!rows.some((r) => r.isPrimary)) rows[0].isPrimary = true;
+  return rows;
+}
+
+/** One vendor_contacts row, or null when the row carries no person at all. */
+function buildContact(value: Section): VendorContactRequest | null {
+  const contactPerson = text(value?.contactPerson);
+  if (!contactPerson) return null;
+  return {
+    contactPerson,
+    designation: text(value?.designation),
+    email: text(value?.email)?.toLowerCase(),
+    mobileNumber: text(joinPhone(value?.mobileDialCode, value?.mobileNumber)),
+    landlineNumber: text(joinPhone(value?.landlineDialCode, value?.landlineNumber)),
+    isPrimary: !!value?.isPrimary,
+  };
+}
+
+function buildContacts(contact: Section): VendorContactRequest[] | undefined {
+  const rows = (contact?.contacts as Section[] ?? [])
+    .map((row) => buildContact(row))
+    .filter((c): c is VendorContactRequest => c !== null);
+
+  if (!rows.length) return undefined;
+
+  // Exactly one contact may be primary; the API mirrors it onto the vendor.
+  const primaryIndex = rows.findIndex((r) => r.isPrimary);
+  rows.forEach((r, i) => (r.isPrimary = i === (primaryIndex === -1 ? 0 : primaryIndex)));
   return rows;
 }
 
@@ -236,11 +263,8 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
     parentCompanyId: text(id.parentCompanyId),
     remarks: text(id.remarks),
 
-    primaryContactPerson: text(contact.primaryContactPerson),
-    designation: text(contact.designation),
-    email: text(contact.email)?.toLowerCase(),
-    mobileNumber: text(joinPhone(contact.mobileDialCode, contact.mobileNumber)),
-    landlineNumber: text(joinPhone(contact.landlineDialCode, contact.landlineNumber)),
+    // The person-level fields travel in `contacts`; the API mirrors the
+    // primary contact onto the vendor record itself.
     website: text(contact.website),
     countryOfRegistration: upper(contact.countryOfRegistration),
 
@@ -253,11 +277,10 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
       msmeSmeRegistration: text(legal.msmeSmeRegistration),
     }),
 
-    // Fed by two steps: payment terms come from Banking, the money from Financial.
     commercial: compact({
-      paymentTerms: (banking.paymentTerms as PaymentTerms) ?? undefined,
-      paymentMilestones: text(banking.paymentMilestones),
-      preferredPaymentMethod: (banking.preferredPaymentMethod as PaymentMethod) ?? undefined,
+      paymentTerms: (financial.paymentTerms as PaymentTerms) ?? undefined,
+      paymentMilestones: text(financial.paymentMilestones),
+      preferredPaymentMethod: (financial.preferredPaymentMethod as PaymentMethod) ?? undefined,
       creditLimitRequested: num(financial.creditLimitRequested),
       currency: upper(financial.currency),
       creditRating: text(financial.creditRating),
@@ -327,6 +350,7 @@ export function toCreateRequest(v: FormValue, resolveNames: CategoryNameResolver
     industryCategoryId: id.industryCategoryId,
     ...toScalarPayload(v, resolveNames),
 
+    contacts: buildContacts(v.contact ?? {}),
     addresses: buildAddresses(v.contact ?? {}),
     bankAccounts: buildBankAccounts(v.banking ?? {}),
     turnovers: buildTurnovers(v.financial ?? {}),
@@ -354,6 +378,7 @@ export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver
 
     // Sent as complete lists, never undefined: the API replaces the collections
     // it receives, so an emptied section has to arrive as [] to be cleared.
+    contacts: buildContacts(v.contact ?? {}) ?? [],
     addresses: buildAddresses(v.contact ?? {}) ?? [],
     bankAccounts: buildBankAccounts(v.banking ?? {}) ?? [],
     turnovers: buildTurnovers(v.financial ?? {}) ?? [],
@@ -366,6 +391,43 @@ export function toUpdateRequest(v: FormValue, resolveNames: CategoryNameResolver
 }
 
 // ── API → Form ─────────────────────────────────────────────────────────────
+
+/**
+ * Every stored contact becomes one form row. A vendor with no contact rows yet
+ * (created before contacts were captured, or by import) falls back to the
+ * primary-contact columns on the vendor record so nothing is lost on edit.
+ */
+function contactsToForm(vendor: Vendor): Section[] {
+  const toRow = (c: {
+    contactPerson?: string; designation?: string; email?: string;
+    mobileNumber?: string; landlineNumber?: string; isPrimary?: boolean;
+  }) => {
+    const mobile = splitPhone(c.mobileNumber);
+    const landline = splitPhone(c.landlineNumber);
+    return {
+      contactPerson: c.contactPerson ?? '',
+      designation: c.designation ?? '',
+      email: c.email ?? '',
+      mobileDialCode: mobile.dialCode,
+      mobileNumber: mobile.number,
+      landlineDialCode: landline.dialCode,
+      landlineNumber: landline.number,
+      isPrimary: !!c.isPrimary,
+    };
+  };
+
+  const rows = (vendor.contacts ?? []).filter((c) => c.isActive !== false).map(toRow);
+  if (rows.length) return rows;
+
+  return [toRow({
+    contactPerson: vendor.primaryContactPerson,
+    designation: vendor.designation,
+    email: vendor.email,
+    mobileNumber: vendor.mobileNumber,
+    landlineNumber: vendor.landlineNumber,
+    isPrimary: true,
+  })];
+}
 
 /**
  * Every stored address becomes one form row. A vendor with no addresses yet
@@ -401,9 +463,6 @@ function addressesToForm(addresses: Vendor['addresses']): Section[] {
  * before patching, since patchValue cannot grow an array on its own.
  */
 export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver = passThroughIds): FormValue {
-  const mobile = splitPhone(vendor.mobileNumber);
-  const landline = splitPhone(vendor.landlineNumber);
-
   const bank = vendor.bankAccounts?.find((b) => b.isPrimary) ?? vendor.bankAccounts?.[0];
 
   return {
@@ -418,13 +477,7 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       remarks: vendor.remarks ?? '',
     },
     contact: {
-      primaryContactPerson: vendor.primaryContactPerson ?? '',
-      designation: vendor.designation ?? '',
-      email: vendor.email ?? '',
-      mobileDialCode: mobile.dialCode,
-      mobileNumber: mobile.number,
-      landlineDialCode: landline.dialCode,
-      landlineNumber: landline.number,
+      contacts: contactsToForm(vendor),
       website: vendor.website ?? '',
       countryOfRegistration: vendor.countryOfRegistration ?? '',
       addresses: addressesToForm(vendor.addresses),
@@ -447,15 +500,16 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       iban: bank?.isMasked ? '' : bank?.iban ?? '',
       swiftCode: bank?.isMasked ? '' : bank?.swiftCode ?? '',
       bankCurrency: bank?.currency ?? '',
-      paymentTerms: vendor.paymentTerms ?? null,
-      paymentMilestones: vendor.paymentMilestones ?? '',
-      preferredPaymentMethod: vendor.preferredPaymentMethod ?? null,
+      preferredPaymentMethod: bank?.preferredPaymentMethod ?? null,
     },
     financial: {
       currency: vendor.currency ?? '',
       creditLimitRequested: vendor.creditLimitRequested ?? null,
       creditRating: vendor.creditRating ?? '',
       auditedFinancialStatementsUrl: vendor.auditedFinancialStatementsUrl ?? '',
+      paymentTerms: vendor.paymentTerms ?? null,
+      paymentMilestones: vendor.paymentMilestones ?? '',
+      preferredPaymentMethod: vendor.preferredPaymentMethod ?? null,
       priceStructure: vendor.priceStructure ?? '',
       discountTerms: vendor.discountTerms ?? '',
       contractReferenceNumbers: vendor.contractReferenceNumbers ?? [],

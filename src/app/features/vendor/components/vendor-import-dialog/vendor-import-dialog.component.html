@@ -9,9 +9,11 @@
     @case ('select') {
       <p class="imp-hint">
         Upload an <strong>.xlsx</strong>, <strong>.csv</strong> or <strong>.json</strong> file (max 5 MB) with the columns
-        <em>Vendor Code, Vendor Name, Vendor Type, Material Category, Contact details</em>.
+        <em>Vendor Code, Vendor Name, Vendor Type, Material Category, Contact details, Email, Mobile Number</em>
+        (Email and Mobile Number are optional — blank cells leave stored values unchanged).
         Vendor Type and Material Category are matched by name (case- and plural-insensitive). A blank
-        Vendor Type defaults to "Supplier"; a Vendor Type that doesn't exist yet is created automatically.
+        Vendor Type defaults to "Supplier"; a Vendor Type or Material Category that doesn't exist yet is
+        created automatically.
         A vendor is matched on Vendor Name + Vendor Type + Material Category together — a match is
         updated, otherwise a new vendor is added with a generated code. The import is all-or-nothing.
       </p>
@@ -68,6 +70,13 @@
             <mat-icon>info_outline</mat-icon>
             New Vendor Type{{ result()!.vendorTypesCreated.length === 1 ? '' : 's' }} created:
             {{ result()!.vendorTypesCreated.join(', ') }}
+          </p>
+        }
+        @if (result()?.materialCategoriesCreated?.length) {
+          <p class="imp-note">
+            <mat-icon>info_outline</mat-icon>
+            New Material {{ result()!.materialCategoriesCreated!.length === 1 ? 'Category' : 'Categories' }} created:
+            {{ result()!.materialCategoriesCreated!.join(', ') }}
           </p>
         }
       </div>

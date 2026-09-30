@@ -94,6 +94,7 @@ export enum VendorAddressType {
   WAREHOUSE = 'WAREHOUSE',
   BRANCH = 'BRANCH',
   SITE_OFFICE = 'SITE_OFFICE',
+  OTHER = 'OTHER',
 }
 
 export enum VendorDocumentType {
@@ -186,6 +187,7 @@ export const VENDOR_ADDRESS_TYPE_OPTIONS: readonly EnumOption<VendorAddressType>
   { value: VendorAddressType.WAREHOUSE, label: 'Warehouse' },
   { value: VendorAddressType.BRANCH, label: 'Branch' },
   { value: VendorAddressType.SITE_OFFICE, label: 'Site Office' },
+  { value: VendorAddressType.OTHER, label: 'Other' },
 ];
 
 export const PENDING_STATUS_OPTIONS: readonly EnumOption<PendingStatusChange>[] = [

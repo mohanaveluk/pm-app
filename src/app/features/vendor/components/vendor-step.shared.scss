@@ -426,6 +426,19 @@
   }
 }
 
+// Mobile and landline side by side on their own full-width line, so each
+// number field has room for a full 10+ digit number beside its code selector.
+.phone-pair {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
 // Repeating child rows (turnovers, certifications).
 .repeat-row {
   display: grid;
@@ -446,6 +459,26 @@
     font-size: 0.78rem;
     font-weight: 600;
     color: #5a7a9e;
+  }
+}
+
+// Contact card: name, designation and email share one line and stretch to fill
+// it — three columns on desktop, two on tablet, one on phones. The fields are
+// forced to 100% because mat-form-field otherwise keeps its intrinsic width
+// inside a grid cell instead of following the column.
+.repeat-row--contact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  > mat-form-field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
   }
 }
 

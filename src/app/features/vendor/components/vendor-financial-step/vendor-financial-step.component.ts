@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -10,6 +11,8 @@ import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { VendorFormService } from '../../services/vendor-form.service';
 import { VendorFileUploadComponent } from '../vendor-file-upload/vendor-file-upload.component';
+import { OptionSearch } from '../../utils/option-search';
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_TERMS_OPTIONS } from '../../models/vendor.model';
 import { firstErrorMessage } from '../../validators/vendor.validators';
 
 /**
@@ -18,13 +21,18 @@ import { firstErrorMessage } from '../../validators/vendor.validators';
  * Turnover is a child collection (vendor_turnovers): three rows by default,
  * each needing a year, an amount and a currency before the API will accept it.
  * Like the other child collections it is create-time only.
+ *
+ * Payment Terms, Preferred Payment Method and Payment Milestones are the
+ * vendor-level commercial terms, moved here from the Banking step — Banking
+ * now holds only the bank account itself (which has its own, separate
+ * preferred-payment-method field on the account record).
  */
 @Component({
   selector: 'app-vendor-financial-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatIconModule, MatCheckboxModule, MatChipsModule,
+    CommonModule, ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, MatButtonModule, MatIconModule, MatCheckboxModule, MatChipsModule,
     MatTooltipModule, VendorFileUploadComponent,
   ],
   templateUrl: './vendor-financial-step.component.html',
@@ -32,6 +40,12 @@ import { firstErrorMessage } from '../../validators/vendor.validators';
 })
 export class VendorFinancialStepComponent {
   protected readonly formService = inject(VendorFormService);
+
+  /** Inline search state for this step's dropdowns. */
+  protected readonly optionSearch = new OptionSearch();
+
+  protected readonly paymentTermsOptions = PAYMENT_TERMS_OPTIONS;
+  protected readonly paymentMethodOptions = PAYMENT_METHOD_OPTIONS;
 
   readonly readonly = input(false);
 

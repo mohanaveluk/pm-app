@@ -33,13 +33,11 @@ export interface MaterialFormValue {
   technical: {
     technicalDescription: string; modelPartNumber: string; manufacturerName: string;
     manufacturerPartNumber: string; brand: string; materialComposition: string;
-    dimensions: string; weight: string; colorFinish: string;
     operatingTemperatureRange: string; pressureRating: string; voltageCurrentRating: string;
     certifications: string; datasheetReference: string;
   };
   procurement: {
     preferredVendorId: string; vendorPartNumber: string; leadTimeDays: number | null;
-    minimumOrderQuantity: number | null; reorderLevel: number | null; reorderQuantity: number | null;
     purchaseUomId: string; lastPurchasePrice: number | null; currency: string;
     contractReference: string; hsCode: string; countryOfOrigin: string;
   };
@@ -47,6 +45,7 @@ export interface MaterialFormValue {
     storageLocation: string; warehouseBinRack: string; storageConditions: string;
     shelfLifeDays: number | null; stockingStrategy: StockingStrategy | null;
     safetyStock: number | null; maximumStockLevel: number | null;
+    minimumOrderQuantity: number | null; reorderLevel: number | null; reorderQuantity: number | null;
   };
   quality: {
     inspectionType: InspectionType | null; qualitySpecDocumentNo: string;
@@ -63,6 +62,7 @@ export interface MaterialFormValue {
     regulatoryCompliance: string;
   };
   logistics: {
+    dimensions: string; weight: string; colorFinish: string;
     packagingType: PackagingType | null; packagingDimensions: string; packagingWeight: string;
     unitsPerPackage: number | null; transportationMode: TransportationMode | null;
     specialTransportRequirements: string; barcodeQrCodeRequired: boolean;
@@ -133,9 +133,6 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
       manufacturerPartNumber: s(v.technical.manufacturerPartNumber),
       brand: s(v.technical.brand),
       materialComposition: s(v.technical.materialComposition),
-      dimensions: s(v.technical.dimensions),
-      weight: s(v.technical.weight),
-      colorFinish: s(v.technical.colorFinish),
       operatingTemperatureRange: s(v.technical.operatingTemperatureRange),
       pressureRating: s(v.technical.pressureRating),
       voltageCurrentRating: s(v.technical.voltageCurrentRating),
@@ -147,9 +144,6 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
       preferredVendorId: s(v.procurement.preferredVendorId),
       vendorPartNumber: s(v.procurement.vendorPartNumber),
       leadTimeDays: n(v.procurement.leadTimeDays),
-      minimumOrderQuantity: n(v.procurement.minimumOrderQuantity),
-      reorderLevel: n(v.procurement.reorderLevel),
-      reorderQuantity: n(v.procurement.reorderQuantity),
       purchaseUomId: s(v.procurement.purchaseUomId),
       lastPurchasePrice: n(v.procurement.lastPurchasePrice),
       currency: s(v.procurement.currency)?.toUpperCase(),
@@ -166,6 +160,9 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
       stockingStrategy: e(v.inventory.stockingStrategy),
       safetyStock: n(v.inventory.safetyStock),
       maximumStockLevel: n(v.inventory.maximumStockLevel),
+      minimumOrderQuantity: n(v.inventory.minimumOrderQuantity),
+      reorderLevel: n(v.inventory.reorderLevel),
+      reorderQuantity: n(v.inventory.reorderQuantity),
     }),
 
     quality: compact({
@@ -200,6 +197,9 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
     }),
 
     logistics: compact({
+      dimensions: s(v.logistics.dimensions),
+      weight: s(v.logistics.weight),
+      colorFinish: s(v.logistics.colorFinish),
       packagingType: e(v.logistics.packagingType),
       packagingDimensions: s(v.logistics.packagingDimensions),
       packagingWeight: s(v.logistics.packagingWeight),
@@ -283,9 +283,6 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       manufacturerPartNumber: m.manufacturerPartNumber ?? '',
       brand: m.brand ?? '',
       materialComposition: m.materialComposition ?? '',
-      dimensions: m.dimensions ?? '',
-      weight: m.weight ?? '',
-      colorFinish: m.colorFinish ?? '',
       operatingTemperatureRange: m.operatingTemperatureRange ?? '',
       pressureRating: m.pressureRating ?? '',
       voltageCurrentRating: m.voltageCurrentRating ?? '',
@@ -296,9 +293,6 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       preferredVendorId: m.preferredVendorId ?? '',
       vendorPartNumber: m.vendorPartNumber ?? '',
       leadTimeDays: m.leadTimeDays ?? null,
-      minimumOrderQuantity: m.minimumOrderQuantity ?? null,
-      reorderLevel: m.reorderLevel ?? null,
-      reorderQuantity: m.reorderQuantity ?? null,
       purchaseUomId: m.purchaseUomId ?? '',
       lastPurchasePrice: m.lastPurchasePrice ?? null,
       currency: m.currency ?? '',
@@ -314,6 +308,9 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       stockingStrategy: m.stockingStrategy ?? null,
       safetyStock: m.safetyStock ?? null,
       maximumStockLevel: m.maximumStockLevel ?? null,
+      minimumOrderQuantity: m.minimumOrderQuantity ?? null,
+      reorderLevel: m.reorderLevel ?? null,
+      reorderQuantity: m.reorderQuantity ?? null,
     },
     quality: {
       inspectionType: m.inspectionType ?? null,
@@ -343,6 +340,9 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       regulatoryCompliance: m.regulatoryCompliance ?? '',
     },
     logistics: {
+      dimensions: m.dimensions ?? '',
+      weight: m.weight ?? '',
+      colorFinish: m.colorFinish ?? '',
       packagingType: m.packagingType ?? null,
       packagingDimensions: m.packagingDimensions ?? '',
       packagingWeight: m.packagingWeight ?? '',
