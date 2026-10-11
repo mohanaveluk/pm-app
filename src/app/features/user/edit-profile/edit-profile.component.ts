@@ -80,6 +80,9 @@ export class EditProfileComponent implements OnInit {
   readonly website    = signal('');
   readonly userEmail  = signal('');
 
+  /** External (vendor-side) accounts have no work details — the section is hidden for them. */
+  readonly isExternal = signal(false);
+
   orgUsers: UserOption[] = [];
 
   readonly positions     = POSITIONS;
@@ -128,6 +131,9 @@ export class EditProfileComponent implements OnInit {
       this.legalName.set(org?.legalName       ?? '');
       this.website.set(org?.website           ?? '');
       this.userEmail.set(profile?.email       ?? '');
+
+      // is_internal: 1 = internal staff (default), 0 = external. Absent means internal.
+      this.isExternal.set(profile?.is_internal != null && Number(profile.is_internal) === 0);
 
       // Parse comma-separated strings back to arrays for multi-selects
       const toArray = (s: string | null | undefined) =>
@@ -191,16 +197,22 @@ export class EditProfileComponent implements OnInit {
       const worksWithStr        = (v.worksWith         as any[] ?? []).join(', ');
       const projectsWorkedOnStr = (v.projectsWorkedOn  as any[] ?? []).join(', ');
 
-      const payload: any = {
-        first_name:       v.firstName        || undefined,
-        last_name:        v.lastName         || undefined,
-        mobile:           v.mobile           || undefined,
-        dob:              dobStr,
+      // An external user never sees Work Details, so what was loaded into those
+      // hidden controls is left alone server-side rather than re-posted.
+      const work = this.isExternal() ? {} : {
         position:         v.position         || undefined,
         location:         v.location         || undefined,
         report_to:        reportToStr        || undefined,
         worksWith:        worksWithStr       || undefined,
         projectsWorkedOn: projectsWorkedOnStr || undefined,
+      };
+
+      const payload: any = {
+        first_name:       v.firstName        || undefined,
+        last_name:        v.lastName         || undefined,
+        mobile:           v.mobile           || undefined,
+        dob:              dobStr,
+        ...work,
       };
 
       if (v.newPassword) {

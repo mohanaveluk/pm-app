@@ -1,4 +1,5 @@
 import { Component, signal, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -22,6 +23,15 @@ interface RoleOption  { guid: string; name: string; }
 interface UserOption  { uguid: string; fullName: string; email: string; }
 
 type FormMode = 'create' | 'edit';
+
+/**
+ * Role an external (vendor-side) account is given. The vendor module grants its
+ * create/view/edit endpoints to 'ExternalUser'; the plain 'User' role is only a
+ * fallback for organisations that have not got that role.
+ */
+const EXTERNAL_ROLE_NAMES = ['ExternalUser', 'User'];
+
+const WORK_DETAIL_FIELDS = ['position', 'location', 'reportTo', 'worksWith', 'projectsWorkedOn'] as const;
 
 const POSITIONS = [
   'Project Manager', 'Site Engineer', 'Civil Engineer', 'Structural Engineer',
@@ -81,6 +91,11 @@ export class CreateUserComponent implements OnInit {
   readonly serverError  = signal('');
   readonly organizationId  = signal('');
 
+  /** Mirrors the isExternal control so the template can show/hide Work Details. */
+  readonly isExternal = signal(false);
+  /** Role guid we preselected for an external account, so toggling back can undo it. */
+  private autoSelectedRole: string | null = null;
+
   /** 'create' registers a brand-new account; 'edit' updates an existing one — see app.routes.ts. */
   readonly mode = signal<FormMode>('create');
   readonly targetUguid = signal<string | null>(null);
@@ -116,10 +131,16 @@ export class CreateUserComponent implements OnInit {
     isExternal:       [false],
     position:         [''],
     location:         [''],
-    reportTo:         [[] as string[]],      // dropdown of org users (single)
+    reportTo:         [''],                  // single-select of org users — a string, not a list
     worksWith:        [[] as string[]],      // dropdown of org users (multi)
     projectsWorkedOn: [[] as string[]],      // dropdown of projects (multi)
   });
+
+  constructor() {
+    this.form.controls.isExternal.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((value) => this.onAccountTypeChange(!!value));
+  }
 
   ngOnInit(): void {
     const mode = (this.route.snapshot.data['mode'] as FormMode) ?? 'create';
@@ -185,6 +206,8 @@ export class CreateUserComponent implements OnInit {
       const splitList = (value: string | null | undefined): string[] =>
         (value ?? '').split(',').map(v => v.trim()).filter(Boolean);
 
+      // emitEvent:false — loading a record must not run the toggle's side effects
+      // (clearing work details, preselecting a role) over what is stored.
       this.form.patchValue({
         firstName:        u.first_name ?? '',
         lastName:         u.last_name ?? '',
@@ -198,10 +221,50 @@ export class CreateUserComponent implements OnInit {
         reportTo:         u.report_to ?? '',
         worksWith:        splitList(u.worksWith),
         projectsWorkedOn: splitList(u.projectsWorkedOn),
-      });
+      }, { emitEvent: false });
+      this.isExternal.set(u.is_internal === 0);
     } catch {
       this.serverError.set('Unable to load this user\'s details. Please try again.');
     }
+  }
+
+  /**
+   * Account type drives the rest of the form: an external user is just a vendor-side
+   * contact, so they get no work details and are preselected the external role.
+   */
+  private onAccountTypeChange(external: boolean): void {
+    this.isExternal.set(external);
+    const role = this.form.controls.role_guid;
+
+    if (external) {
+      for (const field of WORK_DETAIL_FIELDS) {
+        this.form.get(field)?.setValue(Array.isArray(this.form.get(field)?.value) ? [] : '');
+      }
+      const guid = this.externalRoleGuid();
+      if (guid) {
+        this.autoSelectedRole = guid;
+        role.setValue(guid);
+      }
+    } else if (this.autoSelectedRole && role.value === this.autoSelectedRole) {
+      // Only undo what we set — a role the admin picked deliberately stays.
+      role.setValue('');
+      this.autoSelectedRole = null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  /** report_to is one name: an unselected or legacy list value must never reach the API as an array. */
+  private reportToValue(value: unknown): string {
+    const single = Array.isArray(value) ? value[0] : value;
+    return typeof single === 'string' ? single.trim() : '';
+  }
+
+  private externalRoleGuid(): string | null {
+    for (const name of EXTERNAL_ROLE_NAMES) {
+      const match = this.roles.find((r) => r.name === name);
+      if (match) return match.guid;
+    }
+    return null;
   }
 
   // ── Password strength ─────────────────────────────────────────
@@ -245,7 +308,7 @@ export class CreateUserComponent implements OnInit {
     const projectsWorkedOnStr = (v.projectsWorkedOn ?? []).join(', ');
 
     // report_to: single user's fullName or email stored as a string
-    const reportToStr = (v.reportTo as any) ?? ''; //(v.reportTo as any)?.[0] ?? '';
+    const reportToStr = this.reportToValue(v.reportTo);
 
     const dobStr = v.dob ? (v.dob as Date).toISOString().split('T')[0] : undefined;
 
@@ -279,7 +342,7 @@ export class CreateUserComponent implements OnInit {
 
     const worksWithStr        = (v.worksWith        ?? []).join(', ');
     const projectsWorkedOnStr = (v.projectsWorkedOn ?? []).join(', ');
-    const reportToStr = (v.reportTo as any) ?? '';
+    const reportToStr = this.reportToValue(v.reportTo);
     const dobStr = v.dob ? (v.dob as Date).toISOString().split('T')[0] : undefined;
 
     await this.api.updateUser(uguid, {

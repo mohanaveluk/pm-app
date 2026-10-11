@@ -1,7 +1,7 @@
 <div class="step" [formGroup]="group">
 
   <section class="step-section">
-    <h3 class="step-section__title"><mat-icon>badge</mat-icon> Identity</h3>
+    <h3 class="step-section__title"><mat-icon>badge</mat-icon> General</h3>
 
     <div class="step-grid">
       <!-- Server-generated: prefix plus a locked per-prefix sequence counter. -->
@@ -31,7 +31,7 @@
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline" class="step-full">
+      <mat-form-field appearance="outline">  <!--class="step-full"-->
         <mat-label>Vendor Name</mat-label>
         <input
           matInput
@@ -85,6 +85,18 @@
           }
         </mat-select>
         @if (err('vendorTypeId', 'Vendor type')) { <mat-error>{{ err('vendorTypeId', 'Vendor type') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Vendor Account Group</mat-label>
+        <mat-select formControlName="vendorAccountGroup" required [disabled]="readonly()">
+          @for (option of accountGroupOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+        @if (err('vendorAccountGroup', 'Vendor account group')) {
+          <mat-error>{{ err('vendorAccountGroup', 'Vendor account group') }}</mat-error>
+        }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="step-full">

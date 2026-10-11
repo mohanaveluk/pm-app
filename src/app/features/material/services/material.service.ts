@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MaterialImportResult } from '../models/material-import.model';
+import { MaterialImportPreview, MaterialImportResult } from '../models/material-import.model';
 import { ApiEnvelope } from '../models/material-response.model';
 import { environment } from '../../../../environments/environment';
 import {
@@ -66,10 +66,22 @@ export class MaterialService {
    * everything (creating new materials, updating ones whose name already exists) or
    * nothing. A 422 carries per-row `errors`.
    */
-  importMaterials(file: File): Observable<ApiEnvelope<MaterialImportResult>> {
+  importMaterials(file: File, updateExisting = true): Observable<ApiEnvelope<MaterialImportResult>> {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<ApiEnvelope<MaterialImportResult>>(`${this.baseUrl}/import`, form);
+    const params = new HttpParams().set('updateExisting', String(updateExisting));
+    return this.http.post<ApiEnvelope<MaterialImportResult>>(`${this.baseUrl}/import`, form, { params });
+  }
+
+  /**
+   * POST /materials/import/preview — validates the file like a real import but
+   * writes nothing, and reports how many rows are new vs. already exist, so the
+   * caller can ask before existing materials are updated.
+   */
+  previewImport(file: File): Observable<ApiEnvelope<MaterialImportPreview>> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ApiEnvelope<MaterialImportPreview>>(`${this.baseUrl}/import/preview`, form);
   }
 
   /** POST /materials — code auto-generated server-side. */

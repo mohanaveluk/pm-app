@@ -10,7 +10,7 @@ import { VendorService } from './vendor.service';
 import { VendorFormValue } from './vendor.mapper';
 import {
   DeliveryCapability, PaymentMethod, PaymentTerms,
-  TaxDocumentType, VendorAddressType, VendorDocumentType,
+  TaxDocumentType, VendorAccountGroup, VendorAddressType, VendorDocumentType,
   VendorOption,
 } from '../models/vendor.model';
 import { VendorTypeService } from '../../vendor-type/services/vendor-type.service';
@@ -18,7 +18,7 @@ import { VendorType } from '../../vendor-type/models/vendor-type.model';
 import {
   dateOrderValidator, decimalPlacesValidator, financialYearValidator,
   nonBlankEntriesValidator, nonNegativeValidator, otherTaxTypeValidator,
-  phoneValidator, urlValidator,
+  phoneValidator, requiredNonBlank, urlValidator,
 } from '../validators/vendor.validators';
 
 /**
@@ -317,6 +317,7 @@ export class VendorFormService {
         vendorName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
         vendorDescription: ['', [Validators.maxLength(4000)]],
         tradeName: ['', [Validators.maxLength(255)]],
+        vendorAccountGroup: [null as VendorAccountGroup | null, [Validators.required]],
         vendorTypeId: [null as string | null, [Validators.required]],
         industryCategoryId: [''],
         // Material categories the vendor supplies. Persisted as
@@ -452,9 +453,9 @@ export class VendorFormService {
     return this.fb.group({
       contactPerson: ['', [Validators.required, Validators.maxLength(255)]],
       designation: ['', [Validators.maxLength(150)]],
-      email: ['', [Validators.email, Validators.maxLength(255)]],
-      mobileDialCode: [''],
-      mobileNumber: ['', [phoneValidator]],
+      email: ['', [requiredNonBlank, Validators.email, Validators.maxLength(255)]],
+      mobileDialCode: ['', [requiredNonBlank]],
+      mobileNumber: ['', [requiredNonBlank, phoneValidator]],
       landlineDialCode: [''],
       landlineNumber: ['', [phoneValidator]],
       isPrimary: [isPrimary],

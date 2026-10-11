@@ -159,6 +159,16 @@ export class UserListComponent implements OnInit {
     }
   }
 
+  /** Only active, verified accounts have a password to reset — and never your own. */
+  canResetPassword(u: OrgUser): boolean {
+    return !!u.is_active && u.is_email_verified && u.id !== this.currentUserId();
+  }
+
+  resetPassword(u: OrgUser, event?: Event): void {
+    event?.stopPropagation();
+    this.router.navigate(['/admin/users', u.uguid, 'reset-password']);
+  }
+
   addUser(): void {
     this.router.navigate(['/admin/users/create']);
   }

@@ -1,23 +1,27 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { firstValueFrom } from 'rxjs';
 import { VendorService } from '../../services/vendor.service';
-import { VendorImportResult, VendorImportRowError } from '../../models/vendor-import.model';
+import { VendorImportPreview, VendorImportResult, VendorImportRowError } from '../../models/vendor-import.model';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 const ACCEPT = '.xlsx,.csv,.json';
 const MAX_BYTES = 5 * 1024 * 1024;
 
-type Phase = 'select' | 'importing' | 'success' | 'failed';
+type Phase = 'select' | 'checking' | 'importing' | 'success' | 'failed';
 
 /**
  * Import Vendors from .xlsx / .csv / .json (max 5 MB). The file is validated
- * here for type and size, then sent to POST /vendors/import, which reads it,
- * validates every row and writes everything — including any Vendor Type it
+ * here for type and size, then checked with POST /vendors/import/preview. New
+ * vendors are always added; when some rows match vendors that already exist the
+ * user is asked whether to update them (Yes) or leave them alone (No). The
+ * answer goes to POST /vendors/import as updateExisting, which validates every
+ * row and writes everything — including any Vendor Type or Material Category it
  * has to create — in one transaction, so a failure always means nothing was
  * imported. Closes with true if data changed.
  */
@@ -31,6 +35,7 @@ type Phase = 'select' | 'importing' | 'success' | 'failed';
 export class VendorImportDialogComponent {
   private readonly vendorService = inject(VendorService);
   private readonly dialogRef = inject(MatDialogRef<VendorImportDialogComponent, boolean>);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly accept = ACCEPT;
   protected readonly phase = signal<Phase>('select');
@@ -92,22 +97,67 @@ export class VendorImportDialogComponent {
     const file = this.file();
     if (!file || this.phase() === 'importing') return;
 
-    this.phase.set('importing');
+    // 1. Dry run: validates the file and finds which rows already exist.
+    this.phase.set('checking');
+    let updateExisting = true;
     try {
-      const res = await firstValueFrom(this.vendorService.importVendors(file));
+      const preview = (await firstValueFrom(this.vendorService.previewImport(file))).data;
+
+      if (preview.toUpdate > 0) {
+        const answer = await this.askToUpdateExisting(preview);
+        if (answer === null) {
+          // Dismissed without choosing — nothing has been written, so go back.
+          this.phase.set('select');
+          return;
+        }
+        updateExisting = answer;
+      }
+
+      // 2. The real import, with the user's answer.
+      this.phase.set('importing');
+      const res = await firstValueFrom(this.vendorService.importVendors(file, updateExisting));
       this.result.set(res.data);
       this.phase.set('success');
     } catch (e) {
-      const err = e as HttpErrorResponse;
-      const body = err?.error;
-      this.failureMessage.set(
-        (Array.isArray(body?.message) ? body.message.join(' · ') : body?.message)
-          || (err?.status === 413 ? 'The file is larger than the 5 MB limit.' : 'The import failed. Nothing was changed.'),
-      );
-      this.rowErrors.set(body?.errors ?? []);
-      this.totalErrors.set(body?.totalErrors ?? (body?.errors?.length ?? 0));
-      this.phase.set('failed');
+      this.showFailure(e as HttpErrorResponse);
     }
+  }
+
+  /** true = update them, false = leave them alone, null = dialog dismissed. */
+  private async askToUpdateExisting(preview: VendorImportPreview): Promise<boolean | null> {
+    const names = preview.existing.slice(0, 3).map((e) => `"${e.name}"`).join(', ');
+    const more = preview.toUpdate > 3 ? ` and ${preview.toUpdate - 3} more` : '';
+    const newLine = preview.toCreate > 0
+      ? ` The other ${preview.toCreate} new vendor${preview.toCreate === 1 ? '' : 's'} will be added either way.`
+      : '';
+
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      width: '480px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: {
+        title: 'Update existing vendors?',
+        message:
+          `${preview.toUpdate} of the ${preview.total} vendors in this file already exist (${names}${more}). \n\n` +
+          `Do you want to update them with the values from the file?${newLine}`,
+        confirmText: 'Yes, update them',
+        cancelText: 'No, skip them',
+        icon: 'sync_alt',
+      },
+    });
+    const answer = await firstValueFrom(ref.afterClosed());
+    return typeof answer === 'boolean' ? answer : null;
+  }
+
+  private showFailure(err: HttpErrorResponse): void {
+    const body = err?.error;
+    this.failureMessage.set(
+      (Array.isArray(body?.message) ? body.message.join(' · ') : body?.message)
+        || (err?.status === 413 ? 'The file is larger than the 5 MB limit.' : 'The import failed. Nothing was changed.'),
+    );
+    this.rowErrors.set(body?.errors ?? []);
+    this.totalErrors.set(body?.totalErrors ?? (body?.errors?.length ?? 0));
+    this.phase.set('failed');
   }
 
   tryAgain(): void {
@@ -117,7 +167,9 @@ export class VendorImportDialogComponent {
   }
 
   close(): void {
-    this.dialogRef.close(this.phase() === 'success');
+    const r = this.result();
+    // Only refresh the list when something was actually added or changed.
+    this.dialogRef.close(this.phase() === 'success' && !!r && r.created + r.updated > 0);
   }
 
   sizeLabel(bytes: number): string {

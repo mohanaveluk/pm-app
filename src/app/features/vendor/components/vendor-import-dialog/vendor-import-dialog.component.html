@@ -14,8 +14,9 @@
         Vendor Type and Material Category are matched by name (case- and plural-insensitive). A blank
         Vendor Type defaults to "Supplier"; a Vendor Type or Material Category that doesn't exist yet is
         created automatically.
-        A vendor is matched on Vendor Name + Vendor Type + Material Category together — a match is
-        updated, otherwise a new vendor is added with a generated code. The import is all-or-nothing.
+        A vendor is matched on Vendor Name + Vendor Type + Material Category together — a match is only
+        updated if you confirm, otherwise a new vendor is added with a generated code. The import is
+        all-or-nothing.
       </p>
 
       <input #picker type="file" hidden aria-hidden="true" [accept]="accept" (change)="onPicked($event)" />
@@ -48,6 +49,14 @@
       }
     }
 
+    @case ('checking') {
+      <div class="imp-state" role="status" aria-live="polite">
+        <mat-spinner diameter="48" />
+        <p class="imp-state__title">Checking {{ file()?.name }}…</p>
+        <p class="imp-state__sub">Validating rows and looking for vendors that already exist.</p>
+      </div>
+    }
+
     @case ('importing') {
       <div class="imp-state" role="status" aria-live="polite">
         <mat-spinner diameter="48" />
@@ -64,6 +73,7 @@
           <div><strong>{{ result()?.total }}</strong><span>rows processed</span></div>
           <div><strong>{{ result()?.created }}</strong><span>added</span></div>
           <div><strong>{{ result()?.updated }}</strong><span>updated</span></div>
+          <div><strong>{{ result()?.skipped }}</strong><span>skipped</span></div>
         </div>
         @if (result()?.vendorTypesCreated?.length) {
           <p class="imp-note">
@@ -91,7 +101,11 @@
                   <td>{{ item.row }}</td>
                   <td>{{ item.code }}</td>
                   <td>{{ item.name }}</td>
-                  <td><span class="imp-tag" [class.imp-tag--upd]="item.action === 'updated'">{{ item.action }}</span></td>
+                  <td>
+                    <span class="imp-tag"
+                          [class.imp-tag--upd]="item.action === 'updated'"
+                          [class.imp-tag--skip]="item.action === 'skipped'">{{ item.action }}</span>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -135,6 +149,9 @@
       <button mat-raised-button color="primary" type="button" [disabled]="!file()" (click)="startImport()">
         <mat-icon>upload</mat-icon> Import
       </button>
+    }
+    @case ('checking') {
+      <button mat-button type="button" disabled>Checking…</button>
     }
     @case ('importing') {
       <button mat-button type="button" disabled>Importing…</button>

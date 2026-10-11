@@ -177,6 +177,11 @@ export const routes: Routes = [
             data: { breadcrumb: 'Create User', permission: PERMISSIONS.USERS_MANAGE, mode: 'create' },
           },
           {
+            path: 'users/:uguid/reset-password',
+            loadComponent: () => import('./features/admin/users/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+            data: { breadcrumb: 'Reset Password', permission: PERMISSIONS.USERS_MANAGE },
+          },
+          {
             path: 'users/:uguid/edit',
             loadComponent: () => import('./features/admin/users/create-user/create-user.component').then(m => m.CreateUserComponent),
             data: { breadcrumb: 'Edit User', permission: PERMISSIONS.USERS_MANAGE, mode: 'edit' },
