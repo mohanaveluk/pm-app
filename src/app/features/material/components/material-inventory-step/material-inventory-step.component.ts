@@ -4,21 +4,24 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MaterialFormService } from '../../services/material-form.service';
 import { STOCKING_STRATEGY_OPTIONS } from '../../models/material.model';
 
 /**
- * Step 4 — Inventory & Storage. Carries a cross-field rule: safety stock must not
- * exceed the maximum stock level (enforced by `stockRangeValidator` on the group).
+ * Step 4 — Inventory & Storage. Holds the Material Control Type flags (stock item,
+ * serialized, batch managed) because they decide how the item is stocked. Carries a
+ * cross-field rule: safety stock must not exceed the maximum stock level (enforced
+ * by `stockRangeValidator` on the group).
  */
 @Component({
   selector: 'app-material-inventory-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatIconModule, MatTooltipModule,
+    MatSelectModule, MatSlideToggleModule, MatIconModule, MatTooltipModule,
   ],
   templateUrl: './material-inventory-step.component.html',
   styleUrl: '../material-step.shared.scss',

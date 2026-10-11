@@ -6,7 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
@@ -32,7 +31,7 @@ const SHORT_DESCRIPTION_MAX = 500;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatButtonModule, MatIconModule, MatSlideToggleModule,
+    MatSelectModule, MatButtonModule, MatIconModule,
     MatTooltipModule, MatProgressSpinnerModule,
   ],
   templateUrl: './material-general-step.component.html',

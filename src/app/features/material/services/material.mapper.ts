@@ -25,9 +25,6 @@ export interface MaterialFormValue {
     materialGroupId: string;
     unitOfMeasurementId: string;
     criticalityLevel: CriticalityLevel;
-    isStockItem: boolean;
-    isSerialized: boolean;
-    isBatchManaged: boolean;
     remarks: string;
   };
   technical: {
@@ -42,6 +39,10 @@ export interface MaterialFormValue {
     contractReference: string; hsCode: string; countryOfOrigin: string;
   };
   inventory: {
+    // Material Control Type: sent as core (un-nested) fields, edited on this step.
+    isStockItem: boolean;
+    isSerialized: boolean;
+    isBatchManaged: boolean;
     storageLocation: string; warehouseBinRack: string; storageConditions: string;
     shelfLifeDays: number | null; stockingStrategy: StockingStrategy | null;
     safetyStock: number | null; maximumStockLevel: number | null;
@@ -121,9 +122,9 @@ export function toMaterialRequest(v: MaterialFormValue): CreateMaterialRequest {
     criticalityLevel: v.general.criticalityLevel,
     longDescription: s(v.general.longDescription),
     specialInstruction: s(v.general.specialInstruction),
-    isStockItem: v.general.isStockItem,
-    isSerialized: v.general.isSerialized,
-    isBatchManaged: v.general.isBatchManaged,
+    isStockItem: v.inventory.isStockItem,
+    isSerialized: v.inventory.isSerialized,
+    isBatchManaged: v.inventory.isBatchManaged,
     remarks: s(v.general.remarks),
 
     technicalSpec: compact({
@@ -237,14 +238,19 @@ export function pickMaterialSection(
         criticalityLevel: request.criticalityLevel,
         longDescription: request.longDescription,
         specialInstruction: request.specialInstruction,
-        isStockItem: request.isStockItem,
-        isSerialized: request.isSerialized,
-        isBatchManaged: request.isBatchManaged,
         remarks: request.remarks,
       };
     case 'technical':   return { technicalSpec: request.technicalSpec ?? {} };
     case 'procurement': return { procurement:   request.procurement   ?? {} };
-    case 'inventory':   return { inventory:     request.inventory     ?? {} };
+    case 'inventory':
+      // The control-type flags are core fields on the DTO but are edited on this
+      // step, so they travel with it rather than with 'general'.
+      return {
+        inventory: request.inventory ?? {},
+        isStockItem: request.isStockItem,
+        isSerialized: request.isSerialized,
+        isBatchManaged: request.isBatchManaged,
+      };
     case 'quality':     return { quality:       request.quality       ?? {} };
     case 'accounting':  return { accounting:    request.accounting    ?? {} };
     case 'safety':      return { safety:        request.safety        ?? {} };
@@ -271,9 +277,6 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       materialGroupId: m.materialGroupId ?? '',
       unitOfMeasurementId: m.unitOfMeasurementId ?? '',
       criticalityLevel: m.criticalityLevel ?? CriticalityLevel.MEDIUM,
-      isStockItem: m.isStockItem ?? true,
-      isSerialized: m.isSerialized ?? false,
-      isBatchManaged: m.isBatchManaged ?? false,
       remarks: m.remarks ?? '',
     },
     technical: {
@@ -301,6 +304,9 @@ export function toMaterialFormValue(m: Material): MaterialFormValue {
       countryOfOrigin: m.countryOfOrigin ?? '',
     },
     inventory: {
+      isStockItem: m.isStockItem ?? true,
+      isSerialized: m.isSerialized ?? false,
+      isBatchManaged: m.isBatchManaged ?? false,
       storageLocation: m.storageLocation ?? '',
       warehouseBinRack: m.warehouseBinRack ?? '',
       storageConditions: m.storageConditions ?? '',

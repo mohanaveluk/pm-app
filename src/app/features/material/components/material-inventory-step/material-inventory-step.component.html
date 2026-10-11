@@ -1,6 +1,36 @@
 <div class="step" [formGroup]="group">
 
   <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>tune</mat-icon> Material Control Type</h3>
+
+    <div class="step-toggles">
+      <div class="step-toggle">
+        <span class="step-toggle__label">Stock Item</span>
+        <mat-slide-toggle formControlName="isStockItem" color="primary">
+          {{ group.get('isStockItem')?.value ? 'Warehouse managed' : 'Direct charge' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Off for services and direct-charge items</span>
+      </div>
+
+      <div class="step-toggle">
+        <span class="step-toggle__label">Serialized</span>
+        <mat-slide-toggle formControlName="isSerialized" color="primary">
+          {{ group.get('isSerialized')?.value ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Each unit carries a unique serial number</span>
+      </div>
+
+      <div class="step-toggle">
+        <span class="step-toggle__label">Batch Managed</span>
+        <mat-slide-toggle formControlName="isBatchManaged" color="primary">
+          {{ group.get('isBatchManaged')?.value ? 'Yes' : 'No' }}
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Tracked in batches or lots</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="step-section">
     <h3 class="step-section__title"><mat-icon>warehouse</mat-icon> Storage</h3>
     <div class="step-grid">
       <mat-form-field appearance="outline">

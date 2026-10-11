@@ -1,5 +1,5 @@
 import {
-  Component, signal, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef,
+  Component, signal, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -14,12 +14,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { ApiService } from '../../../../services/api.service';
 import { UserDetailDialogComponent } from '../user-detail-dialog/user-detail-dialog.component';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
 import { CommonService, AuthService } from '../../../../services';
 
 type ViewMode = 'grid' | 'table';
+type StatusFilter = 'all' | 'active' | 'disabled' | 'pending';
+type AccountTypeFilter = 'all' | 'internal' | 'external';
 
 export interface OrgUser {
   id: string;
@@ -52,6 +57,7 @@ export interface OrgUser {
     MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatChipsModule,
     MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule,
     MatDialogModule, MatDividerModule, MatTableModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule,
   ],
   templateUrl: './user-list.component.html',
   styleUrl: './user-list.component.scss',
@@ -83,6 +89,81 @@ export class UserListComponent implements OnInit {
   readonly viewMode       = signal<ViewMode>('grid');
 
   readonly tableColumns = ['avatar', 'name', 'role', 'location', 'report_to', 'status', 'actions'];
+
+  // ── Search & filters (client-side: the org's users are loaded in one call) ──
+  readonly searchTerm     = signal('');
+  readonly statusFilter   = signal<StatusFilter>('all');
+  readonly roleFilter     = signal('');
+  readonly typeFilter     = signal<AccountTypeFilter>('all');
+  readonly locationFilter = signal('');
+  readonly positionFilter = signal('');
+
+  /** Dropdown options are whatever the loaded users actually have, so no empty choices. */
+  readonly roleOptions     = computed(() => this.distinct(this.users().map(u => u.role?.name)));
+  readonly locationOptions = computed(() => this.distinct(this.users().map(u => u.location)));
+  readonly positionOptions = computed(() => this.distinct(this.users().map(u => u.position)));
+
+  readonly hasActiveFilters = computed(() =>
+    !!this.searchTerm().trim()
+    || this.statusFilter() !== 'all'
+    || !!this.roleFilter()
+    || this.typeFilter() !== 'all'
+    || !!this.locationFilter()
+    || !!this.positionFilter(),
+  );
+
+  readonly filteredUsers = computed(() => {
+    // Every word typed must match somewhere, so "john dubai" narrows by both.
+    const words = this.searchTerm().toLowerCase().split(/\s+/).filter(Boolean);
+    const status = this.statusFilter();
+    const role = this.roleFilter();
+    const type = this.typeFilter();
+    const location = this.locationFilter();
+    const position = this.positionFilter();
+
+    return this.users().filter((u) => {
+      if (status !== 'all' && this.statusKey(u) !== status) return false;
+      if (role && u.role?.name !== role) return false;
+      if (type === 'external' && u.is_internal !== 0) return false;
+      if (type === 'internal' && u.is_internal === 0) return false;
+      if (location && u.location !== location) return false;
+      if (position && u.position !== position) return false;
+
+      if (!words.length) return true;
+      const haystack = [
+        u.first_name, u.last_name, u.email, u.mobile, u.role?.name,
+        u.position, u.location, u.report_to,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return words.every((w) => haystack.includes(w));
+    });
+  });
+
+  onSearchInput(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+  }
+
+  clearSearch(): void {
+    this.searchTerm.set('');
+  }
+
+  resetFilters(): void {
+    this.searchTerm.set('');
+    this.statusFilter.set('all');
+    this.roleFilter.set('');
+    this.typeFilter.set('all');
+    this.locationFilter.set('');
+    this.positionFilter.set('');
+  }
+
+  private statusKey(u: OrgUser): Exclude<StatusFilter, 'all'> {
+    if (!u.is_email_verified) return 'pending';
+    return u.is_active ? 'active' : 'disabled';
+  }
+
+  private distinct(values: (string | null | undefined)[]): string[] {
+    return [...new Set(values.map(v => (v ?? '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+  }
 
   ngOnInit(): void {
     const me = this.auth.user();

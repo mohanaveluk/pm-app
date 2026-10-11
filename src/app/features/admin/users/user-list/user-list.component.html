@@ -42,10 +42,95 @@
 
   @if (!loading() && users().length > 0) {
 
+    <!-- ── Search & filters ── -->
+    <div class="user-filters">
+      <mat-form-field appearance="outline" class="user-filters__search">
+        <mat-label>Search by name, email, role, location, reports to, position…</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [value]="searchTerm()" (input)="onSearchInput($event)" autocomplete="off" />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button type="button" aria-label="Clear search" (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-filters__select">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+          <mat-option value="all">All</mat-option>
+          <mat-option value="active">Active</mat-option>
+          <mat-option value="disabled">Disabled</mat-option>
+          <mat-option value="pending">Pending</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-filters__select">
+        <mat-label>Role</mat-label>
+        <mat-select [value]="roleFilter()" (selectionChange)="roleFilter.set($event.value)">
+          <mat-option value="">All roles</mat-option>
+          @for (r of roleOptions(); track r) {
+            <mat-option [value]="r">{{ r }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-filters__select">
+        <mat-label>Account type</mat-label>
+        <mat-select [value]="typeFilter()" (selectionChange)="typeFilter.set($event.value)">
+          <mat-option value="all">All</mat-option>
+          <mat-option value="internal">Internal</mat-option>
+          <mat-option value="external">External User</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-filters__select">
+        <mat-label>Location</mat-label>
+        <mat-select [value]="locationFilter()" (selectionChange)="locationFilter.set($event.value)">
+          <mat-option value="">All locations</mat-option>
+          @for (l of locationOptions(); track l) {
+            <mat-option [value]="l">{{ l }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-filters__select">
+        <mat-label>Position</mat-label>
+        <mat-select [value]="positionFilter()" (selectionChange)="positionFilter.set($event.value)">
+          <mat-option value="">All positions</mat-option>
+          @for (p of positionOptions(); track p) {
+            <mat-option [value]="p">{{ p }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (hasActiveFilters()) {
+        <button mat-button type="button" class="user-filters__reset" (click)="resetFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Reset Filters
+        </button>
+      }
+    </div>
+
+    <p class="user-filters__count" role="status" aria-live="polite">
+      @if (hasActiveFilters()) {
+        Showing {{ filteredUsers().length }} of {{ users().length }} users
+      } @else {
+        {{ users().length }} user{{ users().length === 1 ? '' : 's' }}
+      }
+    </p>
+
+    @if (filteredUsers().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">search_off</mat-icon>
+        <p>No users match your search or filters.</p>
+        <button mat-stroked-button type="button" (click)="resetFilters()">Reset Filters</button>
+      </div>
+    }
+
     <!-- ── GRID VIEW ── -->
     @if (viewMode() === 'grid') {
       <div class="users-grid" [@staggerIn]="users().length">
-        @for (user of users(); track user.id) {
+        @for (user of filteredUsers(); track user.id) {
           <mat-card class="user-card" (click)="openDetail(user)">
             <div class="card-top">
               <div class="avatar-wrap">
@@ -83,11 +168,17 @@
               }
             </div>
 
+            @if (user.is_internal === 0) {
+              <div class="card-tags">
+                <mat-chip color="accent" highlighted
+                          matTooltip="Scoped to only the Vendor Master records this account creates">
+                  External User
+                </mat-chip>
+              </div>
+            }
+
             <div class="card-footer">
               <mat-chip [color]="statusColor(user)" highlighted>{{ statusLabel(user) }}</mat-chip>
-              @if (user.is_internal === 0) {
-                <mat-chip color="accent" matTooltip="Scoped to only the Vendor Master records this account creates">External</mat-chip>
-              }
 
               <div class="action-icons" (click)="$event.stopPropagation()">
                 @if (!user.is_email_verified) {
@@ -132,7 +223,7 @@
     <!-- ── TABLE VIEW ── -->
     @if (viewMode() === 'table') {
       <div class="table-wrap">
-        <table mat-table [dataSource]="users()" class="users-table">
+        <table mat-table [dataSource]="filteredUsers()" class="users-table">
 
           <!-- Avatar + Name column -->
           <ng-container matColumnDef="avatar">
@@ -194,15 +285,17 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let user">
-              <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
-                {{ statusLabel(user) }}
-              </mat-chip>
-              @if (user.is_internal === 0) {
-                <mat-chip color="accent" highlighted class="status-chip-sm"
-                          matTooltip="Scoped to only the Vendor Master records this account creates">
-                  External
+              <div class="tbl-status">
+                @if (user.is_internal === 0) {
+                  <mat-chip color="accent" highlighted class="status-chip-sm"
+                            matTooltip="Scoped to only the Vendor Master records this account creates">
+                    External User
+                  </mat-chip>
+                }
+                <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
+                  {{ statusLabel(user) }}
                 </mat-chip>
-              }
+              </div>
             </td>
           </ng-container>
 
