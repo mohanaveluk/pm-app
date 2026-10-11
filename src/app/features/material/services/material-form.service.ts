@@ -111,9 +111,6 @@ export class MaterialFormService {
         materialGroupId: ['', [Validators.required]],
         unitOfMeasurementId: ['', [Validators.required]],
         criticalityLevel: [CriticalityLevel.MEDIUM as CriticalityLevel, [Validators.required]],
-        isStockItem: [true],
-        isSerialized: [false],
-        isBatchManaged: [false],
         remarks: [''],
       }),
       technical: this.fb.group({
@@ -142,6 +139,11 @@ export class MaterialFormService {
       }),
       inventory: this.fb.group(
         {
+          // Material Control Type — core fields on the API, but part of how the
+          // item is stocked, so they are edited on the Inventory step.
+          isStockItem: [true],
+          isSerialized: [false],
+          isBatchManaged: [false],
           storageLocation: ['', [Validators.maxLength(255)]],
           warehouseBinRack: ['', [Validators.maxLength(100)]],
           storageConditions: [''],
