@@ -12,7 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { VendorFormService } from '../../services/vendor-form.service';
-import { VendorStatus, enumLabel } from '../../models/vendor.model';
+import { VENDOR_ACCOUNT_GROUP_OPTIONS, VendorStatus, enumLabel } from '../../models/vendor.model';
 import { firstErrorMessage } from '../../validators/vendor.validators';
 import {
   CreateCategoryDialogComponent, CreateCategoryDialogResult,
@@ -47,6 +47,7 @@ export class VendorIdentificationStepComponent {
   readonly vendorCode = input<string | null>(null);
   readonly vendorStatus = input<VendorStatus | null>(null);
 
+  protected readonly accountGroupOptions = VENDOR_ACCOUNT_GROUP_OPTIONS;
   protected readonly parentSearch = signal('');
   protected readonly materialSearch = signal('');
   protected readonly vendorTypeSearch = signal('');

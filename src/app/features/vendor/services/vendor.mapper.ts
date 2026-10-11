@@ -5,7 +5,7 @@ import {
 } from '../models/vendor-request.model';
 import {
   DeliveryCapability, PaymentMethod, PaymentTerms,
-  TaxDocumentType, TransportationMode, Vendor, VendorAddressType,
+  TaxDocumentType, TransportationMode, Vendor, VendorAccountGroup, VendorAddressType,
 } from '../models/vendor.model';
 import { joinPhone, splitPhone } from '../../../shared/reference/countries';
 
@@ -260,6 +260,7 @@ function toScalarPayload(v: FormValue, resolveNames: CategoryNameResolver): Omit
   return {
     vendorDescription: text(id.vendorDescription),
     tradeName: text(id.tradeName),
+    vendorAccountGroup: (id.vendorAccountGroup as VendorAccountGroup) || undefined,
     parentCompanyId: text(id.parentCompanyId),
     remarks: text(id.remarks),
 
@@ -470,6 +471,7 @@ export function toVendorFormValue(vendor: Vendor, resolveIds: CategoryIdResolver
       vendorName: vendor.vendorName ?? '',
       vendorDescription: vendor.vendorDescription ?? '',
       tradeName: vendor.tradeName ?? '',
+      vendorAccountGroup: vendor.vendorAccountGroup ?? null,
       vendorTypeId: vendor.vendorTypeId ?? null,
       industryCategoryId: vendor.industryCategoryId ?? '',
       productCategories: resolveIds(vendor.productCategories ?? []),

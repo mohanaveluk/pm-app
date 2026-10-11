@@ -109,6 +109,12 @@
                     </button>
                   }
                 }
+                @if (canResetPassword(user)) {
+                  <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
+                          (click)="resetPassword(user, $event)">
+                    <mat-icon>lock_reset</mat-icon>
+                  </button>
+                }
                 <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -222,6 +228,12 @@
                       <mat-icon>how_to_reg</mat-icon>
                     </button>
                   }
+                }
+                @if (canResetPassword(user)) {
+                  <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
+                          (click)="resetPassword(user, $event)">
+                    <mat-icon>lock_reset</mat-icon>
+                  </button>
                 }
                 <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
                   <mat-icon>edit</mat-icon>

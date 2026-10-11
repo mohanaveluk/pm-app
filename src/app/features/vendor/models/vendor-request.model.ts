@@ -2,6 +2,7 @@ import {
   DeliveryCapability, EvaluationDecision, EvaluationStage, PaymentMethod, PaymentTerms,
   PendingStatusChange, RiskCategory, TaxDocumentType, TransportationMode, VendorAddressType,
   VendorClassification, VendorDocumentType, VendorSortField, VendorStatus,
+  VendorAccountGroup,
 } from './vendor.model';
 
 /**
@@ -190,6 +191,7 @@ export interface CreateVendorRequest {
 
   vendorDescription?: string;
   tradeName?: string;
+  vendorAccountGroup?: VendorAccountGroup;
   parentCompanyId?: string;
 
   primaryContactPerson?: string;

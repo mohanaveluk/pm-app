@@ -138,6 +138,17 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/v1/auth/${uguid}/status`, { isActive });
   }
 
+  /**
+   * POST /auth/:uguid/reset-password — admin resets a user's forgotten password to the
+   * default temporary one and the user is emailed. `emailSent` is false when the
+   * reset succeeded but the notification could not be delivered.
+   */
+  adminResetUserPassword(uguid: string): Observable<{ message: string; emailSent: boolean }> {
+    return this.http.post<{ message: string; emailSent: boolean }>(
+      `${this.baseUrl}/v1/auth/${uguid}/reset-password`, {},
+    );
+  }
+
   /** PUT /auth/:uguid — admin edit of any field except password (role, is_internal included). */
   updateUser(uguid: string, data: {
     first_name?: string;

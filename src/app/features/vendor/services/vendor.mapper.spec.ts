@@ -61,3 +61,22 @@ describe('vendor mapper — contacts', () => {
     expect(rows[0]).toMatchObject({ contactPerson: 'Legacy', email: 'l@v.example', isPrimary: true });
   });
 });
+
+describe('vendor mapper — account group', () => {
+  it('sends the chosen account group and omits it when none is chosen', () => {
+    const withGroup: any = form([row({ contactPerson: 'Asha' })]);
+    withGroup.identification.vendorAccountGroup = 'IMPORT';
+    expect(toCreateRequest(withGroup).vendorAccountGroup).toBe('IMPORT');
+    expect(toUpdateRequest(withGroup).vendorAccountGroup).toBe('IMPORT');
+
+    const without: any = form([row({ contactPerson: 'Asha' })]);
+    without.identification.vendorAccountGroup = null;
+    expect(toCreateRequest(without).vendorAccountGroup).toBeUndefined();
+  });
+
+  it('rehydrates the stored account group, null when the vendor has none', () => {
+    const stored = { vendorName: 'ABC', vendorAccountGroup: 'ONE_TIME' } as unknown as Vendor;
+    expect(toVendorFormValue(stored).identification.vendorAccountGroup).toBe('ONE_TIME');
+    expect(toVendorFormValue({ vendorName: 'ABC' } as unknown as Vendor).identification.vendorAccountGroup).toBeNull();
+  });
+});

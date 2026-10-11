@@ -50,7 +50,7 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" maxlength="255" [readonly]="readonly()" placeholder="contact@vendor.example" />
+            <input matInput type="email" formControlName="email" maxlength="255" required [readonly]="readonly()" placeholder="contact@vendor.example" />
             @if (contactErr($index, 'email', 'Email')) {
               <mat-error>{{ contactErr($index, 'email', 'Email') }}</mat-error>
             }
@@ -61,7 +61,7 @@
             <div class="phone-row">
               <mat-form-field appearance="outline" class="phone-row__code">
                 <mat-label>Code</mat-label>
-                <mat-select formControlName="mobileDialCode" [disabled]="readonly()">
+                <mat-select formControlName="mobileDialCode" required [disabled]="readonly()">
                   <mat-option class="select-search-option">
                     <input
                       class="select-search"
@@ -75,16 +75,18 @@
                       (keydown)="$event.stopPropagation()"
                     />
                   </mat-option>
-                  <mat-option value="">—</mat-option>
                   @for (country of optionSearch.dialCodes(dialKey($index, 'mobile'), countries); track country.code) {
                     <mat-option [value]="country.dialCode">{{ country.flag }} {{ country.dialCode }}</mat-option>
                   }
                 </mat-select>
+                @if (contactErr($index, 'mobileDialCode', 'Code')) {
+                  <mat-error>{{ contactErr($index, 'mobileDialCode', 'Code') }}</mat-error>
+                }
               </mat-form-field>
   
               <mat-form-field appearance="outline" class="phone-row__number">
                 <mat-label>Mobile Number</mat-label>
-                <input matInput formControlName="mobileNumber" [readonly]="readonly()" placeholder="50 123 4567" />
+                <input matInput formControlName="mobileNumber" required [readonly]="readonly()" placeholder="50 123 4567" />
                 @if (contactErr($index, 'mobileNumber', 'Mobile number')) {
                   <mat-error>{{ contactErr($index, 'mobileNumber', 'Mobile number') }}</mat-error>
                 }

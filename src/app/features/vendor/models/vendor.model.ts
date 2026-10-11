@@ -62,6 +62,12 @@ export enum PaymentTerms {
   OTHER = 'OTHER',
 }
 
+export enum VendorAccountGroup {
+  DOMESTIC = 'DOMESTIC',
+  IMPORT = 'IMPORT',
+  ONE_TIME = 'ONE_TIME',
+}
+
 export enum PaymentMethod {
   BANK_TRANSFER = 'BANK_TRANSFER',
   CHEQUE = 'CHEQUE',
@@ -244,6 +250,12 @@ export const PAYMENT_TERMS_OPTIONS: readonly EnumOption<PaymentTerms>[] = [
   { value: PaymentTerms.MILESTONE_BASED, label: 'Milestone based' },
   { value: PaymentTerms.LETTER_OF_CREDIT, label: 'Letter of Credit' },
   { value: PaymentTerms.OTHER, label: 'Other' },
+];
+
+export const VENDOR_ACCOUNT_GROUP_OPTIONS: readonly EnumOption<VendorAccountGroup>[] = [
+  { value: VendorAccountGroup.DOMESTIC, label: 'Domestic' },
+  { value: VendorAccountGroup.IMPORT, label: 'Import' },
+  { value: VendorAccountGroup.ONE_TIME, label: 'One-time' },
 ];
 
 export const PAYMENT_METHOD_OPTIONS: readonly EnumOption<PaymentMethod>[] = [
@@ -430,6 +442,7 @@ export interface Vendor {
   vendorName: string;
   vendorDescription?: string;
   tradeName?: string;
+  vendorAccountGroup?: VendorAccountGroup;
   vendorTypeId: string;
   vendorType?: { id: string; code?: string; name?: string };
 
@@ -540,6 +553,7 @@ export interface VendorListItem {
   code: string;
   vendorName: string;
   tradeName?: string;
+  vendorAccountGroup?: VendorAccountGroup;
   vendorTypeId: string;
   vendorTypeName?: string;
   vendorStatus: VendorStatus;
@@ -570,6 +584,7 @@ export interface VendorOption {
   code: string;
   vendorName: string;
   tradeName?: string;
+  vendorAccountGroup?: VendorAccountGroup;
   vendorTypeId: string;
   vendorTypeName?: string;
   vendorStatus: VendorStatus;
@@ -625,6 +640,7 @@ const LABELS: Record<string, string> = {
   ...Object.fromEntries(VENDOR_STATUS_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(VENDOR_CLASSIFICATION_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(PAYMENT_TERMS_OPTIONS.map((o) => [o.value, o.label])),
+  ...Object.fromEntries(VENDOR_ACCOUNT_GROUP_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(PAYMENT_METHOD_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(DELIVERY_CAPABILITY_OPTIONS.map((o) => [o.value, o.label])),
   ...Object.fromEntries(RISK_CATEGORY_OPTIONS.map((o) => [o.value, o.label])),

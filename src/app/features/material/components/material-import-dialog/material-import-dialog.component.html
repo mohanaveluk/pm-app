@@ -11,7 +11,8 @@
         Upload an <strong>.xlsx</strong>, <strong>.csv</strong> or <strong>.json</strong> file (max 5 MB) with the columns
         <em>Code, Short Description, Long Description, UOM, Material Category, Material Group</em>.
         Category, group and UOM are matched by name (case-insensitive). A material whose Short Description
-        already exists is updated; otherwise it is added with a generated code. The import is all-or-nothing.
+        already exists is only updated if you confirm; otherwise it is added with a generated code. The import is
+        all-or-nothing.
       </p>
 
       <input #picker type="file" hidden aria-hidden="true" [accept]="accept" (change)="onPicked($event)" />
@@ -44,6 +45,14 @@
       }
     }
 
+    @case ('checking') {
+      <div class="imp-state" role="status" aria-live="polite">
+        <mat-spinner diameter="48" />
+        <p class="imp-state__title">Checking {{ file()?.name }}…</p>
+        <p class="imp-state__sub">Validating rows and looking for materials that already exist.</p>
+      </div>
+    }
+
     @case ('importing') {
       <div class="imp-state" role="status" aria-live="polite">
         <mat-spinner diameter="48" />
@@ -60,6 +69,7 @@
           <div><strong>{{ result()?.total }}</strong><span>rows processed</span></div>
           <div><strong>{{ result()?.created }}</strong><span>added</span></div>
           <div><strong>{{ result()?.updated }}</strong><span>updated</span></div>
+          <div><strong>{{ result()?.skipped }}</strong><span>skipped</span></div>
         </div>
       </div>
 
@@ -73,7 +83,11 @@
                   <td>{{ item.row }}</td>
                   <td>{{ item.code }}</td>
                   <td>{{ item.name }}</td>
-                  <td><span class="imp-tag" [class.imp-tag--upd]="item.action === 'updated'">{{ item.action }}</span></td>
+                  <td>
+                    <span class="imp-tag"
+                          [class.imp-tag--upd]="item.action === 'updated'"
+                          [class.imp-tag--skip]="item.action === 'skipped'">{{ item.action }}</span>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -117,6 +131,9 @@
       <button mat-raised-button color="primary" type="button" [disabled]="!file()" (click)="startImport()">
         <mat-icon>upload</mat-icon> Import
       </button>
+    }
+    @case ('checking') {
+      <button mat-button type="button" disabled>Checking…</button>
     }
     @case ('importing') {
       <button mat-button type="button" disabled>Importing…</button>

@@ -16,7 +16,7 @@ import {
   VendorStatusChangeAcceptedResponse, VendorStatusChangeRequestsResponse,
 } from '../models/vendor-response.model';
 import { VendorDocumentType } from '../models/vendor.model';
-import { VendorImportResult } from '../models/vendor-import.model';
+import { VendorImportPreview, VendorImportResult } from '../models/vendor-import.model';
 import { ApiEnvelope } from '../models/vendor-response.model';
 
 export interface UploadedVendorDocument {
@@ -284,9 +284,21 @@ export class VendorService {
    * Material Category already match, and creating any missing Vendor Type along the
    * way) or nothing. A 422 carries per-row `errors`.
    */
-  importVendors(file: File): Observable<ApiEnvelope<VendorImportResult>> {
+  importVendors(file: File, updateExisting = true): Observable<ApiEnvelope<VendorImportResult>> {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<ApiEnvelope<VendorImportResult>>(`${this.baseUrl}/import`, form);
+    const params = new HttpParams().set('updateExisting', String(updateExisting));
+    return this.http.post<ApiEnvelope<VendorImportResult>>(`${this.baseUrl}/import`, form, { params });
+  }
+
+  /**
+   * POST /vendors/import/preview — validates the file like a real import but writes
+   * nothing, and reports how many rows are new vs. already exist, so the caller can
+   * ask before existing vendors are updated.
+   */
+  previewImport(file: File): Observable<ApiEnvelope<VendorImportPreview>> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ApiEnvelope<VendorImportPreview>>(`${this.baseUrl}/import/preview`, form);
   }
 }

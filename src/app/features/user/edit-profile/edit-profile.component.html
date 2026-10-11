@@ -195,10 +195,11 @@
           </div>
         </section>
 
+        @if (!isExternal()) {
         <mat-divider />
 
         <!-- ════════════════════════════════════════════════════════
-             SECTION 3 — Work Details
+             SECTION 3 — Work Details (internal staff only)
         ═════════════════════════════════════════════════════════ -->
         <section class="form-section">
           <div class="section-head">
@@ -286,6 +287,7 @@
             </mat-form-field>
           </div>
         </section>
+        }
 
         <!-- ── Sticky action bar ──────────────────────────────────── -->
         <div class="bottom-bar">

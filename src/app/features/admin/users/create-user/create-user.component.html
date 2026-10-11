@@ -48,6 +48,23 @@
             </div>
           </div>
 
+          <!-- Account type comes first: it decides which of the remaining sections apply. -->
+          <div class="account-type">
+            <mat-slide-toggle formControlName="isExternal" color="primary">
+              External user
+            </mat-slide-toggle>
+            <p class="field-hint">
+              @if (isExternal()) {
+                External accounts (vendor-side contacts) only ever see and manage the Vendor
+                Master records they themselves create — nothing else in the organisation. Work
+                details are not needed, and the role is set to match.
+              } @else {
+                Internal staff. Leave off for anyone on your own team — they can see every
+                vendor in the organisation they're granted access to.
+              }
+            </p>
+          </div>
+
           <div class="form-grid">
             <mat-form-field appearance="outline">
               <mat-label>First Name *</mat-label>
@@ -160,27 +177,13 @@
             </mat-form-field>
           </div>
 
-          <!-- Account type — internal staff vs external (vendor-side) account -->
-          <div class="account-type">
-            <mat-slide-toggle formControlName="isExternal" color="primary">
-              External user
-            </mat-slide-toggle>
-            <p class="field-hint">
-              @if (form.get('isExternal')?.value) {
-                External accounts (vendor-side contacts) only ever see and manage the Vendor
-                Master records they themselves create — nothing else in the organisation.
-              } @else {
-                Internal staff. Leave off for anyone on your own team — they can see every
-                vendor in the organisation they're granted access to.
-              }
-            </p>
-          </div>
         </section>
 
+        @if (!isExternal()) {
         <mat-divider />
 
         <!-- ════════════════════════════════════════════════════════
-             SECTION 3 — Work Details
+             SECTION 3 — Work Details (internal staff only)
         ═════════════════════════════════════════════════════════ -->
         <section class="form-section">
           <div class="section-head">
@@ -270,6 +273,7 @@
 
           </div>
         </section>
+        }
 
         <!-- ── Action bar ──────────────────────────────────────── -->
         <div class="form-actions">

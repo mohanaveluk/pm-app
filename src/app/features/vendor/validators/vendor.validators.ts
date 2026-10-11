@@ -120,3 +120,11 @@ export function firstErrorMessage(control: AbstractControl | null, label = 'This
   if (e['pattern']) return `${label} is not in the expected format`;
   return `${label} is invalid`;
 }
+
+/**
+ * `Validators.required` accepts "   "; the API trims before validating, so a
+ * whitespace-only value would pass the form and then be rejected server-side.
+ */
+export function requiredNonBlank(control: AbstractControl): ValidationErrors | null {
+  return (control.value ?? '').toString().trim() ? null : { required: true };
+}
