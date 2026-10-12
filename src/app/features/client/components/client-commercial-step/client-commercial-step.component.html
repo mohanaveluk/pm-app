@@ -1,0 +1,129 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>gavel</mat-icon> Legal Entity</h3>
+    <p class="step-section__hint">
+      Registration and tax numbers are optional — enter them where the client's country or contract requires.
+    </p>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Legal Entity Name</mat-label>
+        <input matInput formControlName="legalEntityName" maxlength="255" placeholder="As registered" />
+        @if (err('legalEntityName')) { <mat-error>{{ err('legalEntityName') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Legal Entity Type</mat-label>
+        <mat-select formControlName="legalEntityType">
+          <mat-option value="">— None —</mat-option>
+          @for (t of legalTypes; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Contracting Entity</mat-label>
+        <input matInput formControlName="contractingEntityName" maxlength="255" placeholder="Entity that signs contracts" />
+        @if (err('contractingEntityName')) { <mat-error>{{ err('contractingEntityName') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Registration Number</mat-label>
+        <input matInput formControlName="registrationNumber" maxlength="50" autocomplete="off" />
+        <mat-hint>Business registration identifier</mat-hint>
+        @if (err('registrationNumber')) { <mat-error>{{ err('registrationNumber') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tax / VAT / GST Number</mat-label>
+        <input matInput formControlName="taxRegistrationNumber" maxlength="50" autocomplete="off" />
+        @if (err('taxRegistrationNumber')) { <mat-error>{{ err('taxRegistrationNumber') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>D-U-N-S / External Business ID</mat-label>
+        <input matInput formControlName="externalBusinessId" maxlength="50" autocomplete="off" />
+        @if (err('externalBusinessId')) { <mat-error>{{ err('externalBusinessId') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Applicable Tax Region</mat-label>
+        <input matInput formControlName="taxRegion" maxlength="100" placeholder="e.g. UAE VAT, EU VAT" />
+        @if (err('taxRegion')) { <mat-error>{{ err('taxRegion') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>payments</mat-icon> Commercial Terms</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Default Currency</mat-label>
+        <mat-select formControlName="defaultCurrencyCode">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search currencies…"
+              aria-label="Search currencies"
+              [ngModel]="currencySearch()"
+              (ngModelChange)="currencySearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">— None —</mat-option>
+          @for (c of visibleCurrencies(); track c.code) {
+            <mat-option [value]="c.code">{{ c.code }} — {{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Payment Terms</mat-label>
+        <mat-select formControlName="defaultPaymentTerms">
+          <mat-option value="">— None —</mat-option>
+          @for (t of paymentTerms; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default Incoterms</mat-label>
+        <mat-select formControlName="defaultIncoterms">
+          <mat-option value="">— None —</mat-option>
+          @for (t of incoterms; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Preferred Date Format</mat-label>
+        <mat-select formControlName="dateFormat">
+          <mat-option value="">— None —</mat-option>
+          @for (f of dateFormats; track f) {
+            <mat-option [value]="f">{{ f }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Contract Reference Format</mat-label>
+        <input matInput formControlName="contractReferenceFormat" maxlength="100" placeholder="e.g. CTR-{CLIENT}-{YEAR}-{SEQ}" />
+        @if (err('contractReferenceFormat')) { <mat-error>{{ err('contractReferenceFormat') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Purchase Order Reference Format</mat-label>
+        <input matInput formControlName="purchaseOrderReferenceFormat" maxlength="100" placeholder="e.g. PO-{PROJECT}-{SEQ}" />
+        @if (err('purchaseOrderReferenceFormat')) { <mat-error>{{ err('purchaseOrderReferenceFormat') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+</div>

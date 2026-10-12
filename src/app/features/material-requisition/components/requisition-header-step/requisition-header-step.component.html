@@ -1,0 +1,343 @@
+<div class="header-layout" [formGroup]="header">
+
+  <!-- ── Header information ─────────────────────────────────────── -->
+  <section class="step-section header-layout__main">
+    <h3 class="step-section__title"><mat-icon>assignment</mat-icon> Header Information</h3>
+
+    @if (form.referenceError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ form.referenceError() }}</span>
+        <button mat-button type="button" (click)="form.loadReferenceData()">Retry</button>
+      </div>
+    }
+
+    <div class="info-grid">
+      <!-- Project: searchable, open projects only -->
+      <mat-form-field appearance="outline">
+        <mat-label>Project</mat-label>
+        <mat-select
+          formControlName="projectId"
+          required
+          placeholder="Search by project no. or name"
+          (selectionChange)="onProjectSelected($event.value)"
+        >
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search by no., name or client…"
+              aria-label="Search projects"
+              [ngModel]="projectSearch()"
+              (ngModelChange)="projectSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (p of visibleProjects(); track p.id) {
+            <mat-option [value]="p.id">{{ p.code }} — {{ p.projectName }}</mat-option>
+          }
+          @if (visibleProjects().length === 0) {
+            <mat-option disabled>No matching projects</mat-option>
+          }
+        </mat-select>
+        @if (form.referenceLoading()) { <mat-hint>Loading projects…</mat-hint> }
+        @if (err('projectId')) { <mat-error>{{ err('projectId') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Project Name</mat-label>
+        <input
+          matInput
+          readonly
+          tabindex="-1"
+          [value]="form.selectedProject()?.projectName ?? ''"
+          placeholder="Shown when a project is chosen"
+          aria-label="Project name"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Client</mat-label>
+        <input
+          matInput
+          readonly
+          tabindex="-1"
+          [value]="clientText()"
+          placeholder="Shown when a project is chosen"
+          aria-label="Client of the project"
+        />
+        <mat-icon matSuffix matTooltip="Read from the project — for information only">info_outline</mat-icon>
+      </mat-form-field>
+
+      <!-- WBS / cost code of the chosen project -->
+      <mat-form-field appearance="outline" class="info-grid__wide">
+        <mat-label>Cost Code / WBS</mat-label>
+        <mat-select
+          formControlName="wbsCostCodeId"
+          required
+          [disabled]="!header.get('projectId')?.value"
+          placeholder="Choose a project first"
+        >
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search WBS / cost codes…"
+              aria-label="Search WBS / cost codes"
+              [ngModel]="wbsSearch()"
+              (ngModelChange)="wbsSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          @for (w of visibleWbs(); track w.id) {
+            <mat-option [value]="w.id">{{ w.code }} — {{ w.projectDetails }}</mat-option>
+          }
+          @if (visibleWbs().length === 0) {
+            <mat-option disabled>
+              {{ form.wbsLoading() ? 'Loading…' : 'No WBS / cost codes for this project' }}
+            </mat-option>
+          }
+        </mat-select>
+        @if (header.get('projectId')?.value && !form.wbsLoading() && form.wbsCodes().length === 0) {
+          <mat-hint>This project has no WBS / cost codes yet</mat-hint>
+        }
+        @if (err('wbsCostCodeId')) { <mat-error>{{ err('wbsCostCodeId') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Budget Head</mat-label>
+        <input matInput formControlName="budgetHead" maxlength="100" placeholder="e.g. CAPEX - Equipment" />
+        @if (err('budgetHead')) { <mat-error>{{ err('budgetHead') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    <!-- Information only: what the chosen WBS / cost code carries. -->
+    @if (form.selectedWbs(); as wbs) {
+      <div class="info-grid wbs-info" aria-label="Details of the chosen WBS / cost code">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Area / Facility</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.areaFacility || '—'" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>System / Sub-system</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.systemSubsystem || '—'" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Discipline</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.disciplineName || '—'" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Department</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.departmentName || '—'" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Work Package</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.workPackage || '—'" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Activities (Schedule Level)</mat-label>
+          <input matInput readonly tabindex="-1" [value]="wbs.activities || '—'" />
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="info-grid" style="margin-top: 16px">
+      <mat-form-field appearance="outline">
+        <mat-label>Required on Site (ROS)</mat-label>
+        <input
+          matInput
+          [matDatepicker]="rosPicker"
+          [min]="today"
+          formControlName="requiredOnSiteDate"
+          required
+          readonly
+          placeholder="Select a date"
+          aria-label="Required on site date"
+          (click)="rosPicker.open()"
+          (keydown.enter)="rosPicker.open()"
+        />
+        <mat-datepicker-toggle matSuffix [for]="rosPicker" />
+        <mat-datepicker #rosPicker />
+        @if (err('requiredOnSiteDate')) { <mat-error>{{ err('requiredOnSiteDate') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Material Requisition Number</mat-label>
+        <input
+          matInput
+          formControlName="mrNumber"
+          maxlength="50"
+          placeholder="Auto-generated"
+          autocomplete="off"
+        />
+        <mat-hint>Leave empty to use the system code</mat-hint>
+        @if (err('mrNumber')) { <mat-error>{{ err('mrNumber') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Area / Unit</mat-label>
+        <input matInput formControlName="areaUnit" maxlength="100" placeholder="e.g. Unit 1 - Hydrocracker" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>MTO Reference</mat-label>
+        <input matInput formControlName="mtoReference" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>P&amp;ID Reference</mat-label>
+        <input matInput formControlName="pidReference" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Isometric Reference</mat-label>
+        <input matInput formControlName="isometricReference" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="info-grid__full">
+        <mat-label>Remarks</mat-label>
+        <textarea matInput formControlName="remarks" rows="2" maxlength="4000"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- ── Supporting documents (below Remarks) ───────────────────── -->
+    <h3 class="step-section__title" style="margin-top: 8px">
+      <mat-icon>attach_file</mat-icon> Supporting Documents
+    </h3>
+
+    <input #coverPicker type="file" hidden [accept]="accept" (change)="onCoveringFile($event)" />
+    <input #supportPicker type="file" hidden multiple [accept]="accept" (change)="onSupportingFiles($event)" />
+    <input #replacePicker type="file" hidden [accept]="accept" (change)="onReplaceFile($event)" />
+
+    <div class="doc-slot-grid" style="margin-top: 0">
+
+      <!-- Covering document: one, replaced when uploaded again -->
+      <div class="doc-slot">
+        <div class="doc-slot__head">
+          <mat-icon class="doc-slot__icon">description</mat-icon>
+          <div class="doc-slot__meta">
+            <div class="doc-slot__label">Template of Covering Document</div>
+            <div class="doc-slot__hint">Cover sheet issued with the requisition</div>
+          </div>
+        </div>
+
+        @if (uploading() && !form.coveringDocument()) {
+          <div class="doc-slot__uploading"><mat-spinner diameter="24" /> Uploading…</div>
+        } @else if (form.coveringDocument(); as cover) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">description</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name" [matTooltip]="cover.fileName || cover.documentName">
+                {{ cover.fileName || cover.documentName }}
+              </div>
+              <div class="doc-row__sub">{{ sizeLabel(cover.fileSizeBytes) }}</div>
+            </div>
+            <button mat-icon-button type="button" matTooltip="View" (click)="open(cover.documentUrl)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button type="button" matTooltip="Replace the file" [disabled]="uploading()" (click)="coverPicker.click()">
+              <mat-icon>swap_horiz</mat-icon>
+            </button>
+            <button mat-icon-button type="button" color="warn" matTooltip="Remove" (click)="remove(cover)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div
+            class="doc-dropzone doc-dropzone--compact"
+            role="button"
+            tabindex="0"
+            aria-label="Add the covering document"
+            (click)="coverPicker.click()"
+            (keydown.enter)="coverPicker.click()"
+            (keydown.space)="coverPicker.click(); $event.preventDefault()"
+          >
+            <mat-icon>add_circle_outline</mat-icon>
+            <p class="doc-dropzone__title">Add New Document</p>
+            <p class="doc-dropzone__hint">Drop a file, or click · {{ acceptLabel }}</p>
+          </div>
+          <p class="doc-empty">No documents uploaded yet.</p>
+        }
+      </div>
+
+      <!-- Specifications and project documents: any number, each replaceable -->
+      <div class="doc-slot">
+        <div class="doc-slot__head">
+          <mat-icon class="doc-slot__icon">folder_copy</mat-icon>
+          <div class="doc-slot__meta">
+            <div class="doc-slot__label">Specifications &amp; Project Documents</div>
+            <div class="doc-slot__hint">Add as many files as needed</div>
+          </div>
+        </div>
+
+        <div
+          class="doc-dropzone doc-dropzone--compact"
+          [class.doc-dropzone--active]="dragActive()"
+          role="button"
+          tabindex="0"
+          aria-label="Add specifications and project documents"
+          (click)="supportPicker.click()"
+          (keydown.enter)="supportPicker.click()"
+          (keydown.space)="supportPicker.click(); $event.preventDefault()"
+          (dragover)="$event.preventDefault(); dragActive.set(true)"
+          (dragleave)="dragActive.set(false)"
+          (drop)="onDropSupporting($event)"
+        >
+          @if (uploading()) {
+            <mat-spinner diameter="24" style="margin: 0 auto" />
+            <p class="doc-dropzone__title">Uploading…</p>
+          } @else {
+            <mat-icon>add_circle_outline</mat-icon>
+            <p class="doc-dropzone__title">Add New Documents</p>
+            <p class="doc-dropzone__hint">Drop files, or click · {{ acceptLabel }} · up to {{ maxMb }} MB each</p>
+          }
+        </div>
+
+        @for (doc of form.supportingDocuments(); track doc.key) {
+          <div class="doc-row">
+            <mat-icon class="doc-row__icon">description</mat-icon>
+            <div class="doc-row__meta">
+              <div class="doc-row__name" [matTooltip]="doc.fileName || doc.documentName">
+                {{ doc.fileName || doc.documentName }}
+              </div>
+              <div class="doc-row__sub">
+                <select
+                  class="doc-type"
+                  [value]="doc.documentType"
+                  aria-label="Document type"
+                  (change)="setType(doc, $any($event.target).value)"
+                >
+                  @for (t of supportingTypes; track t) {
+                    <option [value]="t" [selected]="t === doc.documentType">{{ typeLabels[t] }}</option>
+                  }
+                </select>
+                @if (doc.fileSizeBytes) { · {{ sizeLabel(doc.fileSizeBytes) }} }
+              </div>
+            </div>
+            <button mat-icon-button type="button" matTooltip="View" (click)="open(doc.documentUrl)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              matTooltip="Replace the file"
+              [disabled]="uploading()"
+              (click)="startReplace(doc.key, replacePicker)"
+            >
+              <mat-icon>swap_horiz</mat-icon>
+            </button>
+            <button mat-icon-button type="button" color="warn" matTooltip="Remove" (click)="remove(doc)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <p class="doc-empty">No documents uploaded yet.</p>
+        }
+      </div>
+    </div>
+  </section>
+</div>

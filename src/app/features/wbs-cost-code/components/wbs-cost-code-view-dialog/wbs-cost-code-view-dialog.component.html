@@ -1,0 +1,88 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>visibility</mat-icon>
+  WBS / Cost Code Details
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  <div class="dlg-header">
+    <div>
+      <div class="dlg-code">{{ wbsCostCode.code }}</div>
+      <div class="dlg-name">{{ wbsCostCode.projectDetails }}</div>
+    </div>
+    <mat-chip [class]="wbsCostCode.isActive ? 'status-chip status-chip--active' : 'status-chip status-chip--inactive'">
+      <span class="status-chip__dot" aria-hidden="true"></span>
+      {{ wbsCostCode.isActive ? 'Active' : 'Inactive' }}
+    </mat-chip>
+  </div>
+
+  <mat-divider />
+
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Project</dt>
+      <dd>
+        {{ wbsCostCode.projectCode
+          ? wbsCostCode.projectCode + ' — ' + wbsCostCode.projectName
+          : '—' }}
+      </dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Client</dt>
+      <dd>
+        {{ wbsCostCode.clientName
+          ? (wbsCostCode.clientCode ? wbsCostCode.clientCode + ' — ' : '') + wbsCostCode.clientName
+          : '—' }}
+      </dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Area / Facility</dt>
+      <dd>{{ wbsCostCode.areaFacility || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>System / Sub-system</dt>
+      <dd>{{ wbsCostCode.systemSubsystem || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Discipline</dt>
+      <dd>{{ wbsCostCode.disciplineName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Department</dt>
+      <dd>{{ wbsCostCode.departmentName || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Work Package</dt>
+      <dd>{{ wbsCostCode.workPackage || '—' }}</dd>
+    </div>
+    <div class="dlg-field dlg-field--full">
+      <dt>Activities (Schedule Level)</dt>
+      <dd class="dlg-multiline">{{ wbsCostCode.activities || '—' }}</dd>
+    </div>
+  </dl>
+
+  <mat-divider />
+
+  <h3 class="dlg-section__title">Audit Information</h3>
+  <dl class="dlg-fields">
+    <div class="dlg-field">
+      <dt>Created By</dt>
+      <dd>{{ wbsCostCode.createdBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Created Date</dt>
+      <dd>{{ wbsCostCode.createdAt | date: 'medium' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated By</dt>
+      <dd>{{ wbsCostCode.updatedBy || '—' }}</dd>
+    </div>
+    <div class="dlg-field">
+      <dt>Updated Date</dt>
+      <dd>{{ wbsCostCode.updatedAt ? (wbsCostCode.updatedAt | date: 'medium') : '—' }}</dd>
+    </div>
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" mat-dialog-close>Close</button>
+</mat-dialog-actions>

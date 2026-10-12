@@ -1,0 +1,183 @@
+<div class="step">
+
+  @if (!clientId()) {
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Client Documents</h3>
+      <div class="step-caution">
+        <mat-icon>info</mat-icon>
+        <span>
+          Documents are attached to a saved client. Continue from the first step to create the client, and
+          this section unlocks.
+        </span>
+      </div>
+    </section>
+  } @else {
+
+    <!-- Register a document -->
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>upload_file</mat-icon> Add a Document</h3>
+      <p class="step-section__hint">
+        Registration certificates, tax certificates, contract frameworks, NDAs, specifications, approved
+        templates and procedures.
+      </p>
+
+      <input #fileInput type="file" hidden [accept]="accept" (change)="onFileInput($event)" />
+
+      @if (uploading()) {
+        <div class="doc-dropzone doc-dropzone--compact" aria-busy="true">
+          <mat-spinner diameter="26" style="margin: 0 auto" />
+          <p class="doc-dropzone__title">Uploading…</p>
+        </div>
+      } @else if (uploaded(); as file) {
+        <div class="doc-row">
+          <mat-icon class="doc-row__icon">description</mat-icon>
+          <div class="doc-row__meta">
+            <div class="doc-row__name" [matTooltip]="file.url">{{ file.fileName }}</div>
+            <div class="doc-row__sub">Uploaded · {{ sizeLabel(file.sizeBytes) }}</div>
+          </div>
+          <button mat-icon-button type="button" matTooltip="Choose a different file" (click)="clearUpload()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      } @else {
+        <div
+          class="doc-dropzone"
+          [class.doc-dropzone--active]="dragActive()"
+          role="button"
+          tabindex="0"
+          aria-label="Choose a file to upload"
+          (click)="fileInput.click()"
+          (keydown.enter)="fileInput.click()"
+          (keydown.space)="fileInput.click(); $event.preventDefault()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+        >
+          <mat-icon>cloud_upload</mat-icon>
+          <p class="doc-dropzone__title">Drop a file here, or click to choose</p>
+          <p class="doc-dropzone__hint">PDF, Word, Excel or image · up to {{ maxFileSizeMb }} MB</p>
+        </div>
+      }
+
+      <form [formGroup]="form" class="doc-form" style="margin-top: 16px" (ngSubmit)="addDocument()">
+        <mat-form-field appearance="outline">
+          <mat-label>Document Type</mat-label>
+          <mat-select formControlName="documentType" required>
+            @for (t of typeOptions; track t.value) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Document Name</mat-label>
+          <input matInput formControlName="documentName" maxlength="255" required />
+          @if (form.controls.documentName.touched && form.controls.documentName.errors?.['required']) {
+            <mat-error>Document name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Document Number</mat-label>
+          <input matInput formControlName="documentNumber" maxlength="100" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Version</mat-label>
+          <input matInput formControlName="documentVersion" maxlength="30" placeholder="e.g. Rev B" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Issue Date</mat-label>
+          <input matInput type="date" formControlName="issueDate" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Expiry Date</mat-label>
+          <input matInput type="date" formControlName="expiryDate" />
+          @if (datesInvalid) { <mat-error>Expiry cannot be before the issue date</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="step-full" style="grid-column: 1 / -1">
+          <mat-label>Remarks</mat-label>
+          <textarea matInput formControlName="remarks" rows="2" maxlength="2000"></textarea>
+        </mat-form-field>
+      </form>
+
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          [disabled]="!canSubmit || datesInvalid"
+          (click)="addDocument()"
+        >
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>add</mat-icon> }
+          Add Document
+        </button>
+        @if (!uploaded()) {
+          <span class="step-section__hint" style="margin: 0">Choose a file first.</span>
+        }
+      </div>
+    </section>
+
+    <!-- Register -->
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>folder_open</mat-icon> Documents ({{ documents().length }})</h3>
+
+      @if (loading() && documents().length === 0) {
+        <p class="doc-empty">Loading…</p>
+      } @else if (loadError()) {
+        <div class="step-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ loadError() }}</span>
+          <button mat-button type="button" (click)="retry()">Retry</button>
+        </div>
+      } @else {
+        <div class="doc-list" style="display: flex; flex-direction: column; gap: 8px">
+          @for (doc of documents(); track doc.id) {
+            <div class="doc-row">
+              <mat-icon class="doc-row__icon">description</mat-icon>
+              <div class="doc-row__meta">
+                <div class="doc-row__name" [matTooltip]="doc.documentUrl">{{ doc.documentName }}</div>
+                <div class="doc-row__sub">
+                  {{ label(doc.documentType) }}
+                  @if (doc.documentNumber) { · {{ doc.documentNumber }} }
+                  @if (doc.documentVersion) { · {{ doc.documentVersion }} }
+                  @if (doc.issueDate) { · Issued {{ doc.issueDate | date: 'mediumDate' }} }
+                  @if (doc.expiryDate) {
+                    ·
+                    @if (doc.isExpired) {
+                      <span class="doc-row__expired">Expired {{ doc.expiryDate | date: 'mediumDate' }}</span>
+                    } @else if (isExpiringSoon(doc)) {
+                      <span class="doc-row__expiring">Expires {{ doc.expiryDate | date: 'mediumDate' }}</span>
+                    } @else {
+                      Expires {{ doc.expiryDate | date: 'mediumDate' }}
+                    }
+                  }
+                  @if (doc.uploadedBy) { · {{ doc.uploadedBy }} }
+                </div>
+              </div>
+
+              <button mat-icon-button type="button" matTooltip="Open" (click)="openUrl(doc.documentUrl)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                color="warn"
+                matTooltip="Remove"
+                [attr.aria-label]="'Remove ' + doc.documentName"
+                (click)="removeDocument(doc)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p class="doc-empty">No documents have been added yet.</p>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

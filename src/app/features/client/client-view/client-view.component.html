@@ -1,0 +1,321 @@
+<div class="cv-page">
+
+  @if (loading()) {
+    <div class="cv-state">
+      <mat-spinner diameter="40" />
+      <p>Loading client…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="cv-state cv-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Client Master
+      </button>
+    </div>
+  } @else if (client(); as c) {
+
+    <!-- Summary header -->
+    <header class="cv-header">
+      <div class="cv-header__main">
+        <button mat-icon-button matTooltip="Back to Client Master" (click)="backToList()" aria-label="Back to Client Master">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="cv-header__eyebrow">Client Master</div>
+          <h1 class="cv-header__title">
+            <span class="cv-code">{{ c.code }}</span>
+            <span class="cv-header__desc">{{ c.clientName }}</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="cv-header__right">
+        <dl class="cv-header__facts">
+          <div>
+            <dt>Type</dt>
+            <dd>{{ c.clientTypeName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Industry</dt>
+            <dd>{{ c.industryCategoryName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Country</dt>
+            <dd>{{ country(c.countryCode) || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd><mat-chip [class]="statusClass(c.status)">{{ statusLabel(c.status) }}</mat-chip></dd>
+          </div>
+        </dl>
+
+        <div class="cv-actions">
+          @if (can(PERMISSIONS.CLIENTS_UPDATE)) {
+            <button mat-raised-button color="primary" (click)="edit()">
+              <mat-icon>edit</mat-icon> Edit
+            </button>
+          }
+          @if (c.status === ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_DISABLE)) {
+            <button mat-stroked-button (click)="deactivate()" [disabled]="saving()">
+              <mat-icon>toggle_off</mat-icon> Deactivate
+            </button>
+          }
+          @if (c.status !== ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_ENABLE)) {
+            <button mat-stroked-button (click)="activate()" [disabled]="saving()">
+              <mat-icon>toggle_on</mat-icon> Activate
+            </button>
+          }
+          @if (can(PERMISSIONS.PROJECTS_VIEW)) {
+            <button mat-stroked-button (click)="viewProjects()">
+              <mat-icon>folder_open</mat-icon> View Projects
+            </button>
+          }
+        </div>
+      </div>
+    </header>
+
+    @if (c.status !== ClientStatus.ACTIVE) {
+      <div class="cv-caution" role="status">
+        <mat-icon>info_outline</mat-icon>
+        <span>
+          This client is <strong>inactive</strong>@if (c.deactivationReason) { — {{ c.deactivationReason }}}.
+          It is not offered for new projects; existing records keep showing it.
+        </span>
+      </div>
+    }
+
+    <mat-tab-group class="cv-tabs" animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start">
+
+      <!-- Overview -->
+      <mat-tab label="Overview">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>business</mat-icon> Basic Information</h2>
+          <dl class="cv-fields">
+            @for (f of overviewFields(); track f.label) {
+              <div class="cv-field" [class.cv-field--full]="f.full">
+                <dt>{{ f.label }}</dt>
+                <dd>
+                  @if (f.href) { <a [href]="f.href" target="_blank" rel="noopener">{{ f.value }}</a> }
+                  @else { {{ f.value }} }
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+      </mat-tab>
+
+      <!-- Addresses -->
+      <mat-tab label="Addresses">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>apartment</mat-icon> Registered Office</h2>
+          @if (registeredAddress(); as a) {
+            <div class="cv-address">
+              @if (a.addressLine1) { <div>{{ a.addressLine1 }}</div> }
+              @if (a.addressLine2) { <div>{{ a.addressLine2 }}</div> }
+              <div>
+                {{ [a.city, a.state, a.postalCode].filter(x => !!x).join(', ') }}
+              </div>
+              @if (a.countryCode) { <div>{{ country(a.countryCode) }}</div> }
+            </div>
+          } @else {
+            <p class="cv-empty">No registered address recorded.</p>
+          }
+        </section>
+
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>domain</mat-icon> Operational Address</h2>
+          @if (c.operationalAddressSameAsRegistered) {
+            <p class="cv-empty">Same as the registered address.</p>
+          } @else {
+            <div class="cv-grid">
+              @for (a of operationalAddresses(); track a.id) {
+                <div class="cv-tile">
+                  <div class="cv-tile__title">{{ a.label || 'Operational Office' }}</div>
+                  <div class="cv-address">
+                    @if (a.addressLine1) { <div>{{ a.addressLine1 }}</div> }
+                    @if (a.addressLine2) { <div>{{ a.addressLine2 }}</div> }
+                    <div>{{ [a.city, a.state, a.postalCode].filter(x => !!x).join(', ') }}</div>
+                    @if (a.countryCode) { <div>{{ country(a.countryCode) }}</div> }
+                  </div>
+                </div>
+              } @empty {
+                <p class="cv-empty">No operational offices recorded.</p>
+              }
+            </div>
+          }
+        </section>
+
+        @if (regionalFields().length) {
+          <section class="cv-card">
+            <h2 class="cv-card__title"><mat-icon>public</mat-icon> Regional Settings</h2>
+            <dl class="cv-fields">
+              @for (f of regionalFields(); track f.label) {
+                <div class="cv-field"><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></div>
+              }
+            </dl>
+          </section>
+        }
+      </mat-tab>
+
+      <!-- Contacts -->
+      <mat-tab label="Contacts">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>contacts</mat-icon> Contacts ({{ c.contacts.length }})</h2>
+          <div class="cv-grid">
+            @for (k of c.contacts; track k.id) {
+              <div class="cv-tile" [class.cv-tile--inactive]="!k.isActive">
+                <div class="cv-tile__title">
+                  {{ k.contactName }}
+                  @if (k.isPrimary) { <span class="cv-badge">Primary</span> }
+                  @if (!k.isActive) { <span class="cv-badge cv-badge--muted">Inactive</span> }
+                </div>
+                <div class="cv-tile__sub">
+                  {{ [k.jobTitle, k.department].filter(x => !!x).join(' · ') || '—' }}
+                </div>
+                @if (k.contactRole) { <div class="cv-tile__line"><mat-icon>badge</mat-icon> {{ label(k.contactRole) }}</div> }
+                @if (k.email) {
+                  <div class="cv-tile__line"><mat-icon>mail</mat-icon> <a [href]="'mailto:' + k.email">{{ k.email }}</a></div>
+                }
+                @if (k.phone) { <div class="cv-tile__line"><mat-icon>call</mat-icon> {{ k.phone }}</div> }
+                @if (k.mobile) { <div class="cv-tile__line"><mat-icon>smartphone</mat-icon> {{ k.mobile }}</div> }
+                @if (k.preferredContactMethod) {
+                  <div class="cv-tile__line"><mat-icon>favorite_border</mat-icon> Prefers {{ label(k.preferredContactMethod) }}</div>
+                }
+                <div class="cv-tile__flags">
+                  @if (k.isProjectContact) { <span class="cv-badge">Project</span> }
+                  @if (k.isProcurementContact) { <span class="cv-badge">Procurement</span> }
+                  @if (k.isFinanceContact) { <span class="cv-badge">Finance</span> }
+                </div>
+              </div>
+            } @empty {
+              <p class="cv-empty">No contacts recorded.</p>
+            }
+          </div>
+        </section>
+      </mat-tab>
+
+      <!-- Commercial & Tax -->
+      <mat-tab label="Commercial &amp; Tax">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>gavel</mat-icon> Legal, Commercial &amp; Tax</h2>
+          @if (commercialFields().length) {
+            <dl class="cv-fields">
+              @for (f of commercialFields(); track f.label) {
+                <div class="cv-field"><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></div>
+              }
+            </dl>
+          } @else {
+            <p class="cv-empty">No commercial information recorded.</p>
+          }
+        </section>
+      </mat-tab>
+
+      <!-- Project Defaults -->
+      <mat-tab label="Project Defaults">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>tune</mat-icon> Project &amp; Operational Defaults</h2>
+          <dl class="cv-fields">
+            @for (f of defaultsFields(); track f.label) {
+              <div class="cv-field">
+                <dt>{{ f.label }}</dt>
+                <dd>
+                  @if (f.href) { <a [href]="f.href" target="_blank" rel="noopener">{{ f.value }}</a> }
+                  @else { {{ f.value }} }
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+      </mat-tab>
+
+      <!-- Documents -->
+      <mat-tab label="Documents">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>folder_open</mat-icon> Documents ({{ c.documents.length }})</h2>
+          @if (c.documents.length) {
+            <div class="cv-doclist">
+              @for (d of c.documents; track d.id) {
+                <button type="button" class="cv-doc" (click)="openUrl(d.documentUrl)">
+                  <mat-icon>description</mat-icon>
+                  <span class="cv-doc__meta">
+                    <span class="cv-doc__label">{{ d.documentName }}</span>
+                    <span class="cv-doc__sub">
+                      {{ label(d.documentType) }}
+                      @if (d.documentNumber) { · {{ d.documentNumber }} }
+                      @if (d.documentVersion) { · {{ d.documentVersion }} }
+                      @if (d.expiryDate) {
+                        ·
+                        @if (d.isExpired) {
+                          <span class="cv-doc__expired">Expired {{ d.expiryDate | date: 'mediumDate' }}</span>
+                        } @else if (isExpiringSoon(d.expiryDate, d.isExpired)) {
+                          <span class="cv-doc__expiring">Expires {{ d.expiryDate | date: 'mediumDate' }}</span>
+                        } @else {
+                          Expires {{ d.expiryDate | date: 'mediumDate' }}
+                        }
+                      }
+                    </span>
+                  </span>
+                  <mat-icon class="cv-doc__open">open_in_new</mat-icon>
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="cv-empty">No documents attached.</p>
+          }
+        </section>
+      </mat-tab>
+
+      <!-- Audit History -->
+      <mat-tab label="Audit History">
+        <section class="cv-card">
+          <h2 class="cv-card__title"><mat-icon>history</mat-icon> Audit History</h2>
+
+          <dl class="cv-fields">
+            @for (f of lifecycleFields(); track f.label) {
+              <div class="cv-field" [class.cv-field--full]="f.full"><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></div>
+            }
+          </dl>
+
+          @if (auditLoading() && audit().length === 0) {
+            <p class="cv-empty">Loading history…</p>
+          } @else if (auditError()) {
+            <p class="cv-empty">{{ auditError() }}</p>
+          } @else {
+            <ol class="cv-timeline">
+              @for (e of audit(); track e.id) {
+                <li class="cv-timeline__item">
+                  <mat-icon class="cv-timeline__icon">{{ auditIcon(e.action) }}</mat-icon>
+                  <div class="cv-timeline__body">
+                    <div class="cv-timeline__head">
+                      <strong>{{ e.summary || label(e.action) }}</strong>
+                      <span class="cv-timeline__meta">
+                        {{ e.createdAt | date: 'medium' }}
+                        @if (e.performedBy) { · {{ e.performedBy }} }
+                        @if (e.version) { · v{{ e.version }} }
+                      </span>
+                    </div>
+                    @if (e.changes?.length) {
+                      <ul class="cv-changes">
+                        @for (ch of e.changes; track ch.field) {
+                          <li>
+                            <span class="cv-changes__field">{{ fieldLabel(ch.field) }}</span>
+                            <span class="cv-changes__from">{{ auditValue(ch.field, ch.from) }}</span>
+                            <mat-icon>arrow_forward</mat-icon>
+                            <span class="cv-changes__to">{{ auditValue(ch.field, ch.to) }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                </li>
+              } @empty {
+                <li class="cv-empty">No changes have been recorded yet.</li>
+              }
+            </ol>
+          }
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

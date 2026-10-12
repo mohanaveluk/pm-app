@@ -1,0 +1,110 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>tune</mat-icon> Project Defaults</h3>
+    <p class="step-section__hint">
+      Applied to new projects for this client. A project can override any of them.
+    </p>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Default Project Type</mat-label>
+        <mat-select formControlName="defaultProjectTypeId">
+          <mat-option value="">— None —</mat-option>
+          @for (t of formService.projectTypes(); track t.id) {
+            <mat-option [value]="t.id">{{ t.name }}</mat-option>
+          }
+        </mat-select>
+        @if (formService.referenceLoading()) { <mat-hint>Loading project types…</mat-hint> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default Project Currency</mat-label>
+        <mat-select formControlName="defaultProjectCurrencyCode">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search currencies…"
+              aria-label="Search currencies"
+              [ngModel]="currencySearch()"
+              (ngModelChange)="currencySearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">— None —</mat-option>
+          @for (c of visibleCurrencies(); track c.code) {
+            <mat-option [value]="c.code">{{ c.code }} — {{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Measurement System</mat-label>
+        <mat-select formControlName="measurementSystem">
+          <mat-option value="">— None —</mat-option>
+          @for (m of measurementSystems; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Document Numbering Scheme</mat-label>
+        <input matInput formControlName="documentNumberingScheme" maxlength="100" placeholder="e.g. Client standard DOC-001" />
+        @if (err('documentNumberingScheme')) { <mat-error>{{ err('documentNumberingScheme') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default WBS Template</mat-label>
+        <input matInput formControlName="defaultWbsTemplate" maxlength="100" />
+        @if (err('defaultWbsTemplate')) { <mat-error>{{ err('defaultWbsTemplate') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default Cost Code Scheme</mat-label>
+        <input matInput formControlName="defaultCostCodeScheme" maxlength="100" />
+        @if (err('defaultCostCodeScheme')) { <mat-error>{{ err('defaultCostCodeScheme') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default Approval Workflow</mat-label>
+        <input matInput formControlName="defaultApprovalWorkflow" maxlength="100" />
+        @if (err('defaultApprovalWorkflow')) { <mat-error>{{ err('defaultApprovalWorkflow') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Default Procurement Terms</mat-label>
+        <input matInput formControlName="defaultProcurementTerms" maxlength="255" />
+        @if (err('defaultProcurementTerms')) { <mat-error>{{ err('defaultProcurementTerms') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Client Document Portal URL</mat-label>
+        <input matInput formControlName="documentPortalUrl" maxlength="500" placeholder="https://portal.example.com" />
+        @if (err('documentPortalUrl')) { <mat-error>{{ err('documentPortalUrl') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>rule</mat-icon> Controls</h3>
+
+    <div class="step-toggles">
+      <div class="step-toggle">
+        <mat-slide-toggle formControlName="requiresClientApproval" color="primary">
+          Requires client approval
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Project deliverables must be approved by the client.</span>
+      </div>
+      <div class="step-toggle">
+        <mat-slide-toggle formControlName="requiresDocumentControl" color="primary">
+          Client document control required
+        </mat-slide-toggle>
+        <span class="step-toggle__hint">Documents go through the client's document control process.</span>
+      </div>
+    </div>
+  </section>
+</div>

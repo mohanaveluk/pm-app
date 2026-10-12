@@ -71,6 +71,32 @@ export const PERMISSIONS = {
   VENDOR_TYPES_DELETE: 'vendor-types.delete',
   VENDOR_TYPES_EXPORT: 'vendor-types.export',
 
+  PROJECT_TYPES_VIEW: 'project-types.view',
+  PROJECT_TYPES_CREATE: 'project-types.create',
+  PROJECT_TYPES_UPDATE: 'project-types.update',
+  PROJECT_TYPES_DELETE: 'project-types.delete',
+  PROJECT_TYPES_EXPORT: 'project-types.export',
+
+  WBS_COST_CODES_VIEW: 'wbs-cost-codes.view',
+  WBS_COST_CODES_CREATE: 'wbs-cost-codes.create',
+  WBS_COST_CODES_UPDATE: 'wbs-cost-codes.update',
+  WBS_COST_CODES_DELETE: 'wbs-cost-codes.delete',
+  WBS_COST_CODES_EXPORT: 'wbs-cost-codes.export',
+
+  CLIENT_TYPES_VIEW: 'client-types.view',
+  CLIENT_TYPES_CREATE: 'client-types.create',
+  CLIENT_TYPES_UPDATE: 'client-types.update',
+  CLIENT_TYPES_DELETE: 'client-types.delete',
+  CLIENT_TYPES_EXPORT: 'client-types.export',
+
+  CLIENTS_VIEW: 'clients.view',
+  CLIENTS_CREATE: 'clients.create',
+  CLIENTS_UPDATE: 'clients.update',
+  CLIENTS_DELETE: 'clients.delete',
+  CLIENTS_ENABLE: 'clients.enable',
+  CLIENTS_DISABLE: 'clients.disable',
+  CLIENTS_EXPORT: 'clients.export',
+
   MATERIAL_CATEGORIES_VIEW: 'material-categories.view',
   MATERIAL_CATEGORIES_CREATE: 'material-categories.create',
   MATERIAL_CATEGORIES_UPDATE: 'material-categories.update',
@@ -115,6 +141,19 @@ export const PERMISSIONS = {
 
   PROJECTS_VIEW: 'projects.view',
   PROJECTS_MANAGE: 'projects.manage',
+  PROJECTS_CREATE: 'projects.create',
+  PROJECTS_UPDATE: 'projects.update',
+  PROJECTS_DELETE: 'projects.delete',
+  PROJECTS_STATUS: 'projects.status',
+  PROJECTS_EXPORT: 'projects.export',
+
+  // Material Requisition
+  MATERIAL_REQUISITIONS_VIEW: 'material-requisitions.view',
+  MATERIAL_REQUISITIONS_CREATE: 'material-requisitions.create',
+  MATERIAL_REQUISITIONS_UPDATE: 'material-requisitions.update',
+  MATERIAL_REQUISITIONS_DELETE: 'material-requisitions.delete',
+  MATERIAL_REQUISITIONS_SUBMIT: 'material-requisitions.submit',
+  MATERIAL_REQUISITIONS_EXPORT: 'material-requisitions.export',
   ENGINEERING_VIEW: 'engineering.view',
 
   MATERIALS_VIEW: 'materials.view',

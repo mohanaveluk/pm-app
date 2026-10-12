@@ -98,9 +98,15 @@ export const routes: Routes = [
       },
       {
         path: 'projects',
-        loadComponent: comingSoon,
+        loadChildren: () => import('./features/project/project.routes').then(m => m.PROJECT_ROUTES),
         canActivate: [permissionGuard],
-        data: { breadcrumb: 'Projects', title: 'Projects', icon: 'folder_open', permission: PERMISSIONS.PROJECTS_VIEW },
+        data: { breadcrumb: 'Projects', title: 'Project Master', icon: 'folder_open', permission: PERMISSIONS.PROJECTS_VIEW },
+      },
+      {
+        path: 'material-requisitions',
+        loadChildren: () => import('./features/material-requisition/material-requisition.routes').then(m => m.MATERIAL_REQUISITION_ROUTES),
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Material Requisitions', title: 'Material Requisitions', icon: 'shopping_cart', permission: PERMISSIONS.MATERIAL_REQUISITIONS_VIEW },
       },
       {
         path: 'materials',
@@ -230,6 +236,26 @@ export const routes: Routes = [
             path: 'vendor-types',
             loadComponent: () => import('./features/vendor-type/vendor-type.component').then(m => m.VendorTypeComponent),
             data: { breadcrumb: 'Vendor Types', permission: PERMISSIONS.VENDOR_TYPES_VIEW },
+          },
+          {
+            path: 'project-types',
+            loadComponent: () => import('./features/project-type/project-type.component').then(m => m.ProjectTypeComponent),
+            data: { breadcrumb: 'Project Types', permission: PERMISSIONS.PROJECT_TYPES_VIEW },
+          },
+          {
+            path: 'wbs-cost-codes',
+            loadComponent: () => import('./features/wbs-cost-code/wbs-cost-code.component').then(m => m.WbsCostCodeComponent),
+            data: { breadcrumb: 'WBS / Cost Codes', permission: PERMISSIONS.WBS_COST_CODES_VIEW },
+          },
+          {
+            path: 'client-types',
+            loadComponent: () => import('./features/client-type/client-type.component').then(m => m.ClientTypeComponent),
+            data: { breadcrumb: 'Client Types', permission: PERMISSIONS.CLIENT_TYPES_VIEW },
+          },
+          {
+            path: 'clients',
+            loadChildren: () => import('./features/client/client.routes').then(m => m.CLIENT_ROUTES),
+            data: { breadcrumb: 'Client Master', permission: PERMISSIONS.CLIENTS_VIEW },
           },
           {
             path: 'material-categories',

@@ -1,0 +1,398 @@
+<div class="pl-page" [class.pl-page--fullscreen]="isFullscreen()" (keydown.escape)="onEscape()" tabindex="-1">
+
+  <div class="pl-header">
+    <div>
+      <h1>Project Master</h1>
+      <p>Every project, with its client, type, manager and schedule.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="pl-toolbar">
+    @if (can(PERMISSIONS.PROJECTS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="createProject()">
+        <mat-icon>add</mat-icon> New Project
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.PROJECTS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <button
+      mat-stroked-button
+      (click)="toggleFilters()"
+      [matBadge]="store.hasActiveFilters() ? '!' : null"
+      matBadgeSize="small"
+      matBadgeColor="primary"
+    >
+      <mat-icon>filter_alt</mat-icon> Filters
+    </button>
+
+    <span class="pl-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Search sits outside the collapsible panel — it's the most-used control. -->
+  <div class="pl-search">
+    <mat-form-field appearance="outline" class="pl-search__field">
+      <mat-label>Search by project no., name, client, contract or site…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search projects"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Clear Filters
+      </button>
+    }
+    <span class="pl-toolbar__spacer"></span>
+    <span class="pl-count">{{ store.totalCount() }} project{{ store.totalCount() === 1 ? '' : 's' }}</span>
+  </div>
+
+  <!-- Collapsible filters -->
+  @if (filtersOpen()) {
+    <div class="pl-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="store.filter().status" (selectionChange)="store.setFilter({ status: $event.value })">
+          <mat-option [value]="null">All</mat-option>
+          @for (s of statusOptions; track s.value) {
+            <mat-option [value]="s.value" [matTooltip]="s.hint">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Client</mat-label>
+        <mat-select [value]="store.filter().clientId" (selectionChange)="store.setFilter({ clientId: $event.value })">
+          <mat-option [value]="null">All Clients</mat-option>
+          @for (c of store.clients(); track c.id) {
+            <mat-option [value]="c.id">{{ c.code }} — {{ c.displayName || c.clientName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Project Type</mat-label>
+        <mat-select
+          [value]="store.filter().projectTypeId"
+          (selectionChange)="store.setFilter({ projectTypeId: $event.value })"
+        >
+          <mat-option [value]="null">All Types</mat-option>
+          @for (t of store.projectTypes(); track t.id) {
+            <mat-option [value]="t.id">{{ t.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Project Manager</mat-label>
+        <mat-select
+          [value]="store.filter().projectManagerId"
+          (selectionChange)="store.setFilter({ projectManagerId: $event.value })"
+        >
+          <mat-option [value]="null">All Managers</mat-option>
+          @for (m of store.managers(); track m.id) {
+            <mat-option [value]="m.id">{{ m.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country</mat-label>
+        <mat-select
+          [value]="store.filter().countryCode"
+          (selectionChange)="store.setFilter({ countryCode: $event.value })"
+        >
+          <mat-option [value]="null">All Countries</mat-option>
+          @for (c of countries; track c.code) {
+            <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="pl-filters__actions">
+        <button mat-button (click)="resetFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Clear
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="pl-table-card" [class.pl-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <div class="pl-skeleton" aria-busy="true" aria-label="Loading projects">
+        @for (row of skeletonRows; track $index) {
+          <div class="pl-skeleton__row">
+            <span class="pl-skeleton__cell pl-skeleton__cell--sm"></span>
+            <span class="pl-skeleton__cell pl-skeleton__cell--lg"></span>
+            <span class="pl-skeleton__cell pl-skeleton__cell--md"></span>
+            <span class="pl-skeleton__cell pl-skeleton__cell--sm"></span>
+          </div>
+        }
+      </div>
+    } @else if (store.error()) {
+      <div class="pl-state pl-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      @if (store.hasActiveFilters()) {
+        <div class="pl-state">
+          <mat-icon>search_off</mat-icon>
+          <p class="pl-state__title">No matching Projects</p>
+          <p class="pl-state__hint">Try changing your search or filters.</p>
+          <button mat-stroked-button (click)="resetFilters()">
+            <mat-icon>filter_alt_off</mat-icon> Clear Filters
+          </button>
+        </div>
+      } @else {
+        <div class="pl-state">
+          <mat-icon>folder_open</mat-icon>
+          <p class="pl-state__title">No Projects Found</p>
+          <p class="pl-state__hint">Create the first project to start planning its WBS and cost codes.</p>
+          @if (can(PERMISSIONS.PROJECTS_CREATE)) {
+            <button mat-flat-button color="primary" (click)="createProject()">
+              <mat-icon>add</mat-icon> Create Project
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="pl-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.projects()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByProjectId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Project No.</th>
+            <td mat-cell *matCellDef="let p"><span class="pl-code">{{ p.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="projectName">Project Name</th>
+            <td mat-cell *matCellDef="let p" class="pl-cell--truncate" [matTooltip]="p.projectName">
+              {{ p.projectName }}
+              @if (p.clientProjectReference) {
+                <span class="pl-cell__sub">{{ p.clientProjectReference }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="client">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="client">Client</th>
+            <td mat-cell *matCellDef="let p" class="pl-cell--truncate" [matTooltip]="clientText(p)">
+              {{ clientText(p) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="projectType">Project Type</th>
+            <td mat-cell *matCellDef="let p">{{ p.projectTypeName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+            <td mat-cell *matCellDef="let p">
+              <mat-chip [class]="statusClass(p.status)" [matTooltip]="p.statusReason || ''">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ statusLabel(p.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="manager">
+            <th mat-header-cell *matHeaderCellDef>Project Manager</th>
+            <td mat-cell *matCellDef="let p">{{ p.projectManagerName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="startDate">Start Date</th>
+            <td mat-cell *matCellDef="let p">{{ p.startDate | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="endDate">End Date</th>
+            <td mat-cell *matCellDef="let p">{{ p.endDate ? (p.endDate | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="site">
+            <th mat-header-cell *matHeaderCellDef>Site</th>
+            <td mat-cell *matCellDef="let p" class="pl-cell--truncate" [matTooltip]="p.siteLocation || ''">
+              {{ p.siteLocation || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="country">
+            <th mat-header-cell *matHeaderCellDef>Country</th>
+            <td mat-cell *matCellDef="let p">{{ countryLabel(p.countryCode) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="updatedAt">Updated At</th>
+            <td mat-cell *matCellDef="let p">{{ p.updatedAt ? (p.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let p">
+              <button mat-icon-button (click)="viewProject(p, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.PROJECTS_UPDATE)) {
+                <button mat-icon-button (click)="editProject(p, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="copyCode(p, $event)">
+                  <mat-icon>content_paste</mat-icon> Copy Project No.
+                </button>
+
+                @if (can(PERMISSIONS.PROJECTS_STATUS) && canChangeStatus(p)) {
+                  <button mat-menu-item (click)="changeStatus(p, $event)">
+                    <mat-icon>swap_horiz</mat-icon> Change Status
+                  </button>
+                }
+
+                @if (can(PERMISSIONS.PROJECTS_DELETE) && canDelete(p)) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteProject(p, $event)" class="pl-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="pl-row" (click)="viewProject(row)"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile: cards keep Number / Name / Status / Actions visible. -->
+      <div class="pl-cards">
+        @for (p of store.projects(); track trackByProjectId($index, p)) {
+          <div class="pl-card">
+            <div class="pl-card__head">
+              <div>
+                <div class="pl-code">{{ p.code }}</div>
+                <div class="pl-card__desc">{{ p.projectName }}</div>
+              </div>
+              <mat-chip [class]="statusClass(p.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ statusLabel(p.status) }}
+              </mat-chip>
+            </div>
+
+            <details class="pl-card__details">
+              <summary>Details</summary>
+              <dl class="pl-card__fields">
+                <div><dt>Client</dt><dd>{{ clientText(p) }}</dd></div>
+                <div><dt>Type</dt><dd>{{ p.projectTypeName || '—' }}</dd></div>
+                <div><dt>Manager</dt><dd>{{ p.projectManagerName || '—' }}</dd></div>
+                <div><dt>Start</dt><dd>{{ p.startDate | date: 'mediumDate' }}</dd></div>
+                <div><dt>End</dt><dd>{{ p.endDate ? (p.endDate | date: 'mediumDate') : '—' }}</dd></div>
+                <div><dt>Site</dt><dd>{{ p.siteLocation || '—' }}</dd></div>
+              </dl>
+            </details>
+
+            <div class="pl-card__actions">
+              <button mat-icon-button (click)="viewProject(p, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.PROJECTS_UPDATE)) {
+                <button mat-icon-button (click)="editProject(p, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (can(PERMISSIONS.PROJECTS_STATUS) && canChangeStatus(p)) {
+                <button mat-icon-button (click)="changeStatus(p, $event)" matTooltip="Change status">
+                  <mat-icon>swap_horiz</mat-icon>
+                </button>
+              }
+              @if (can(PERMISSIONS.PROJECTS_DELETE) && canDelete(p)) {
+                <button mat-icon-button color="warn" (click)="deleteProject(p, $event)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="pl-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>
