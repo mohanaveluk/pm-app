@@ -1,0 +1,216 @@
+<h2 mat-dialog-title class="dlg-title">
+  <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
+  {{ isEdit ? 'Edit WBS / Cost Code' : 'New WBS / Cost Code' }}
+</h2>
+
+<mat-dialog-content class="dlg-content">
+  @if (loading()) {
+    <div class="dlg-loading">
+      <mat-spinner diameter="36" />
+      <p>Loading WBS / cost code…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="dlg-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="dlg-form" novalidate>
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">General Information</h3>
+
+        <div class="dlg-grid">
+          @if (isEdit) {
+            <mat-form-field appearance="outline" class="dlg-full-width">
+              <mat-label>Code</mat-label>
+              <input matInput formControlName="code" aria-describedby="code-hint" />
+              <mat-icon matSuffix matTooltip="Code is server-generated and cannot be changed">lock</mat-icon>
+              <mat-hint id="code-hint">Generated automatically — cannot be edited</mat-hint>
+            </mat-form-field>
+          }
+
+          <mat-form-field appearance="outline" class="dlg-full-width">
+            <mat-label>WBS / Cost Name</mat-label>
+            <input
+              matInput
+              formControlName="projectDetails"
+              maxlength="255"
+              placeholder="e.g. Unit 100 — Process Plant Civil Works"
+              required
+            />
+            <mat-hint align="end">{{ form.controls.projectDetails.value.length }}/255</mat-hint>
+            @if (err('projectDetails')) { <mat-error>{{ err('projectDetails') }}</mat-error> }
+          </mat-form-field>
+
+          <!-- Project: searchable (there can be hundreds), stored by id. -->
+          <mat-form-field appearance="outline">
+            <mat-label>Project</mat-label>
+            <mat-select
+              formControlName="projectId"
+              required
+              placeholder="Search by project no., name or client"
+            >
+              <mat-option>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search by no., name or client…"
+                  aria-label="Search projects"
+                  [ngModel]="projectSearch()"
+                  (ngModelChange)="projectSearch.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
+              @for (p of visibleProjects(); track p.id) {
+                <mat-option [value]="p.id">{{ projectLabel(p) }}</mat-option>
+              }
+              @if (visibleProjects().length === 0) {
+                <mat-option disabled>No matching projects</mat-option>
+              }
+            </mat-select>
+            @if (store.projectsLoading()) {
+              <mat-hint>Loading projects…</mat-hint>
+            } @else if (hiddenProjectCount() > 0) {
+              <mat-hint>Showing the first {{ projectListLimit }} — type to narrow the list</mat-hint>
+            }
+            @if (err('projectId')) { <mat-error>{{ err('projectId') }}</mat-error> }
+          </mat-form-field>
+
+          <!-- Information only: read from the chosen project. -->
+          <mat-form-field appearance="outline">
+            <mat-label>Client</mat-label>
+            <input
+              matInput
+              readonly
+              tabindex="-1"
+              [value]="clientText()"
+              placeholder="Shown when a project is chosen"
+              aria-label="Client of the chosen project"
+            />
+            <mat-icon matSuffix matTooltip="Read from the project — for information only">info_outline</mat-icon>
+          </mat-form-field>
+
+          @if (isEdit) {
+            <div class="dlg-status-toggle">
+              <span class="dlg-status-toggle__label">Status</span>
+              <mat-slide-toggle formControlName="isActive" color="primary">
+                {{ form.controls.isActive.value ? 'Active' : 'Inactive' }}
+              </mat-slide-toggle>
+            </div>
+          }
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Breakdown</h3>
+
+        <div class="dlg-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Area / Facility</mat-label>
+            <input matInput formControlName="areaFacility" maxlength="255" placeholder="e.g. Process Area 1" />
+            <mat-hint align="end">{{ form.controls.areaFacility.value.length }}/255</mat-hint>
+            @if (err('areaFacility')) { <mat-error>{{ err('areaFacility') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>System / Sub-system</mat-label>
+            <input matInput formControlName="systemSubsystem" maxlength="255" placeholder="e.g. Cooling Water System" />
+            <mat-hint align="end">{{ form.controls.systemSubsystem.value.length }}/255</mat-hint>
+            @if (err('systemSubsystem')) { <mat-error>{{ err('systemSubsystem') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Discipline</mat-label>
+            <mat-select formControlName="disciplineId" placeholder="Select a discipline">
+              <mat-option value="">— None —</mat-option>
+              @for (d of disciplineOptions(); track d.id) {
+                <mat-option [value]="d.id">{{ d.name }}</mat-option>
+              }
+            </mat-select>
+            @if (store.disciplinesLoading()) {
+              <mat-hint>Loading disciplines…</mat-hint>
+            } @else if (disciplineOptions().length === 0) {
+              <mat-hint>No active disciplines are available.</mat-hint>
+            }
+          </mat-form-field>
+
+          <!-- Information only: the department the chosen discipline belongs to. -->
+          <mat-form-field appearance="outline">
+            <mat-label>Department</mat-label>
+            <input
+              matInput
+              readonly
+              tabindex="-1"
+              [value]="departmentText()"
+              placeholder="Shown when a discipline is chosen"
+              aria-label="Department of the chosen discipline"
+            />
+            <mat-icon matSuffix matTooltip="Read from the discipline — for information only">info_outline</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Work Package</mat-label>
+            <input matInput formControlName="workPackage" maxlength="255" placeholder="e.g. WP-110 Foundations" />
+            <mat-hint align="end">{{ form.controls.workPackage.value.length }}/255</mat-hint>
+            @if (err('workPackage')) { <mat-error>{{ err('workPackage') }}</mat-error> }
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="dlg-section">
+        <h3 class="dlg-section__title">Schedule</h3>
+
+        <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-label>Activities (Schedule Level)</mat-label>
+          <textarea
+            matInput
+            formControlName="activities"
+            rows="3"
+            maxlength="5000"
+            placeholder="e.g. Excavation, blinding, rebar, formwork, concrete pour"
+          ></textarea>
+          <mat-hint align="end">{{ form.controls.activities.value.length }}/5000</mat-hint>
+          @if (err('activities')) { <mat-error>{{ err('activities') }}</mat-error> }
+        </mat-form-field>
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dlg-actions">
+  <button mat-button type="button" (click)="resetForm()" [disabled]="saving() || loading()">
+    <mat-icon>restart_alt</mat-icon> Reset
+  </button>
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+  @if (!isEdit) {
+    <button
+      mat-stroked-button
+      type="button"
+      color="primary"
+      (click)="save(true)"
+      [disabled]="saving() || loading() || form.invalid"
+    >
+      Save &amp; New
+    </button>
+  }
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    (click)="save(false)"
+    [disabled]="saving() || loading() || form.invalid"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Save
+  </button>
+</mat-dialog-actions>

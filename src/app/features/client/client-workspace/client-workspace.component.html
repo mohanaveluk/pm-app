@@ -1,0 +1,230 @@
+<div class="cw-page">
+
+  @if (loading()) {
+    <div class="cw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading client…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="cw-state cw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Client Master
+      </button>
+    </div>
+  } @else if (created(); as done) {
+
+    <!-- ── Success screen ─────────────────────────────────────────── -->
+    <div class="cw-success">
+      <mat-icon class="cw-success__icon">check_circle</mat-icon>
+      <h1>Client Created Successfully</h1>
+
+      <dl class="cw-success__facts">
+        <div>
+          <dt>Client Code</dt>
+          <dd><span class="cw-code">{{ done.code }}</span></dd>
+        </div>
+        <div>
+          <dt>Client</dt>
+          <dd>{{ done.clientName }}</dd>
+        </div>
+        <div>
+          <dt>Client Type</dt>
+          <dd>{{ formService.clientTypeLabel(done.clientTypeId) }}</dd>
+        </div>
+        <div>
+          <dt>Industry</dt>
+          <dd>{{ formService.industryLabel(done.industryCategoryId) }}</dd>
+        </div>
+        <div>
+          <dt>Country</dt>
+          <dd>{{ countryLabel(done.countryCode) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><mat-chip [class]="statusClass(done.status)">{{ done.status }}</mat-chip></dd>
+        </div>
+      </dl>
+
+      <div class="cw-success__actions">
+        <button mat-raised-button color="primary" (click)="viewCreated()">
+          <mat-icon>visibility</mat-icon> View Client
+        </button>
+        <button mat-stroked-button (click)="createAnother()">
+          <mat-icon>add</mat-icon> Create Another
+        </button>
+        <button mat-button (click)="backToList()">Back to Client Master</button>
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- ── Persistent summary header ──────────────────────────────── -->
+    <header class="cw-header">
+      <div class="cw-header__main">
+        <button mat-icon-button matTooltip="Back to Client Master" (click)="backToList()" aria-label="Back to Client Master">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="cw-header__eyebrow">Client Master</div>
+          @if (client(); as c) {
+            <h1 class="cw-header__title">
+              <span class="cw-code">{{ c.code }}</span>
+              <span class="cw-header__desc">{{ c.clientName }}</span>
+            </h1>
+          } @else {
+            <h1 class="cw-header__title">
+              <span class="cw-code cw-code--new">NEW CLIENT</span>
+              <span class="cw-header__desc">The code is generated once the basic information is saved</span>
+            </h1>
+          }
+        </div>
+      </div>
+
+      <dl class="cw-header__facts">
+        <div>
+          <dt>Type</dt>
+          <dd>{{ formService.clientTypeLabel(formService.form.get('general.clientTypeId')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Industry</dt>
+          <dd>{{ formService.industryLabel(formService.form.get('general.industryCategoryId')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Country</dt>
+          <dd>{{ countryLabel(formService.form.get('general.countryCode')?.value) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            <mat-chip [class]="statusClass(client()?.status ?? null)">{{ client()?.status ?? 'NEW' }}</mat-chip>
+          </dd>
+        </div>
+      </dl>
+    </header>
+
+    <div class="cw-progressbar">
+      <p class="cw-progress" aria-live="polite">
+        Step {{ selectedIndex() + 1 }} of {{ steps.length }} — {{ currentStepTitle() }}
+      </p>
+
+      @if (lastSavedAt(); as saved) {
+        <span class="cw-saved" aria-live="polite">
+          <mat-icon>cloud_done</mat-icon>
+          Saved {{ saved | date: 'shortTime' }}
+        </span>
+      } @else if (!isEdit()) {
+        <span class="cw-saved cw-saved--pending">
+          <mat-icon>cloud_off</mat-icon>
+          Not saved yet
+        </span>
+      }
+    </div>
+
+    <!-- ── Stepper ────────────────────────────────────────────────── -->
+    <mat-stepper
+      #stepper
+      class="cw-stepper"
+      [linear]="!isEdit()"
+      [selectedIndex]="selectedIndex()"
+      (selectionChange)="onStepChange($event.selectedIndex)"
+      labelPosition="bottom"
+      headerPosition="top"
+    >
+      <mat-step
+        [stepControl]="formService.group('general')"
+        [state]="stepState('general', 0)"
+        [hasError]="isStepInvalid('general')"
+        errorMessage="Required information missing"
+      >
+        <ng-template matStepLabel>Overview</ng-template>
+        <app-client-general-step [clientId]="clientId()" />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('addresses')"
+        [state]="stepState('addresses', 1)"
+        [hasError]="isStepInvalid('addresses')"
+        errorMessage="Check the address details"
+      >
+        <ng-template matStepLabel>Addresses</ng-template>
+        <app-client-addresses-step />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('contacts')"
+        [state]="stepState('contacts', 2)"
+        [hasError]="isStepInvalid('contacts')"
+        errorMessage="Check the contact details"
+      >
+        <ng-template matStepLabel>Contacts</ng-template>
+        <app-client-contacts-step />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('commercial')"
+        [state]="stepState('commercial', 3)"
+        [hasError]="isStepInvalid('commercial')"
+        errorMessage="Check the commercial details"
+      >
+        <ng-template matStepLabel>Commercial &amp; Tax</ng-template>
+        <app-client-commercial-step />
+      </mat-step>
+
+      <mat-step
+        [stepControl]="formService.group('defaults')"
+        [state]="stepState('defaults', 4)"
+        [hasError]="isStepInvalid('defaults')"
+        errorMessage="Check the project defaults"
+      >
+        <ng-template matStepLabel>Project Defaults</ng-template>
+        <app-client-defaults-step />
+      </mat-step>
+
+      <mat-step [stepControl]="formService.group('documents')" [state]="stepState('documents', 5)">
+        <ng-template matStepLabel>Documents</ng-template>
+        <app-client-documents-step [clientId]="clientId()" />
+      </mat-step>
+    </mat-stepper>
+
+    <!-- ── Navigation footer ──────────────────────────────────────── -->
+    <footer class="cw-footer">
+      <button mat-stroked-button type="button" (click)="back()" [disabled]="selectedIndex() === 0 || saving()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
+
+      <span class="cw-footer__spacer"></span>
+
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+
+      @if (isEdit()) {
+        <button mat-stroked-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+          Save
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          Save &amp; Close
+        </button>
+      } @else if (selectedIndex() < steps.length - 1) {
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          (click)="next()"
+          [disabled]="saving() || !canAdvance()"
+          [matTooltip]="nextTooltip()"
+        >
+          @if (saving()) { <mat-spinner diameter="18" /> }
+          {{ clientId() ? 'Save & Next' : 'Create & Continue' }}
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
+          Finish
+        </button>
+      }
+    </footer>
+  }
+</div>

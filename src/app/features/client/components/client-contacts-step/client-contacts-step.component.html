@@ -1,0 +1,140 @@
+<div class="step">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>contacts</mat-icon> Contacts</h3>
+    <p class="step-section__hint">
+      Add the people we deal with at this client. A primary contact is recommended before project execution.
+    </p>
+
+    @for (contact of contacts; track contact; let i = $index) {
+      <div class="repeat-card" [class.repeat-card--inactive]="!contact.get('isActive')?.value" [formGroup]="contact">
+        <div class="repeat-card__head">
+          <mat-icon>person</mat-icon>
+          <span class="repeat-card__title">{{ title(contact, i) }}</span>
+          @if (contact.get('isPrimary')?.value) {
+            <span class="step-badge"><mat-icon style="font-size:14px;width:14px;height:14px">star</mat-icon> Primary</span>
+          }
+          <button
+            mat-icon-button
+            type="button"
+            color="warn"
+            matTooltip="Remove this contact"
+            [attr.aria-label]="'Remove ' + title(contact, i)"
+            (click)="removeContact(i)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+
+        <div class="step-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Contact Name</mat-label>
+            <input matInput formControlName="contactName" maxlength="255" required autocomplete="off" />
+            @if (err(contact, 'contactName')) { <mat-error>{{ err(contact, 'contactName') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact Role</mat-label>
+            <mat-select formControlName="contactRole">
+              <mat-option value="">— None —</mat-option>
+              @for (r of roleOptions; track r.value) {
+                <mat-option [value]="r.value">{{ r.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Job Title</mat-label>
+            <input matInput formControlName="jobTitle" maxlength="150" autocomplete="off" />
+            @if (err(contact, 'jobTitle')) { <mat-error>{{ err(contact, 'jobTitle') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Department</mat-label>
+            <input matInput formControlName="department" maxlength="100" autocomplete="off" />
+            @if (err(contact, 'department')) { <mat-error>{{ err(contact, 'department') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" maxlength="255" autocomplete="off" />
+            @if (err(contact, 'email')) { <mat-error>{{ err(contact, 'email') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Preferred Contact Method</mat-label>
+            <mat-select formControlName="preferredContactMethod">
+              <mat-option value="">— None —</mat-option>
+              @for (m of methodOptions; track m.value) {
+                <mat-option [value]="m.value">{{ m.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Phone: country code and number are separate inputs, stored as one string. -->
+          <div class="phone-field">
+            <mat-form-field appearance="outline">
+              <mat-label>Code</mat-label>
+              <mat-select formControlName="phoneCode">
+                <mat-select-trigger>{{ contact.get('phoneCode')?.value }}</mat-select-trigger>
+                <mat-option value="">—</mat-option>
+                @for (c of countries; track c.code) {
+                  <mat-option [value]="c.dialCode">{{ c.flag }} {{ c.dialCode }} {{ c.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Phone</mat-label>
+              <input matInput type="tel" formControlName="phoneNumber" maxlength="20" autocomplete="off" />
+              @if (codeError(contact, 'phone')) {
+                <mat-error>Select the country code</mat-error>
+              } @else if (err(contact, 'phoneNumber')) {
+                <mat-error>{{ err(contact, 'phoneNumber') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="phone-field">
+            <mat-form-field appearance="outline">
+              <mat-label>Code</mat-label>
+              <mat-select formControlName="mobileCode">
+                <mat-select-trigger>{{ contact.get('mobileCode')?.value }}</mat-select-trigger>
+                <mat-option value="">—</mat-option>
+                @for (c of countries; track c.code) {
+                  <mat-option [value]="c.dialCode">{{ c.flag }} {{ c.dialCode }} {{ c.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mobile</mat-label>
+              <input matInput type="tel" formControlName="mobileNumber" maxlength="20" autocomplete="off" />
+              @if (codeError(contact, 'mobile')) {
+                <mat-error>Select the country code</mat-error>
+              } @else if (err(contact, 'mobileNumber')) {
+                <mat-error>{{ err(contact, 'mobileNumber') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="step-flags">
+          <mat-checkbox
+            formControlName="isPrimary"
+            (change)="onPrimaryChange(i, $event.checked)"
+            matTooltip="One primary contact per client — choosing this clears it on the others"
+          >Primary contact</mat-checkbox>
+          <mat-checkbox formControlName="isProjectContact">Project contact</mat-checkbox>
+          <mat-checkbox formControlName="isProcurementContact">Procurement contact</mat-checkbox>
+          <mat-checkbox formControlName="isFinanceContact">Finance contact</mat-checkbox>
+          <mat-slide-toggle formControlName="isActive" color="primary">Active</mat-slide-toggle>
+        </div>
+      </div>
+    } @empty {
+      <p class="repeat-empty">No contacts yet. Contacts can also be added later.</p>
+    }
+
+    <button mat-stroked-button type="button" color="primary" (click)="addContact()">
+      <mat-icon>add</mat-icon> Add Contact
+    </button>
+  </section>
+</div>

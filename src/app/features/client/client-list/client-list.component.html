@@ -1,0 +1,397 @@
+<div class="cl-page" [class.cl-page--fullscreen]="isFullscreen()" (keydown.escape)="onEscape()" tabindex="-1">
+
+  <div class="cl-header">
+    <div>
+      <h1>Client Master</h1>
+      <p>Owners, operators, EPC companies, consultants and government bodies we work for.</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="cl-toolbar">
+    @if (can(PERMISSIONS.CLIENTS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="createClient()">
+        <mat-icon>add</mat-icon> New Client
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Reload, keeping filters and paging">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.CLIENTS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV</button>
+        <button mat-menu-item (click)="exportComingSoon('Export to Excel')"><mat-icon>grid_on</mat-icon> Export Excel</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <button
+      mat-stroked-button
+      (click)="toggleFilters()"
+      [matBadge]="store.hasActiveFilters() ? '!' : null"
+      matBadgeSize="small"
+      matBadgeColor="primary"
+    >
+      <mat-icon>filter_alt</mat-icon> Filters
+    </button>
+
+    <span class="cl-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox
+              [checked]="isColumnVisible(col.key)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleColumn(col.key)"
+            >
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()">
+        <mat-icon>restart_alt</mat-icon> Reset Columns
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Search sits outside the collapsible panel — it's the most-used control. -->
+  <div class="cl-search">
+    <mat-form-field appearance="outline" class="cl-search__field">
+      <mat-label>Search by client code or name…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchInput($event)"
+        (keyup.enter)="onSearchEnter()"
+        aria-label="Search clients"
+      />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (store.hasActiveFilters()) {
+      <button mat-button (click)="resetFilters()">
+        <mat-icon>filter_alt_off</mat-icon> Clear Filters
+      </button>
+    }
+    <span class="cl-toolbar__spacer"></span>
+    <span class="cl-count">{{ store.totalCount() }} client{{ store.totalCount() === 1 ? '' : 's' }}</span>
+  </div>
+
+  <!-- Collapsible filters -->
+  @if (filtersOpen()) {
+    <div class="cl-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Client Type</mat-label>
+        <mat-select
+          [value]="store.filter().clientTypeId"
+          (selectionChange)="store.setFilter({ clientTypeId: $event.value })"
+        >
+          <mat-option [value]="null">All Types</mat-option>
+          @for (t of store.clientTypes(); track t.id) {
+            <mat-option [value]="t.id">{{ t.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Industry</mat-label>
+        <mat-select
+          [value]="store.filter().industryCategoryId"
+          (selectionChange)="store.setFilter({ industryCategoryId: $event.value })"
+        >
+          <mat-option [value]="null">All Industries</mat-option>
+          @for (i of store.industries(); track i.id) {
+            <mat-option [value]="i.id">{{ i.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country</mat-label>
+        <mat-select
+          [value]="store.filter().countryCode"
+          (selectionChange)="store.setFilter({ countryCode: $event.value })"
+        >
+          <mat-option [value]="null">All Countries</mat-option>
+          @for (c of countries; track c.code) {
+            <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [value]="store.filter().status" (selectionChange)="store.setFilter({ status: $event.value })">
+          <mat-option [value]="null">All</mat-option>
+          @for (s of statusOptions; track s.value) {
+            <mat-option [value]="s.value" [matTooltip]="s.hint ?? ''">{{ s.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <div class="cl-filters__actions">
+        <button mat-button (click)="resetFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Clear
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="cl-table-card" [class.cl-table-card--compact]="compactDensity()">
+    @if (store.loading()) {
+      <div class="cl-skeleton" aria-busy="true" aria-label="Loading clients">
+        @for (row of skeletonRows; track $index) {
+          <div class="cl-skeleton__row">
+            <span class="cl-skeleton__cell cl-skeleton__cell--sm"></span>
+            <span class="cl-skeleton__cell cl-skeleton__cell--lg"></span>
+            <span class="cl-skeleton__cell cl-skeleton__cell--md"></span>
+            <span class="cl-skeleton__cell cl-skeleton__cell--sm"></span>
+          </div>
+        }
+      </div>
+    } @else if (store.error()) {
+      <div class="cl-state cl-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()">
+          <mat-icon>refresh</mat-icon> Retry
+        </button>
+      </div>
+    } @else if (store.isEmpty()) {
+      @if (store.hasActiveFilters()) {
+        <div class="cl-state">
+          <mat-icon>search_off</mat-icon>
+          <p class="cl-state__title">No matching Clients</p>
+          <p class="cl-state__hint">Try changing your search or filters.</p>
+          <button mat-stroked-button (click)="resetFilters()">
+            <mat-icon>filter_alt_off</mat-icon> Clear Filters
+          </button>
+        </div>
+      } @else {
+        <div class="cl-state">
+          <mat-icon>business</mat-icon>
+          <p class="cl-state__title">No Clients Found</p>
+          <p class="cl-state__hint">Create the first client to start building the master.</p>
+          @if (can(PERMISSIONS.CLIENTS_CREATE)) {
+            <button mat-flat-button color="primary" (click)="createClient()">
+              <mat-icon>add</mat-icon> Create Client
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <div class="cl-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.clients()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+          [trackBy]="trackByClientId"
+        >
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Client Code</th>
+            <td mat-cell *matCellDef="let c"><span class="cl-code">{{ c.code }}</span></td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="clientName">Client Name</th>
+            <td mat-cell *matCellDef="let c" class="cl-cell--truncate" [matTooltip]="c.clientName">
+              {{ c.clientName }}
+              @if (c.displayName && c.displayName !== c.clientName) {
+                <span class="cl-cell__sub">{{ c.displayName }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="clientType">Client Type</th>
+            <td mat-cell *matCellDef="let c">{{ c.clientTypeName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="industry">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="industryCategory">Industry</th>
+            <td mat-cell *matCellDef="let c">{{ c.industryCategoryName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="country">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="countryCode">Country</th>
+            <td mat-cell *matCellDef="let c">{{ countryLabel(c.countryCode) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="parent">
+            <th mat-header-cell *matHeaderCellDef>Parent Client</th>
+            <td mat-cell *matCellDef="let c">{{ c.parentClientName || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="contact">
+            <th mat-header-cell *matHeaderCellDef>Primary Contact</th>
+            <td mat-cell *matCellDef="let c">
+              @if (c.primaryContactName) {
+                {{ c.primaryContactName }}
+                @if (c.primaryContactEmail) { <span class="cl-cell__sub">{{ c.primaryContactEmail }}</span> }
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
+            <td mat-cell *matCellDef="let c">
+              <mat-chip [class]="statusClass(c.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ statusLabel(c.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="updatedAt">Updated At</th>
+            <td mat-cell *matCellDef="let c">{{ c.updatedAt ? (c.updatedAt | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let c">
+              <button mat-icon-button (click)="viewClient(c, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.CLIENTS_UPDATE)) {
+                <button mat-icon-button (click)="editClient(c, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="copyCode(c, $event)">
+                  <mat-icon>content_paste</mat-icon> Copy Client Code
+                </button>
+
+                @if (can(PERMISSIONS.PROJECTS_VIEW)) {
+                  <button mat-menu-item (click)="viewProjects(c, $event)">
+                    <mat-icon>folder_open</mat-icon> View Projects
+                  </button>
+                }
+
+                @if (c.status !== ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_ENABLE)) {
+                  <button mat-menu-item (click)="activate(c, $event)">
+                    <mat-icon>toggle_on</mat-icon> Activate
+                  </button>
+                }
+                @if (c.status === ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_DISABLE)) {
+                  <button mat-menu-item (click)="deactivate(c, $event)">
+                    <mat-icon>toggle_off</mat-icon> Deactivate
+                  </button>
+                }
+
+                @if (can(PERMISSIONS.CLIENTS_DELETE)) {
+                  <mat-divider />
+                  <button mat-menu-item (click)="deleteClient(c, $event)" class="cl-menu-item--danger">
+                    <mat-icon>delete</mat-icon> Delete
+                  </button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="cl-row" (click)="viewClient(row)"></tr>
+        </table>
+      </div>
+
+      <!-- Mobile: cards keep Code / Name / Status / Actions visible. -->
+      <div class="cl-cards">
+        @for (c of store.clients(); track trackByClientId($index, c)) {
+          <div class="cl-card">
+            <div class="cl-card__head">
+              <div>
+                <div class="cl-code">{{ c.code }}</div>
+                <div class="cl-card__desc">{{ c.clientName }}</div>
+              </div>
+              <mat-chip [class]="statusClass(c.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ statusLabel(c.status) }}
+              </mat-chip>
+            </div>
+
+            <details class="cl-card__details">
+              <summary>Details</summary>
+              <dl class="cl-card__fields">
+                <div><dt>Type</dt><dd>{{ c.clientTypeName || '—' }}</dd></div>
+                <div><dt>Industry</dt><dd>{{ c.industryCategoryName || '—' }}</dd></div>
+                <div><dt>Country</dt><dd>{{ countryLabel(c.countryCode) }}</dd></div>
+                <div><dt>Parent</dt><dd>{{ c.parentClientName || '—' }}</dd></div>
+                <div><dt>Contact</dt><dd>{{ c.primaryContactName || '—' }}</dd></div>
+                <div><dt>Email</dt><dd>{{ c.primaryContactEmail || '—' }}</dd></div>
+              </dl>
+            </details>
+
+            <div class="cl-card__actions">
+              <button mat-icon-button (click)="viewClient(c, $event)" matTooltip="View">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.CLIENTS_UPDATE)) {
+                <button mat-icon-button (click)="editClient(c, $event)" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (c.status !== ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_ENABLE)) {
+                <button mat-icon-button (click)="activate(c, $event)" matTooltip="Activate">
+                  <mat-icon>toggle_on</mat-icon>
+                </button>
+              }
+              @if (c.status === ClientStatus.ACTIVE && can(PERMISSIONS.CLIENTS_DISABLE)) {
+                <button mat-icon-button (click)="deactivate(c, $event)" matTooltip="Deactivate">
+                  <mat-icon>toggle_off</mat-icon>
+                </button>
+              }
+              @if (can(PERMISSIONS.CLIENTS_DELETE)) {
+                <button mat-icon-button color="warn" (click)="deleteClient(c, $event)" matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="cl-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

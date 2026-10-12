@@ -1,0 +1,125 @@
+<div class="pw-page">
+
+  @if (loading()) {
+    <div class="pw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading requisition…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="pw-state pw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Requisitions
+      </button>
+    </div>
+  } @else if (submitted(); as done) {
+
+    <!-- ── Confirmation ──────────────────────────────────────────── -->
+    <section class="pw-success" aria-live="polite">
+      <mat-icon class="pw-success__icon">check_circle</mat-icon>
+      <h1>Requisition submitted</h1>
+      <p>It is now waiting for review.</p>
+      <dl class="pw-success__facts">
+        <div><dt>MR Number</dt><dd><span class="pw-code">{{ done.mrNumber }}</span></dd></div>
+        <div><dt>Status</dt>
+          <dd><mat-chip [class]="statusClass(done.status)">{{ statusText(done.status) }}</mat-chip></dd>
+        </div>
+        <div><dt>Project</dt><dd>{{ done.projectCode }} — {{ done.projectName }}</dd></div>
+      </dl>
+      <div class="pw-success__actions">
+        <button mat-raised-button color="primary" type="button" (click)="viewSubmitted()">
+          <mat-icon>visibility</mat-icon> View MR
+        </button>
+        <button mat-stroked-button type="button" (click)="createAnother()">
+          <mat-icon>add</mat-icon> Create New MR
+        </button>
+        <button mat-button type="button" (click)="backToList()">Back to list</button>
+      </div>
+    </section>
+
+  } @else {
+
+    <header class="pw-header">
+      <div class="pw-header__main">
+        <button mat-icon-button matTooltip="Back to Requisitions" (click)="backToList()" aria-label="Back to Requisitions">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="pw-header__eyebrow">Material Requisition</div>
+          @if (saved(); as s) {
+            <h1 class="pw-header__title">
+              <span class="pw-code">{{ s.mrNumber }}</span>
+              <span class="pw-header__desc">Draft requisition</span>
+            </h1>
+          } @else {
+            <h1 class="pw-header__title">
+              <span class="pw-code pw-code--new">NEW REQUISITION</span>
+              <span class="pw-header__desc">The MR number is generated when you save it</span>
+            </h1>
+          }
+        </div>
+      </div>
+      @if (saved(); as s) {
+        <mat-chip [class]="statusClass(s.status)">{{ statusText(s.status) }}</mat-chip>
+      }
+    </header>
+
+    @if (form.referenceError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ form.referenceError() }}</span>
+        <button mat-button type="button" (click)="form.loadReferenceData()">Retry</button>
+      </div>
+    }
+
+    <div class="pw-progressbar">
+      <p class="pw-progress">Step {{ stepIndex() + 1 }} of {{ steps.length }} — {{ steps[stepIndex()].title }}</p>
+    </div>
+
+    <mat-stepper
+      #stepper
+      class="pw-stepper"
+      [linear]="false"
+      (selectionChange)="onStepChange($event.selectedIndex)"
+    >
+      <mat-step label="Header & Documents">
+        <app-requisition-header-step />
+      </mat-step>
+
+      <mat-step label="Material Source & Selection">
+        <app-requisition-materials-step [requisitionId]="saved()?.id ?? null" [initialSource]="initialSource()" />
+      </mat-step>
+
+      <mat-step label="Review & Submit">
+        <app-material-requisition-review [code]="saved()?.code ?? null" />
+      </mat-step>
+    </mat-stepper>
+
+    <footer class="pw-footer">
+      <button mat-button type="button" (click)="backToList()" [disabled]="saving()">Cancel</button>
+      <span class="pw-footer__spacer"></span>
+
+      @if (stepIndex() > 0) {
+        <button mat-button type="button" (click)="stepper.previous()" [disabled]="saving()">
+          <mat-icon>chevron_left</mat-icon> Back
+        </button>
+      }
+
+      <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving()">
+        <mat-icon>save</mat-icon> Save Draft
+      </button>
+
+      @if (isLast()) {
+        <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>send</mat-icon> }
+          Submit for Approval
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" type="button" (click)="next(stepper)" [disabled]="saving()">
+          Next <mat-icon iconPositionEnd>chevron_right</mat-icon>
+        </button>
+      }
+    </footer>
+  }
+</div>

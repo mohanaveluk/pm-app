@@ -1,0 +1,184 @@
+<div class="pv-page">
+
+  @if (loading()) {
+    <div class="pv-state">
+      <mat-spinner diameter="40" />
+      <p>Loading project…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="pv-state pv-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Projects
+      </button>
+    </div>
+  } @else if (summary(); as s) {
+
+    <!-- Summary header -->
+    <header class="pv-header">
+      <div class="pv-header__main">
+        <button mat-icon-button matTooltip="Back to Projects" (click)="backToList()" aria-label="Back to Projects">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="pv-header__eyebrow">Project Master</div>
+          <h1 class="pv-header__title">
+            <span class="pv-code">{{ s.project.code }}</span>
+            <span class="pv-header__desc">{{ s.project.projectName }}</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="pv-header__right">
+        <dl class="pv-header__facts">
+          <div>
+            <dt>Client</dt>
+            <dd>{{ s.client.displayName || s.client.clientName }}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>{{ s.project.projectTypeName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Manager</dt>
+            <dd>{{ s.project.projectManagerName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd><mat-chip [class]="statusClass(s.project.status)">{{ statusLabel(s.project.status) }}</mat-chip></dd>
+          </div>
+        </dl>
+
+        <div class="pv-actions">
+          @if (can(PERMISSIONS.PROJECTS_UPDATE)) {
+            <button mat-raised-button color="primary" (click)="edit()">
+              <mat-icon>edit</mat-icon> Edit
+            </button>
+          }
+          @if (can(PERMISSIONS.PROJECTS_STATUS) && canChangeStatus()) {
+            <button mat-stroked-button (click)="changeStatus()" [disabled]="saving()">
+              <mat-icon>swap_horiz</mat-icon> Change Status
+            </button>
+          }
+        </div>
+      </div>
+    </header>
+
+    @if (s.schedule.isOverdue) {
+      <div class="pv-caution" role="status">
+        <mat-icon>warning_amber</mat-icon>
+        <span>
+          The planned end date has passed and the project is still
+          <strong>{{ statusLabel(s.project.status) }}</strong> — {{ scheduleText() }}.
+        </span>
+      </div>
+    }
+
+    <!-- Project Information -->
+    <section class="pv-card">
+      <h2 class="pv-card__title"><mat-icon>assignment</mat-icon> Project Information</h2>
+      <dl class="pv-fields">
+        @for (f of informationFields(); track f.label) {
+          <div class="pv-field" [class.pv-field--full]="f.full">
+            <dt>{{ f.label }}</dt>
+            <dd>{{ f.value }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <!-- Client -->
+    <section class="pv-card">
+      <h2 class="pv-card__title"><mat-icon>business</mat-icon> Client</h2>
+      <dl class="pv-fields">
+        <div class="pv-field">
+          <dt>Client</dt>
+          <dd>
+            @if (can(PERMISSIONS.CLIENTS_VIEW)) {
+              <a [routerLink]="['/admin/clients', s.client.id]">{{ s.client.code }} — {{ s.client.clientName }}</a>
+            } @else {
+              {{ s.client.code }} — {{ s.client.clientName }}
+            }
+          </dd>
+        </div>
+        @if (s.client.clientTypeName) {
+          <div class="pv-field"><dt>Client Type</dt><dd>{{ s.client.clientTypeName }}</dd></div>
+        }
+        @if (s.client.industryCategoryName) {
+          <div class="pv-field"><dt>Industry</dt><dd>{{ s.client.industryCategoryName }}</dd></div>
+        }
+        @if (s.client.countryCode) {
+          <div class="pv-field"><dt>Country of Registration</dt><dd>{{ country(s.client.countryCode) }}</dd></div>
+        }
+        <div class="pv-field">
+          <dt>Client Status</dt>
+          <dd>{{ s.client.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</dd>
+        </div>
+        @if (s.client.defaultCurrencyCode) {
+          <div class="pv-field"><dt>Client Default Currency</dt><dd>{{ s.client.defaultCurrencyCode }}</dd></div>
+        }
+        @if (s.client.primaryContactName) {
+          <div class="pv-field">
+            <dt>Primary Contact</dt>
+            <dd>
+              {{ s.client.primaryContactName }}
+              @if (s.client.primaryContactEmail) { · {{ s.client.primaryContactEmail }} }
+              @if (s.client.primaryContactPhone) { · {{ s.client.primaryContactPhone }} }
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <!-- Project Details -->
+    <section class="pv-card">
+      <h2 class="pv-card__title"><mat-icon>tune</mat-icon> Project Details</h2>
+      @if (detailFields().length) {
+        <dl class="pv-fields">
+          @for (f of detailFields(); track f.label) {
+            <div class="pv-field" [class.pv-field--full]="f.full">
+              <dt>{{ f.label }}</dt>
+              <dd>{{ f.value }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <p class="pv-empty">No project details recorded.</p>
+      }
+    </section>
+
+    <!-- Schedule -->
+    <section class="pv-card">
+      <h2 class="pv-card__title"><mat-icon>event</mat-icon> Schedule</h2>
+      <dl class="pv-fields">
+        <div class="pv-field">
+          <dt>Planned Duration</dt>
+          <dd>
+            @if (s.schedule.durationDays !== null) {
+              {{ s.schedule.durationDays }} day{{ s.schedule.durationDays === 1 ? '' : 's' }}
+            } @else {
+              No end date set
+            }
+          </dd>
+        </div>
+        @if (scheduleText()) {
+          <div class="pv-field">
+            <dt>Position</dt>
+            <dd [class.pv-overdue]="s.schedule.isOverdue">{{ scheduleText() }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <!-- Audit -->
+    <section class="pv-card">
+      <h2 class="pv-card__title"><mat-icon>history</mat-icon> Record History</h2>
+      <dl class="pv-fields">
+        @for (f of auditFields(); track f.label) {
+          <div class="pv-field" [class.pv-field--full]="f.full"><dt>{{ f.label }}</dt><dd>{{ f.value }}</dd></div>
+        }
+      </dl>
+    </section>
+  }
+</div>

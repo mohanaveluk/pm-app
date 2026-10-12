@@ -1,0 +1,72 @@
+<div class="panel-actions">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 2 1 280px; min-width: 220px">
+    <mat-label>Search by material code or description…</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input
+      matInput
+      [value]="search()"
+      (input)="onSearchInput($event)"
+      (keyup.enter)="searchNow()"
+      aria-label="Search materials"
+    />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1 1 180px">
+    <mat-label>Material Category</mat-label>
+    <mat-select [value]="categoryId()" (selectionChange)="onCategory($event.value)">
+      <mat-option [value]="null">All Categories</mat-option>
+      @for (c of form.categories(); track c.id) {
+        <mat-option [value]="c.id">{{ c.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1 1 180px">
+    <mat-label>Material Group</mat-label>
+    <mat-select [value]="groupId()" (selectionChange)="onGroup($event.value)">
+      <mat-option [value]="null">All Groups</mat-option>
+      @for (g of visibleGroups(); track g.id) {
+        <mat-option [value]="g.id">{{ g.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex: 1 1 150px">
+    <mat-label>Unit of Measurement</mat-label>
+    <mat-select [value]="uomId()" (selectionChange)="onUom($event.value)">
+      <mat-option [value]="null">All Units</mat-option>
+      @for (u of form.uoms(); track u.id) {
+        <mat-option [value]="u.id">{{ u.name }}@if (u.symbol) { — {{ u.symbol }} }</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button mat-flat-button color="primary" type="button" (click)="searchNow()">
+    <mat-icon>search</mat-icon> Search
+  </button>
+  <button mat-stroked-button type="button" (click)="clear()" [disabled]="!hasFilters()">Clear</button>
+</div>
+
+@if (error()) {
+  <div class="step-error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error() }}</span>
+    <button mat-button type="button" (click)="retry()">Retry</button>
+  </div>
+}
+
+<app-requisition-items-table
+  [rows]="results()"
+  [source]="source"
+  [loading]="loading()"
+  emptyMessage="No materials match your search."
+/>
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="pageIndex()"
+  [pageSize]="pageSize()"
+  [pageSizeOptions]="[10, 25, 50, 100]"
+  showFirstLastButtons
+  (page)="onPage($event)"
+></mat-paginator>

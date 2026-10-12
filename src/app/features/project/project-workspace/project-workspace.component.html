@@ -1,0 +1,393 @@
+<div class="pw-page">
+
+  @if (loading()) {
+    <div class="pw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading project…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="pw-state pw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()">
+        <mat-icon>arrow_back</mat-icon> Back to Projects
+      </button>
+    </div>
+  } @else {
+
+    <header class="pw-header">
+      <div class="pw-header__main">
+        <button mat-icon-button matTooltip="Back to Projects" (click)="cancel()" aria-label="Back to Projects">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="pw-header__eyebrow">Project Master</div>
+          @if (project(); as p) {
+            <h1 class="pw-header__title">
+              <span class="pw-code">{{ p.code }}</span>
+              <span class="pw-header__desc">{{ p.projectName }}</span>
+            </h1>
+          } @else {
+            <h1 class="pw-header__title">
+              <span class="pw-code pw-code--new">NEW PROJECT</span>
+              <span class="pw-header__desc">The project number is generated when you create it</span>
+            </h1>
+          }
+        </div>
+      </div>
+
+      @if (project(); as p) {
+        <mat-chip [class]="statusClass(p.status)">{{ statusLabel(p.status) }}</mat-chip>
+      }
+    </header>
+
+    @if (formService.referenceError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ formService.referenceError() }}</span>
+        <button mat-button type="button" (click)="formService.loadReferenceData()">Retry</button>
+      </div>
+    }
+
+    <form class="step" [formGroup]="formService.form" (ngSubmit)="save(false)" novalidate>
+
+      <!-- ── Project Information ───────────────────────────────────── -->
+      <section class="step-section" [formGroup]="info">
+        <h3 class="step-section__title"><mat-icon>assignment</mat-icon> Project Information</h3>
+
+        <div class="step-grid">
+          <!-- Number and status are only shown for an existing project: a new one gets
+               its number generated and starts Planned. -->
+          @if (isEdit()) {
+            <mat-form-field appearance="outline">
+              <mat-label>Project No.</mat-label>
+              <input matInput readonly [value]="project()?.code ?? ''" aria-label="Project number" />
+              <mat-icon matSuffix matTooltip="Generated when the project was created and cannot be changed">lock</mat-icon>
+              <mat-hint>Cannot be changed</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Project Status</mat-label>
+              <input matInput readonly [value]="statusLabel(project()?.status ?? null)" aria-label="Project status" />
+              <mat-hint>Use Change Status on the project page</mat-hint>
+            </mat-form-field>
+          }
+
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Project Name</mat-label>
+            <input
+              matInput
+              formControlName="projectName"
+              maxlength="255"
+              placeholder="e.g. Unit 4 Expansion — Process Plant"
+              required
+            />
+            @if (err(info, 'projectName')) { <mat-error>{{ err(info, 'projectName') }}</mat-error> }
+          </mat-form-field>
+
+          <!-- Client: searchable, active clients only, stored by id -->
+          <div class="step-full">
+            <mat-form-field appearance="outline" class="pw-field-full">
+              <mat-label>Client</mat-label>
+              <mat-select
+                formControlName="clientId"
+                required
+                (selectionChange)="onClientSelected($event.value)"
+                placeholder="Search by client code or name"
+              >
+                <mat-option>
+                  <input
+                    class="select-search"
+                    type="text"
+                    placeholder="Search by code or name…"
+                    aria-label="Search clients"
+                    [ngModel]="clientSearch()"
+                    (ngModelChange)="clientSearch.set($event)"
+                    [ngModelOptions]="{ standalone: true }"
+                    (click)="$event.stopPropagation()"
+                    (keydown)="$event.stopPropagation()"
+                  />
+                </mat-option>
+                @for (c of visibleClients(); track c.id) {
+                  <mat-option [value]="c.id">{{ clientLabel(c) }}</mat-option>
+                }
+                @if (visibleClients().length === 0) {
+                  <mat-option disabled>No matching clients</mat-option>
+                }
+              </mat-select>
+              @if (formService.referenceLoading()) { <mat-hint>Loading clients…</mat-hint> }
+              @if (err(info, 'clientId')) { <mat-error>{{ err(info, 'clientId') }}</mat-error> }
+            </mat-form-field>
+
+            <div class="pw-client-help">
+              <span>Can't find the client?</span>
+              @if (can(PERMISSIONS.CLIENTS_CREATE)) {
+                <a mat-button routerLink="/admin/clients/create" target="_blank" rel="noopener">
+                  <mat-icon>add</mat-icon> Create a new client
+                </a>
+              } @else {
+                <span class="pw-client-help__muted">Ask an administrator to add it.</span>
+              }
+              <button
+                mat-button
+                type="button"
+                (click)="refreshClients()"
+                [disabled]="formService.clientsRefreshing()"
+                matTooltip="Reload the client list — a client you just created will be selected"
+              >
+                <mat-icon>refresh</mat-icon> Refresh list
+              </button>
+            </div>
+
+            @if (selectedClient(); as client) {
+              <p class="pw-client-ref">
+                <mat-icon>link</mat-icon>
+                <span>
+                  <strong>{{ client.displayName || client.clientName }}</strong>
+                  @if (client.displayName && client.displayName !== client.clientName) {
+                    ({{ client.clientName }})
+                  }
+                  · client {{ client.code }}
+                </span>
+              </p>
+            }
+
+            @if (formService.appliedDefaultLabels().length) {
+              <p class="pw-applied">
+                <mat-icon>auto_fix_high</mat-icon>
+                Applied from the client:
+                {{ formService.appliedDefaultLabels().join(', ') }}. You can change them below.
+              </p>
+            }
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project Type</mat-label>
+            <mat-select formControlName="projectTypeId" required>
+              @for (t of formService.projectTypes(); track t.id) {
+                <mat-option [value]="t.id">{{ t.name }}</mat-option>
+              }
+              @if (!formService.referenceLoading() && formService.projectTypes().length === 0) {
+                <mat-option disabled>No project types available</mat-option>
+              }
+            </mat-select>
+            @if (err(info, 'projectTypeId')) { <mat-error>{{ err(info, 'projectTypeId') }}</mat-error> }
+          </mat-form-field>
+
+          <span class="pw-spacer"></span>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Start Date</mat-label>
+            <!-- Read-only: the calendar is the way in, so a typed date can never be misread
+                 (11/01 is January in some locales and November in others). -->
+            <input
+              matInput
+              [matDatepicker]="startPicker"
+              formControlName="startDate"
+              required
+              readonly
+              placeholder="Select a date"
+              aria-label="Start date"
+              (click)="startPicker.open()"
+              (keydown.enter)="startPicker.open()"
+            />
+            <mat-datepicker-toggle matSuffix [for]="startPicker" />
+            <mat-datepicker #startPicker />
+            <mat-hint>Planned project start</mat-hint>
+            @if (err(info, 'startDate')) { <mat-error>{{ err(info, 'startDate') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>End Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="endPicker"
+              formControlName="endDate"
+              [min]="minEndDate()"
+              readonly
+              placeholder="Select a date"
+              aria-label="End date"
+              (click)="endPicker.open()"
+              (keydown.enter)="endPicker.open()"
+            />
+            @if (info.get('endDate')?.value) {
+              <button
+                matSuffix
+                mat-icon-button
+                type="button"
+                matTooltip="Clear end date"
+                aria-label="Clear end date"
+                (click)="clearEndDate()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+            <mat-datepicker-toggle matSuffix [for]="endPicker" />
+            <mat-datepicker #endPicker [startAt]="minEndDate()" />
+            <mat-hint>Planned completion — recommended</mat-hint>
+            @if (endNotAfterStart) { <mat-error>End date must be later than the start date</mat-error> }
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- ── Project Details ───────────────────────────────────────── -->
+      <section class="step-section" [formGroup]="details">
+        <h3 class="step-section__title"><mat-icon>tune</mat-icon> Project Details</h3>
+
+        <div class="step-grid">
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Project Description</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="3"
+              maxlength="4000"
+              placeholder="Scope, objectives and project overview"
+            ></textarea>
+            @if (err(details, 'description')) { <mat-error>{{ err(details, 'description') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project Manager</mat-label>
+            <mat-select formControlName="projectManagerId">
+              <mat-option value="">— None —</mat-option>
+              @for (m of formService.managers(); track m.id) {
+                <mat-option [value]="m.id">{{ m.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Internal project owner — recommended</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project Location / Site</mat-label>
+            <input matInput formControlName="siteLocation" maxlength="255" placeholder="Plant or construction site name" />
+            <mat-hint>Separate from the client's registered address</mat-hint>
+            @if (err(details, 'siteLocation')) { <mat-error>{{ err(details, 'siteLocation') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="step-full">
+            <mat-label>Address Line 1</mat-label>
+            <input matInput formControlName="addressLine1" maxlength="255" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" maxlength="100" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>State / Province</mat-label>
+            <input matInput formControlName="state" maxlength="100" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Postal Code</mat-label>
+            <input matInput formControlName="postalCode" maxlength="20" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <mat-select formControlName="countryCode">
+              <mat-option value="">— None —</mat-option>
+              @for (c of countries; track c.code) {
+                <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Site country — recommended</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contract Number</mat-label>
+            <input matInput formControlName="contractNumber" maxlength="100" autocomplete="off" />
+            <mat-hint>Client contract reference</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Client Project Reference</mat-label>
+            <input matInput formControlName="clientProjectReference" maxlength="100" autocomplete="off" />
+            <mat-hint>The client's own project identifier</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project Currency</mat-label>
+            <mat-select formControlName="currencyCode">
+              <mat-option>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search currencies…"
+                  aria-label="Search currencies"
+                  [ngModel]="currencySearch()"
+                  (ngModelChange)="currencySearch.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
+              <mat-option value="">— None —</mat-option>
+              @for (c of visibleCurrencies(); track c.code) {
+                <mat-option [value]="c.code">{{ c.code }} — {{ c.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Cost reporting and budgeting — recommended</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Measurement System</mat-label>
+            <mat-select formControlName="measurementSystem">
+              <mat-option value="">— None —</mat-option>
+              @for (m of measurementOptions; track m.value) {
+                <mat-option [value]="m.value">{{ m.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project Time Zone</mat-label>
+            <mat-select formControlName="timeZone">
+              <mat-option>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search time zones…"
+                  aria-label="Search time zones"
+                  [ngModel]="timeZoneSearch()"
+                  (ngModelChange)="timeZoneSearch.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
+              <mat-option value="">— None —</mat-option>
+              @for (z of visibleTimeZones(); track z) {
+                <mat-option [value]="z">{{ z }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Used for schedules and date/time display</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+    </form>
+
+    <footer class="pw-footer">
+      <span class="pw-footer__spacer"></span>
+
+      <button mat-button type="button" (click)="cancel()" [disabled]="saving()">Cancel</button>
+
+      @if (isEdit()) {
+        <button mat-stroked-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+          Save
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          Save &amp; Close
+        </button>
+      } @else {
+        <button mat-raised-button color="primary" type="button" (click)="save(false)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
+          Create Project
+        </button>
+      }
+    </footer>
+  }
+</div>

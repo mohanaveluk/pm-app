@@ -1,0 +1,170 @@
+<div class="step" [formGroup]="group">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>badge</mat-icon> Identification</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Client Name</mat-label>
+        <input
+          matInput
+          formControlName="clientName"
+          maxlength="255"
+          placeholder="e.g. Gulf Petrochemical Holdings"
+          required
+        />
+        <mat-hint>The official company or organization name</mat-hint>
+        @if (err('clientName')) { <mat-error>{{ err('clientName') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Display Name</mat-label>
+        <input matInput formControlName="displayName" maxlength="100" placeholder="e.g. GPH" />
+        <mat-hint>Short name shown in dropdowns; the client name is used when empty</mat-hint>
+        @if (err('displayName')) { <mat-error>{{ err('displayName') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Client Type</mat-label>
+        <mat-select formControlName="clientTypeId" required>
+          @for (t of formService.clientTypes(); track t.id) {
+            <mat-option [value]="t.id">{{ t.name }}</mat-option>
+          }
+          @if (noClientTypes()) {
+            <mat-option disabled>No client types available</mat-option>
+          }
+        </mat-select>
+        @if (formService.referenceLoading()) {
+          <mat-hint>Loading client types…</mat-hint>
+        }
+        @if (err('clientTypeId')) { <mat-error>{{ err('clientTypeId') }}</mat-error> }
+      </mat-form-field>
+    </div>
+
+    @if (noClientTypes()) {
+      <div class="step-caution">
+        <mat-icon>info</mat-icon>
+        <span>
+          No client types are configured yet. Add them in
+          <a routerLink="/admin/client-types">Client Types</a> first.
+        </span>
+      </div>
+    }
+
+    @if (formService.referenceError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ formService.referenceError() }}</span>
+        <button mat-button type="button" (click)="formService.loadReferenceData()">Retry</button>
+      </div>
+    }
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>account_tree</mat-icon> Classification &amp; Registration</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Industry Category</mat-label>
+        <mat-select formControlName="industryCategoryId">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search industries…"
+              aria-label="Search industry categories"
+              [ngModel]="industrySearch()"
+              (ngModelChange)="industrySearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">— None —</mat-option>
+          @for (i of visibleIndustries(); track i.id) {
+            <mat-option [value]="i.id">{{ i.name }}</mat-option>
+          }
+          @if (visibleIndustries().length === 0) {
+            <mat-option disabled>No matching industries</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Recommended</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country of Registration</mat-label>
+        <mat-select formControlName="countryCode">
+          <mat-option value="">— None —</mat-option>
+          @for (c of countries; track c.code) {
+            <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Recommended</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Parent Client</mat-label>
+        <mat-select formControlName="parentClientId">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search clients…"
+              aria-label="Search parent clients"
+              [ngModel]="parentSearch()"
+              (ngModelChange)="parentSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">— None —</mat-option>
+          @for (c of visibleParents(); track c.id) {
+            <mat-option [value]="c.id">{{ c.displayName || c.clientName }} ({{ c.code }})</mat-option>
+          }
+          @if (visibleParents().length === 0) {
+            <mat-option disabled>No matching clients</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Links a subsidiary to its parent organization</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Website</mat-label>
+        <input matInput formControlName="website" maxlength="255" placeholder="e.g. www.example.com" />
+        @if (err('website')) { <mat-error>{{ err('website') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>notes</mat-icon> Additional Information</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Client Description</mat-label>
+        <textarea
+          matInput
+          formControlName="description"
+          rows="3"
+          maxlength="4000"
+          placeholder="Additional information about the organization"
+        ></textarea>
+        @if (err('description')) { <mat-error>{{ err('description') }}</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Notes</mat-label>
+        <textarea
+          matInput
+          formControlName="notes"
+          rows="2"
+          maxlength="4000"
+          placeholder="Internal remarks"
+        ></textarea>
+        <mat-hint>Internal only</mat-hint>
+        @if (err('notes')) { <mat-error>{{ err('notes') }}</mat-error> }
+      </mat-form-field>
+    </div>
+  </section>
+</div>

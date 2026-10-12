@@ -1,0 +1,45 @@
+<div class="step">
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>input</mat-icon> Select Material Source</h3>
+    <app-material-source-selector [selected]="source()" (selectedChange)="choose($event)" />
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>checklist</mat-icon> {{ sourceLabel() }}</h3>
+
+    <div class="selected-bar" style="margin-bottom: 12px">
+      <mat-icon style="color: var(--primary)">shopping_cart</mat-icon>
+      <span>
+        <strong>{{ form.lineCount() }}</strong>
+        material{{ form.lineCount() === 1 ? '' : 's' }} selected for this requisition
+      </span>
+      <span class="selected-bar__spacer"></span>
+      <span class="mr-muted">A quantity is required — rows left empty or at 0 are ignored.</span>
+      <button mat-button type="button" [disabled]="form.lineCount() === 0" (click)="clearAll()">
+        <mat-icon>delete_sweep</mat-icon> Clear all
+      </button>
+    </div>
+
+    @if (visited().has(Source.MATERIAL_MASTER)) {
+      <div [style.display]="source() === Source.MATERIAL_MASTER ? 'block' : 'none'">
+        <app-material-search />
+      </div>
+    }
+    @if (visited().has(Source.EARLIER_MR)) {
+      <div [style.display]="source() === Source.EARLIER_MR ? 'block' : 'none'">
+        <app-earlier-mr-source [currentId]="requisitionId()" />
+      </div>
+    }
+    @if (visited().has(Source.BOM)) {
+      <div [style.display]="source() === Source.BOM ? 'block' : 'none'">
+        <app-bom-source />
+      </div>
+    }
+    @if (visited().has(Source.PROJECT)) {
+      <div [style.display]="source() === Source.PROJECT ? 'block' : 'none'">
+        <app-project-source />
+      </div>
+    }
+  </section>
+</div>

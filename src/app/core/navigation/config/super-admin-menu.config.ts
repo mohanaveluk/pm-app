@@ -29,6 +29,10 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
       { id: 'org-uom', label: 'Unit of Measurements', route: '/admin/unit-of-measurements', order: 8, permission: PERMISSIONS.UOM_VIEW },
       { id: 'org-industry-categories', label: 'Industry Categories', route: '/admin/industry-categories', order: 9, permission: PERMISSIONS.INDUSTRY_CATEGORIES_VIEW },
       { id: 'org-vendor-types', label: 'Vendor Types', route: '/admin/vendor-types', order: 10, permission: PERMISSIONS.VENDOR_TYPES_VIEW },
+      { id: 'org-project-types', label: 'Project Types', route: '/admin/project-types', order: 11, permission: PERMISSIONS.PROJECT_TYPES_VIEW },
+      { id: 'org-wbs-cost-codes', label: 'WBS / Cost Codes', route: '/admin/wbs-cost-codes', order: 12, permission: PERMISSIONS.WBS_COST_CODES_VIEW },
+      { id: 'org-client-types', label: 'Client Types', route: '/admin/client-types', order: 13, permission: PERMISSIONS.CLIENT_TYPES_VIEW },
+      { id: 'org-clients', label: 'Client Master', route: '/admin/clients', order: 14, permission: PERMISSIONS.CLIENTS_VIEW },
     ],
   },
 
@@ -69,7 +73,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
   {
     id: 'engineering', label: 'Engineering', tooltip: 'Engineering', icon: 'engineering', order: 7,
     children: [
-      { id: 'material-requisition', label: 'Material Requisition', route: '/warehouse', order: 2, permission: PERMISSIONS.WAREHOUSE_VIEW },
+      { id: 'material-requisition', label: 'Material Requisition', route: '/material-requisitions', order: 2, permission: PERMISSIONS.MATERIAL_REQUISITIONS_VIEW },
     ],
   },
 

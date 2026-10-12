@@ -1,0 +1,185 @@
+<div class="step" [formGroup]="group">
+
+  <!-- Registered office -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>apartment</mat-icon> Registered Office</h3>
+    <p class="step-section__hint">The address the organization is registered at.</p>
+
+    <div class="step-grid" [formGroup]="registered">
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Address Line 1</mat-label>
+        <input matInput formControlName="addressLine1" maxlength="255" autocomplete="off" />
+        @if (registered.get('addressLine1')?.errors?.['maxlength']) { <mat-error>Maximum 255 characters</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="step-full">
+        <mat-label>Address Line 2</mat-label>
+        <input matInput formControlName="addressLine2" maxlength="255" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>City</mat-label>
+        <input matInput formControlName="city" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>State / Province</mat-label>
+        <input matInput formControlName="state" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Postal / ZIP Code</mat-label>
+        <input matInput formControlName="postalCode" maxlength="20" autocomplete="off" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country</mat-label>
+        <mat-select formControlName="countryCode">
+          <mat-option value="">— None —</mat-option>
+          @for (c of countries; track c.code) {
+            <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </section>
+
+  <!-- Operational address(es) -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>domain</mat-icon> Operational Address</h3>
+
+    <div class="step-toggles">
+      <mat-slide-toggle formControlName="operationalAddressSameAsRegistered" color="primary">
+        Same as registered address
+      </mat-slide-toggle>
+    </div>
+
+    @if (sameAsRegistered()) {
+      @if (hasOperationalOffices) {
+        <div class="step-caution">
+          <mat-icon>info</mat-icon>
+          <span>
+            The operational offices listed below are removed when this step is saved. Switch the option off
+            to keep them.
+          </span>
+        </div>
+      } @else {
+        <p class="step-section__hint">
+          Operations are carried out from the registered office. Switch this off to add one or more
+          regional or operational offices.
+        </p>
+      }
+    }
+
+    @if (!sameAsRegistered() || hasOperationalOffices) {
+      @for (office of operational; track office; let i = $index) {
+        <div class="repeat-card" [class.repeat-card--inactive]="sameAsRegistered()" [formGroup]="office">
+          <div class="repeat-card__head">
+            <mat-icon>place</mat-icon>
+            <span class="repeat-card__title">{{ officeTitle(office, i) }}</span>
+            <button
+              mat-icon-button
+              type="button"
+              color="warn"
+              matTooltip="Remove this office"
+              [attr.aria-label]="'Remove ' + officeTitle(office, i)"
+              (click)="removeOffice(i)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <div class="step-grid">
+            <mat-form-field appearance="outline" class="step-full">
+              <mat-label>Office Name</mat-label>
+              <input matInput formControlName="label" maxlength="100" placeholder="e.g. Dubai Regional Office" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="step-full">
+              <mat-label>Address Line 1</mat-label>
+              <input matInput formControlName="addressLine1" maxlength="255" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="step-full">
+              <mat-label>Address Line 2</mat-label>
+              <input matInput formControlName="addressLine2" maxlength="255" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" maxlength="100" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>State / Province</mat-label>
+              <input matInput formControlName="state" maxlength="100" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Postal / ZIP Code</mat-label>
+              <input matInput formControlName="postalCode" maxlength="20" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Country</mat-label>
+              <mat-select formControlName="countryCode">
+                <mat-option value="">— None —</mat-option>
+                @for (c of countries; track c.code) {
+                  <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+      } @empty {
+        <p class="repeat-empty">No operational offices yet.</p>
+      }
+
+      @if (!sameAsRegistered()) {
+        <button mat-stroked-button type="button" color="primary" (click)="addOffice()">
+          <mat-icon>add</mat-icon> Add Operational Office
+        </button>
+      }
+    }
+  </section>
+
+  <!-- Regional settings -->
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>public</mat-icon> Regional Settings</h3>
+
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Time Zone</mat-label>
+        <mat-select formControlName="timeZone">
+          <mat-option>
+            <input
+              class="select-search"
+              type="text"
+              placeholder="Search time zones…"
+              aria-label="Search time zones"
+              [ngModel]="timeZoneSearch()"
+              (ngModelChange)="timeZoneSearch.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()"
+            />
+          </mat-option>
+          <mat-option value="">— None —</mat-option>
+          @for (z of visibleTimeZones(); track z) {
+            <mat-option [value]="z">{{ z }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Preferred Language</mat-label>
+        <mat-select formControlName="preferredLanguage">
+          <mat-option value="">— None —</mat-option>
+          @for (l of languages; track l.value) {
+            <mat-option [value]="l.value">{{ l.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </section>
+</div>
