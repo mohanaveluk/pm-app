@@ -279,6 +279,15 @@ export const SOURCE_LABELS: Record<RequisitionLineSource, string> = {
   [RequisitionLineSource.PROJECT]: 'Project / WBS',
 };
 
+/** Statuses whose content can still be edited (mirrors the API). */
+export const EDITABLE_REQUISITION_STATUSES: readonly MaterialRequisitionStatus[] = [
+  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.UNDER_REVIEW,
+];
+
+export function isRequisitionEditable(status: MaterialRequisitionStatus | string | null | undefined): boolean {
+  return EDITABLE_REQUISITION_STATUSES.includes(status as MaterialRequisitionStatus);
+}
+
 export function requisitionStatusLabel(status: string | null | undefined): string {
   return REQUISITION_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? (status ?? '—');
 }

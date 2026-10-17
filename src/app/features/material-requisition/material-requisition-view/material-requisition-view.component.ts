@@ -17,7 +17,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { MaterialRequisitionService } from '../services/material-requisition.service';
 import {
   DOCUMENT_TYPE_LABELS, MaterialRequisition, MaterialRequisitionStatus, SOURCE_LABELS,
-  requisitionStatusLabel,
+  isRequisitionEditable, requisitionStatusLabel,
 } from '../models/material-requisition.model';
 
 /** Read-only presentation of one requisition. Drafts offer Edit / Submit / Delete. */
@@ -50,6 +50,8 @@ export class MaterialRequisitionViewComponent implements OnInit {
   protected readonly mr = signal<MaterialRequisition | null>(null);
 
   protected readonly isDraft = computed(() => this.mr()?.status === MaterialRequisitionStatus.DRAFT);
+  /** Draft or Under Review — the API accepts edits to both. */
+  protected readonly canEdit = computed(() => isRequisitionEditable(this.mr()?.status));
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -93,7 +95,7 @@ export class MaterialRequisitionViewComponent implements OnInit {
       width: '480px',
       data: {
         title: 'Submit for Approval?',
-        message: `Submit ${mr.mrNumber}? It will move to Under Review and can no longer be edited.`,
+        message: `Submit ${mr.mrNumber}? It will move to Under Review.`,
         confirmText: 'Submit',
         icon: 'send',
       },

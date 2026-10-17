@@ -207,12 +207,33 @@
 .info-grid__wide { grid-column: span 2; @media (max-width: 640px) { grid-column: auto; } }
 .info-grid__full { grid-column: 1 / -1; }
 
+// Read-only details of the chosen WBS / cost code: label over value, no inputs.
 .wbs-info {
-  margin-top: 4px;
-  padding: 12px 12px 0;
+  gap: 12px 18px;
+  margin: 4px 0 0;
+  padding: 12px 14px;
   border: 1px dashed var(--border);
   border-radius: var(--r-md);
   background: var(--body-bg);
+
+  &__item {
+    min-width: 0;
+  }
+
+  dt {
+    font-size: 0.66rem;
+    color: #8098b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #0d2137;
+    overflow-wrap: anywhere;
+  }
 }
 
 .doc-heading {
@@ -301,7 +322,7 @@
 
 .doc-slot-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
   gap: 14px;
   margin-top: 12px;
 }
@@ -425,4 +446,81 @@
   &--on-hold  { background: #e3f2fd; color: #1565c0; }
   &--disabled { background: #eceff1; color: #78909c; }
   &--obsolete { background: #efebe9; color: #6d4c41; }
+}
+
+// ── Lists ────────────────────────────────────────────────────────────
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--body-bg);
+
+  &__icon {
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  &__meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+
+  &__sub {
+    font-size: 0.76rem;
+    color: #8098b8;
+    overflow-wrap: anywhere;
+  }
+}
+
+.doc-masked {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em;
+}
+
+.doc-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #e8f0fe;
+  color: #1a56c4;
+  border: 1px solid #b6ccf6;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--warn   { background: #fff8e1; color: #8a6100; border-color: #f5dfa3; }
+  &--danger { background: #fdecea; color: #b3261e; border-color: #f3b8b3; }
+}
+
+.doc-empty {
+  padding: 32px 12px;
+  text-align: center;
+  color: #8098b8;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.step-section {
+  margin-top: 20px;
 }

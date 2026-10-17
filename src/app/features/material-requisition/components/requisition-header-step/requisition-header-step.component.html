@@ -117,32 +117,14 @@
 
     <!-- Information only: what the chosen WBS / cost code carries. -->
     @if (form.selectedWbs(); as wbs) {
-      <div class="info-grid wbs-info" aria-label="Details of the chosen WBS / cost code">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Area / Facility</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.areaFacility || '—'" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>System / Sub-system</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.systemSubsystem || '—'" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Discipline</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.disciplineName || '—'" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Department</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.departmentName || '—'" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Work Package</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.workPackage || '—'" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Activities (Schedule Level)</mat-label>
-          <input matInput readonly tabindex="-1" [value]="wbs.activities || '—'" />
-        </mat-form-field>
-      </div>
+      <dl class="info-grid wbs-info" aria-label="Details of the chosen WBS / cost code">
+        <div class="wbs-info__item"><dt>Area / Facility</dt><dd>{{ wbs.areaFacility || '—' }}</dd></div>
+        <div class="wbs-info__item"><dt>System / Sub-system</dt><dd>{{ wbs.systemSubsystem || '—' }}</dd></div>
+        <div class="wbs-info__item"><dt>Discipline</dt><dd>{{ wbs.disciplineName || '—' }}</dd></div>
+        <div class="wbs-info__item"><dt>Department</dt><dd>{{ wbs.departmentName || '—' }}</dd></div>
+        <div class="wbs-info__item"><dt>Work Package</dt><dd>{{ wbs.workPackage || '—' }}</dd></div>
+        <div class="wbs-info__item"><dt>Activities (Schedule Level)</dt><dd>{{ wbs.activities || '—' }}</dd></div>
+      </dl>
     }
 
     <div class="info-grid" style="margin-top: 16px">

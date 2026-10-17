@@ -31,12 +31,12 @@
 
       <div class="pw-header__main">
         <mat-chip [class]="statusClass(r.status)">{{ statusText(r.status) }}</mat-chip>
+        @if (canEdit() && can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
+          <button mat-stroked-button (click)="edit()" [disabled]="busy()">
+            <mat-icon>edit</mat-icon> Edit
+          </button>
+        }
         @if (isDraft()) {
-          @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
-            <button mat-stroked-button (click)="edit()" [disabled]="busy()">
-              <mat-icon>edit</mat-icon> Edit
-            </button>
-          }
           @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_SUBMIT)) {
             <button mat-flat-button color="primary" (click)="submit()" [disabled]="busy()">
               <mat-icon>send</mat-icon> Submit for Approval
