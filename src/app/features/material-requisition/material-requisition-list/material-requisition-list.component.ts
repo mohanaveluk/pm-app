@@ -26,7 +26,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { MaterialRequisitionListStore } from '../store/material-requisition-list.store';
 import {
   MaterialRequisitionListItem, MaterialRequisitionSortField, MaterialRequisitionStatus,
-  REQUISITION_STATUS_OPTIONS, REQUISITION_STATUS_TRANSITIONS, requisitionStatusLabel,
+  REQUISITION_STATUS_OPTIONS, REQUISITION_STATUS_TRANSITIONS, isRequisitionEditable, requisitionStatusLabel,
 } from '../models/material-requisition.model';
 
 interface ColumnDef {
@@ -99,8 +99,17 @@ export class MaterialRequisitionListComponent {
     return item.id;
   }
 
+  /** Draft or Under Review — the API accepts edits to both. */
+  protected canEdit(item: MaterialRequisitionListItem): boolean {
+    return isRequisitionEditable(item.status);
+  }
+
   protected isDraft(item: MaterialRequisitionListItem): boolean {
     return item.status === MaterialRequisitionStatus.DRAFT;
+  }
+
+  protected isUnderReview(item: MaterialRequisitionListItem): boolean {
+    return item.status === MaterialRequisitionStatus.UNDER_REVIEW;
   }
 
   /** Whether the requisition can be moved to `status` from where it is now. */
@@ -119,6 +128,7 @@ export class MaterialRequisitionListComponent {
   /** A draft is deleted; a submitted requisition is put on hold (or released). */
   protected canDeleteOrHold(item: MaterialRequisitionListItem): boolean {
     return this.isDraft(item)
+      || this.isUnderReview(item)
       || this.canMoveTo(item, MaterialRequisitionStatus.ON_HOLD)
       || this.isOnHold(item);
   }
@@ -286,7 +296,7 @@ export class MaterialRequisitionListComponent {
       viewContainerRef: this.viewContainerRef,
       data: {
         title: 'Submit for Approval?',
-        message: `Submit ${item.mrNumber}? It will move to Under Review and can no longer be edited.`,
+        message: `Submit ${item.mrNumber}? It will move to Under Review.`,
         confirmText: 'Submit',
         icon: 'send',
       },

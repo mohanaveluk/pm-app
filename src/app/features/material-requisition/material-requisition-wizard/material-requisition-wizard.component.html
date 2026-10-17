@@ -50,7 +50,9 @@
           @if (saved(); as s) {
             <h1 class="pw-header__title">
               <span class="pw-code">{{ s.mrNumber }}</span>
-              <span class="pw-header__desc">Draft requisition</span>
+              <span class="pw-header__desc">
+                {{ isUnderReview() ? 'Under review — changes are saved in place' : 'Draft requisition' }}
+              </span>
             </h1>
           } @else {
             <h1 class="pw-header__title">
@@ -106,11 +108,24 @@
         </button>
       }
 
-      <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving()">
-        <mat-icon>save</mat-icon> Save Draft
-      </button>
+      @if (isUnderReview()) {
+        @if (!isLast()) {
+          <button mat-stroked-button type="button" (click)="saveChanges()" [disabled]="saving()">
+            <mat-icon>save</mat-icon> Save Changes
+          </button>
+        }
+      } @else {
+        <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving()">
+          <mat-icon>save</mat-icon> Save Draft
+        </button>
+      }
 
-      @if (isLast()) {
+      @if (isLast() && isUnderReview()) {
+        <button mat-raised-button color="primary" type="button" (click)="saveChanges()" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+          Save Changes
+        </button>
+      } @else if (isLast()) {
         <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
           @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>send</mat-icon> }
           Submit for Approval

@@ -15,7 +15,8 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { MaterialRequisitionService } from '../services/material-requisition.service';
 import { RequisitionFormService } from '../services/requisition-form.service';
 import {
-  MaterialRequisition, MaterialRequisitionStatus, RequisitionLineSource, requisitionStatusLabel,
+  MaterialRequisition, MaterialRequisitionStatus, RequisitionLineSource, isRequisitionEditable,
+  requisitionStatusLabel,
 } from '../models/material-requisition.model';
 import { HasUnsavedRequisitionChanges } from '../guards/unsaved-requisition.guard';
 import { RequisitionHeaderStepComponent } from '../components/requisition-header-step/requisition-header-step.component';
@@ -65,6 +66,14 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
   protected readonly initialSource = signal(RequisitionLineSource.MATERIAL_MASTER);
   protected readonly isEdit = computed(() => this.route.snapshot.data['mode'] === 'edit');
 
+  /**
+   * Already submitted: it is corrected in place — no Save Draft, no Submit —
+   * and keeps its Under Review status.
+   */
+  protected readonly isUnderReview = computed(
+    () => this.saved()?.status === MaterialRequisitionStatus.UNDER_REVIEW,
+  );
+
   private bypassGuard = false;
 
   ngOnInit(): void {
@@ -85,8 +94,8 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     this.loadError.set('');
     try {
       const res = await lastValueFrom(this.service.getRequisitionById(id));
-      if (res.data.status !== MaterialRequisitionStatus.DRAFT) {
-        this.snack.open('Only a draft can be edited.', 'OK', { duration: 4000 });
+      if (!isRequisitionEditable(res.data.status)) {
+        this.snack.open('Only a draft or a requisition under review can be edited.', 'OK', { duration: 4000 });
         this.leaveTo(['/material-requisitions', id]);
         return;
       }
@@ -149,6 +158,27 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     try {
       const mr = await this.persist();
       this.snack.open(`Draft ${mr.mrNumber} saved.`, 'OK', { duration: 3000 });
+    } catch (err) {
+      this.fail(err);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Saves corrections to a requisition under review, then shows it. */
+  protected async saveChanges(): Promise<void> {
+    if (this.saving()) return;
+    const issues = this.form.submitIssues();
+    if (issues.length) {
+      this.form.header.markAllAsTouched();
+      this.snack.open(issues[0], 'Close', { duration: 5000, panelClass: ['error-snackbar'] });
+      return;
+    }
+    this.saving.set(true);
+    try {
+      const mr = await this.persist();
+      this.snack.open(`${mr.mrNumber} updated.`, 'OK', { duration: 3000 });
+      this.leaveTo(['/material-requisitions', mr.id]);
     } catch (err) {
       this.fail(err);
     } finally {

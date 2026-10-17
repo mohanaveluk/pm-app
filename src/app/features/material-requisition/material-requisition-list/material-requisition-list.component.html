@@ -254,8 +254,8 @@
               <button mat-icon-button (click)="view(r, $event)" matTooltip="View">
                 <mat-icon>visibility</mat-icon>
               </button>
-              @if (isDraft(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
-                <button mat-icon-button (click)="edit(r, $event)" matTooltip="Edit draft">
+              @if (canEdit(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
+                <button mat-icon-button (click)="edit(r, $event)" matTooltip="Edit">
                   <mat-icon>edit</mat-icon>
                 </button>
               }
@@ -306,8 +306,8 @@
               <button mat-icon-button (click)="view(r, $event)" matTooltip="View">
                 <mat-icon>visibility</mat-icon>
               </button>
-              @if (isDraft(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
-                <button mat-icon-button (click)="edit(r, $event)" matTooltip="Edit draft">
+              @if (canEdit(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
+                <button mat-icon-button (click)="edit(r, $event)" matTooltip="Edit">
                   <mat-icon>edit</mat-icon>
                 </button>
               }
@@ -346,8 +346,8 @@
     </button>
 
     @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
-      <button mat-menu-item [disabled]="!isDraft(r)" (click)="edit(r, $event)"
-        [matTooltip]="isDraft(r) ? '' : 'Only a draft can be edited'">
+      <button mat-menu-item [disabled]="!canEdit(r)" (click)="edit(r, $event)"
+        [matTooltip]="canEdit(r) ? '' : 'Only a draft or a requisition under review can be edited'">
         <mat-icon>edit</mat-icon> Edit Requisition
       </button>
     }
