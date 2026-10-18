@@ -114,10 +114,18 @@ links, audit info; Edit / status actions / Delete gated by permission and status
 
 Mapper spec (round-trip, empty → null, code never in request), form-service spec
 (validators, cascades, defaults), and for transactions the line/selection rules.
-API service spec with the transaction-manager harness for create/update/status.
+API service spec with the transaction-manager harness for create/update/status,
+asserting the workflow step each action records (pm-conventions §3a).
+
+Workflow: transactions (MR, RFQ, PO …) carry a trackingId from creation —
+RFQ/PO copy it from the MR they were raised from — and record every submit,
+review, approve, return, reject, cancel, hold/release and delete inside the
+same transaction (`tracking.record(..., manager)`). Reviewer/approver style
+participants are the registered audience; emailed users go in `metadata.emailedTo`.
 
 ## Done when
 
 List, workspace, view, routes, guard, form service, mapper, store, specs and
-the backend module exist; wiring (pm-conventions §5) is done; SQL is reported;
+the backend module exist; wiring (pm-conventions §5) is done; every action records a workflow step
+and notifies (pm-conventions §3a); SQL is reported;
 the verification commands pass with no warnings.

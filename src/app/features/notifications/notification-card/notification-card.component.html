@@ -1,0 +1,128 @@
+@let n = notification();
+@let v = visual();
+<article
+  class="nt-card"
+  [id]="'notif-' + n.id"
+  [class.nt-card--unread]="!n.isRead"
+  [class.nt-card--open]="expanded()"
+  [class.nt-card--compact]="compact()"
+>
+  <div class="nt-card__head">
+    <button
+      type="button"
+      class="nt-card__toggle"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="'notif-body-' + n.id"
+      (click)="onToggle()"
+    >
+      <span class="nt-card__icon nt-card__icon--{{ v.tone }}"><mat-icon>{{ v.icon }}</mat-icon></span>
+      <span class="nt-card__main">
+        <span class="nt-card__title">
+          {{ n.title }}
+          @if (!n.isRead) { <span class="nt-card__new">NEW</span> }
+        </span>
+        <span class="nt-card__message">{{ n.message }}</span>
+        <span class="nt-card__time"><mat-icon>schedule</mat-icon> {{ n.occurredAt | date: (compact() ? 'd MMM y, h:mm a' : 'd MMM y') }}</span>
+      </span>
+      <mat-icon class="nt-card__chevron">{{ expanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+    @if (showFullView()) {
+      <button
+        mat-icon-button
+        type="button"
+        class="nt-card__full"
+        matTooltip="Open in full view"
+        [attr.aria-label]="'Open ' + n.title + ' in full view'"
+        (click)="openFull($event)"
+      >
+        <mat-icon>fullscreen</mat-icon>
+      </button>
+    }
+  </div>
+
+  @if (expanded()) {
+    <div class="nt-card__body" [id]="'notif-body-' + n.id">
+      <div class="nt-meta">
+        <span><mat-icon>event</mat-icon> {{ n.occurredAt | date: 'MMM d, y, h:mm a' }}</span>
+        <span class="nt-meta__read"><mat-icon>visibility</mat-icon> Read</span>
+        <span class="nt-meta__chip">{{ categoryLabel() }}</span>
+        @if (n.trackingId) { <span class="nt-meta__mono" matTooltip="Workflow tracking id">{{ n.trackingId }}</span> }
+      </div>
+
+      @if (isEmail()) {
+        @if (detail(); as d) {
+          <dl class="nt-email-head">
+            <div><dt>Subject</dt><dd>{{ d.emailSubject }}</dd></div>
+            <div><dt>From</dt><dd>{{ d.emailFrom }}</dd></div>
+            <div><dt>To</dt><dd>{{ d.emailTo }}</dd></div>
+            @if (d.emailStatus === 'FAILED') {
+              <div><dt>Delivery</dt><dd class="nt-danger">Could not be delivered by email — shown here instead</dd></div>
+            }
+          </dl>
+          @if (d.emailHtml) {
+            <div class="nt-email"><app-email-frame [html]="d.emailHtml" /></div>
+          } @else {
+            <p class="nt-muted">The email content is no longer available.</p>
+          }
+        } @else if (detailLoading()) {
+          <div class="nt-inline"><mat-spinner diameter="22" /> Loading the email…</div>
+        } @else if (detailError()) {
+          <div class="nt-inline nt-danger">
+            <mat-icon>error_outline</mat-icon> {{ detailError() }}
+            <button mat-button type="button" (click)="retry()">Retry</button>
+          </div>
+        }
+      } @else {
+        <div class="nt-detail">
+          <p class="nt-detail__message">{{ n.message }}</p>
+          <dl class="nt-detail__facts">
+            @if (n.actorName) { <div><dt>By</dt><dd>{{ n.actorName }}</dd></div> }
+            @if (n.metadata?.['toStatus']) {
+              <div><dt>Status</dt>
+                <dd>
+                  @if (n.metadata?.['fromStatus'] && n.metadata?.['fromStatus'] !== n.metadata?.['toStatus']) {
+                    <span class="nt-status">{{ status(n.metadata?.['fromStatus']) }}</span>
+                    <mat-icon class="nt-arrow">arrow_forward</mat-icon>
+                  }
+                  <span class="nt-status nt-status--to">{{ status(n.metadata?.['toStatus']) }}</span>
+                </dd>
+              </div>
+            }
+            @if (n.metadata?.['round']) { <div><dt>Review round</dt><dd>{{ n.metadata?.['round'] }}</dd></div> }
+            @for (d of details(); track d.label) {
+              <div [class.nt-detail__wide]="d.value.length > 60"><dt>{{ d.label }}</dt><dd>{{ d.value }}</dd></div>
+            }
+          </dl>
+          @if (n.sourceType === 'EMAIL_WORKFLOW' && n.metadata?.['emailStatus'] === 'FAILED') {
+            <p class="nt-detail__note nt-danger"><mat-icon>mail_lock</mat-icon> The email about this could not be delivered — this notification is your copy.</p>
+          }
+          @if (n.metadata?.['comments']) {
+            <blockquote class="nt-detail__comment">“{{ n.metadata?.['comments'] }}”</blockquote>
+          }
+        </div>
+      }
+      <hr class="nt-divider" />
+      <div class="nt-actions">
+        @if (n.link) {
+          <button mat-button color="primary" type="button" (click)="openRecord()">
+            <mat-icon>open_in_new</mat-icon> Open Related Record
+          </button>
+        }
+        @if (showFullView()) {
+          <button mat-button type="button" (click)="openFull($event)">
+            <mat-icon>fullscreen</mat-icon> Full View
+          </button>
+        }
+        <button mat-button type="button" (click)="markUnread()">
+          <mat-icon>mark_email_unread</mat-icon> Mark Unread
+        </button>
+        @if (n.isArchived) {
+          <button mat-button type="button" (click)="unarchive()"><mat-icon>unarchive</mat-icon> Unarchive</button>
+        } @else {
+          <button mat-button type="button" (click)="archive()"><mat-icon>archive</mat-icon> Archive</button>
+        }
+        <button mat-button type="button" class="nt-danger" (click)="remove()"><mat-icon>delete</mat-icon> Delete</button>
+      </div>
+    </div>
+  }
+</article>

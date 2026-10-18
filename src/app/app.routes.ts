@@ -72,6 +72,12 @@ export const routes: Routes = [
         data: { breadcrumb: 'My Profile' },
       },
       {
+        // Every signed-in user's own notifications (the API returns only theirs).
+        path: 'notifications',
+        loadComponent: () => import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
+        data: { breadcrumb: 'Notifications', title: 'Notifications', icon: 'notifications' },
+      },
+      {
         path: 'preferences',
         loadComponent: comingSoon,
         data: { breadcrumb: 'Preferences', title: 'Preferences', icon: 'tune' },

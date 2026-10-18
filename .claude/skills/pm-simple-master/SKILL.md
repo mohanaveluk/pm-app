@@ -91,10 +91,15 @@ Plus: `MasterSequenceKey.<X>`, `app.module.ts`, permissions, role grants, menu
   `{ items, total, page, limit, totalPages }`.
 - `findActive` for dropdowns ordered by displayOrder, name.
 - `remove` soft-deletes; 409 when referenced by other data.
+- Every create / update / enable / disable / status change / delete records a
+  workflow step and notifies (pm-conventions §3a): `trackingId` column,
+  `trackX()` helper around `WorkflowTrackingService.track`, audience registered
+  in `onModuleInit`, `linkFor` route, new `WorkflowEntityType` value.
 - Spec covers: code generation call, duplicate → 409, org scoping, code
   immutability, soft delete, sort whitelist fallback.
 
 ## Done when
 
-All files above exist, the four wiring points are done, the new table SQL is in
+All files above exist, the four wiring points are done, every action records a
+workflow step (pm-conventions §3a), the new table SQL is in
 the report, and the pm-conventions verification commands pass with no warnings.

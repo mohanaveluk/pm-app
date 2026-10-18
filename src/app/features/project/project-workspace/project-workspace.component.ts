@@ -79,6 +79,8 @@ export class ProjectWorkspaceComponent implements OnInit, HasUnsavedProjectChang
   protected readonly project = signal<Project | null>(null);
 
   protected readonly clientSearch = signal('');
+  protected readonly managerSearch = signal('');
+  protected readonly countrySearch = signal('');
   protected readonly currencySearch = signal('');
   protected readonly timeZoneSearch = signal('');
 
@@ -139,6 +141,23 @@ export class ProjectWorkspaceComponent implements OnInit, HasUnsavedProjectChang
     const start = this.startDateValue();
     if (!(start instanceof Date) || Number.isNaN(start.getTime())) return null;
     return new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+  });
+
+  /** Search by manager name or email. */
+  protected readonly visibleManagers = computed(() => {
+    const term = this.managerSearch().trim().toLowerCase();
+    const all = this.formService.managers();
+    return term
+      ? all.filter((m) => m.name.toLowerCase().includes(term) || (m.email ?? '').toLowerCase().includes(term))
+      : all;
+  });
+
+  /** Search by country name or ISO code. */
+  protected readonly visibleCountries = computed(() => {
+    const term = this.countrySearch().trim().toLowerCase();
+    return term
+      ? this.countries.filter((c) => c.code.toLowerCase().includes(term) || c.name.toLowerCase().includes(term))
+      : this.countries;
   });
 
   protected readonly visibleCurrencies = computed(() => {
