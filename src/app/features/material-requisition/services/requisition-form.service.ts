@@ -14,8 +14,10 @@ import { MaterialGroupOption } from '../../material-group/models/material-group.
 import { UnitOfMeasurementOption } from '../../unit-of-measurement/models/unit-of-measurement.model';
 import { MaterialRequisitionService } from './material-requisition.service';
 import {
-  MaterialRequisition, RequisitionCandidate, RequisitionDocumentDraft, RequisitionDocumentType,
-  RequisitionLine, RequisitionLineSource,
+  APPROVER_EDITABLE_STATUSES, MaterialRequisition, REVIEWER_EDITABLE_STATUSES, RequisitionCandidate,
+  RequisitionDocumentDraft,
+  RequisitionDocumentType, RequisitionLine, RequisitionLineSource, RequisitionParticipantRole,
+  RequisitionUserOption,
 } from '../models/material-requisition.model';
 import { CreateMaterialRequisitionRequest } from '../models/material-requisition-request.model';
 
@@ -59,6 +61,30 @@ export class RequisitionFormService {
   readonly referenceLoading = signal(true);
   readonly referenceError = signal<string | null>(null);
 
+  /** Internal users who can review or approve. */
+  readonly userOptions = signal<RequisitionUserOption[]>([]);
+  readonly userOptionsLoading = signal(false);
+  readonly userOptionsError = signal<string | null>(null);
+
+  /**
+   * Assigned users no longer in the options (deactivated since), kept so the
+   * pickers still show who they are.
+   */
+  private readonly assignedUsers = signal<RequisitionUserOption[]>([]);
+
+  readonly allUserOptions = computed<RequisitionUserOption[]>(() => {
+    const options = this.userOptions();
+    const missing = this.assignedUsers().filter((a) => !options.some((o) => o.id === a.id));
+    return [...missing, ...options];
+  });
+
+  /**
+   * Reviewers change until the requisition is reviewed, approvers until it is
+   * approved — and only by its requester (the API's permissions say which).
+   */
+  readonly reviewersLocked = signal(false);
+  readonly approversLocked = signal(false);
+
   // ── Header ──────────────────────────────────────────────────────────
   readonly header: FormGroup = this.fb.group({
     projectId: ['', [Validators.required]],
@@ -71,7 +97,28 @@ export class RequisitionFormService {
     isometricReference: ['', [Validators.maxLength(100)]],
     areaUnit: ['', [Validators.maxLength(100)]],
     remarks: ['', [Validators.maxLength(4000)]],
+    reviewerIds: [[] as string[]],
+    approverIds: [[] as string[]],
   });
+
+  readonly reviewerIdsValue = toSignal(this.header.get('reviewerIds')!.valueChanges, {
+    initialValue: [] as string[],
+  });
+  readonly approverIdsValue = toSignal(this.header.get('approverIds')!.valueChanges, {
+    initialValue: [] as string[],
+  });
+
+  /** The chosen reviewers, in order. */
+  readonly selectedReviewers = computed(() => this.pick(this.reviewerIdsValue() ?? []));
+  /** The chosen approvers, in order. */
+  readonly selectedApprovers = computed(() => this.pick(this.approverIdsValue() ?? []));
+
+  private pick(ids: string[]): RequisitionUserOption[] {
+    const all = this.allUserOptions();
+    return ids
+      .map((id) => all.find((u) => u.id === id))
+      .filter((u): u is RequisitionUserOption => !!u);
+  }
 
   private readonly projectIdValue = toSignal(this.header.get('projectId')!.valueChanges, {
     initialValue: this.header.get('projectId')!.value as string,
@@ -315,9 +362,27 @@ export class RequisitionFormService {
         this.referenceLoading.set(false);
       },
     });
+
+    this.loadUserOptions();
   }
 
-  /** Loads the chosen project's WBS / cost codes. */
+  /** Internal users for the reviewer / approver pickers. */
+  loadUserOptions(): void {
+    this.userOptionsLoading.set(true);
+    this.userOptionsError.set(null);
+    this.service.getParticipantOptions().subscribe({
+      next: (res) => {
+        this.userOptions.set(res.data ?? []);
+        this.userOptionsLoading.set(false);
+      },
+      error: () => {
+        this.userOptionsError.set('Unable to load the users who can review or approve.');
+        this.userOptionsLoading.set(false);
+      },
+    });
+  }
+
+  /** Loads the chosen project's WBS. */
   loadWbsCodes(projectId: string | null, then?: () => void): void {
     if (!projectId) {
       this.wbsCodes.set([]);
@@ -396,12 +461,21 @@ export class RequisitionFormService {
     const c = this.header.controls;
 
     if (!c['projectId'].value) issues.push('Select a project.');
-    if (!c['wbsCostCodeId'].value) issues.push('Select a WBS / cost code.');
+    if (!c['wbsCostCodeId'].value) issues.push('Select a WBS.');
 
     const ros = c['requiredOnSiteDate'].value as Date | null;
     const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
     if (!ros) issues.push('Set the required-on-site date.');
     else if (ros < today) issues.push('The required-on-site date cannot be in the past.');
+
+    const reviewers = (c['reviewerIds'].value as string[]) ?? [];
+    const approvers = (c['approverIds'].value as string[]) ?? [];
+    if (!this.reviewersLocked() && !reviewers.length) issues.push('Assign at least one reviewer.');
+    if (!this.approversLocked() && !approvers.length) issues.push('Assign at least one approver.');
+    const both = this.pick(reviewers.filter((id) => approvers.includes(id)));
+    if (both.length) {
+      issues.push(`${both.map((u) => u.name).join(', ')} cannot be both a reviewer and an approver.`);
+    }
 
     if (this.header.invalid && issues.length === 0) issues.push('Correct the highlighted header fields.');
     const missing = this.incompleteLines().length;
@@ -454,6 +528,9 @@ export class RequisitionFormService {
         fileSizeBytes: d.fileSizeBytes,
       })),
       submit,
+      // A locked list is left out: the API keeps it as it is.
+      ...(this.reviewersLocked() ? {} : { reviewerIds: [...((v.reviewerIds as string[]) ?? [])] }),
+      ...(this.approversLocked() ? {} : { approverIds: [...((v.approverIds as string[]) ?? [])] }),
     };
   }
 
@@ -470,7 +547,17 @@ export class RequisitionFormService {
       isometricReference: mr.isometricReference ?? '',
       areaUnit: mr.areaUnit ?? '',
       remarks: mr.remarks ?? '',
+      reviewerIds: this.participantIds(mr, RequisitionParticipantRole.REVIEWER),
+      approverIds: this.participantIds(mr, RequisitionParticipantRole.APPROVER),
     });
+    this.assignedUsers.set((mr.participants ?? []).map((p) => ({
+      id: p.userId, name: p.userName, email: p.userEmail, position: null, role: null,
+    })));
+    // The API says whether this user may change them; without it, go by the status.
+    this.lockParticipants(
+      mr.permissions ? !mr.permissions.canEditReviewers : !REVIEWER_EDITABLE_STATUSES.includes(mr.status),
+      mr.permissions ? !mr.permissions.canEditApprovers : !APPROVER_EDITABLE_STATUSES.includes(mr.status),
+    );
 
     this.loadedProject.set({
       id: mr.projectId,
@@ -519,12 +606,40 @@ export class RequisitionFormService {
     this.linesChanged.set(false);
   }
 
+  /** Fixes (or frees) the reviewer and approver pickers. */
+  private lockParticipants(reviewersLocked: boolean, approversLocked: boolean): void {
+    this.reviewersLocked.set(reviewersLocked);
+    this.approversLocked.set(approversLocked);
+    for (const [name, locked] of [['reviewerIds', reviewersLocked], ['approverIds', approversLocked]] as const) {
+      const control = this.header.get(name)!;
+      if (locked) control.disable({ emitEvent: false });
+      else control.enable({ emitEvent: false });
+    }
+  }
+
+  /** Sets one of the two lists from a picker. */
+  setParticipants(controlName: 'reviewerIds' | 'approverIds', ids: string[]): void {
+    const control = this.header.get(controlName)!;
+    control.setValue([...ids]);
+    control.markAsDirty();
+  }
+
+  private participantIds(mr: MaterialRequisition, role: RequisitionParticipantRole): string[] {
+    return (mr.participants ?? [])
+      .filter((p) => p.role === role)
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((p) => p.userId);
+  }
+
   /** Back to an empty wizard — used by "Create New MR". */
   reset(): void {
     this.header.reset({
       projectId: '', wbsCostCodeId: '', budgetHead: '', requiredOnSiteDate: null, mrNumber: '',
       mtoReference: '', pidReference: '', isometricReference: '', areaUnit: '', remarks: '',
+      reviewerIds: [], approverIds: [],
     });
+    this.assignedUsers.set([]);
+    this.lockParticipants(false, false);
     this.wbsCodes.set([]);
     this.loadedProject.set(null);
     this.documents.set([]);

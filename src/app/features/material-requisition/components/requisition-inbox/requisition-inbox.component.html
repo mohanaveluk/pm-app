@@ -1,0 +1,151 @@
+<div class="pl-page">
+  <div class="pl-header">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p>{{ subtitle() }}</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="pl-toolbar">
+    <mat-button-toggle-group
+      [value]="pendingOnly()"
+      (change)="setPendingOnly($event.value)"
+      aria-label="Which requisitions to show"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle [value]="true">
+        <mat-icon>pending_actions</mat-icon> Waiting for me
+      </mat-button-toggle>
+      <mat-button-toggle [value]="false">
+        <mat-icon>list</mat-icon> All assigned
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <button mat-stroked-button (click)="refresh()" matTooltip="Reload">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+    <span class="pl-toolbar__spacer"></span>
+  </mat-toolbar>
+
+  <div class="pl-search">
+    <mat-form-field appearance="outline" class="pl-search__field">
+      <mat-label>Search by MR number, tracking id, project or client…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [value]="searchTerm()" (input)="onSearch($event)" aria-label="Search requisitions" />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <span class="pl-toolbar__spacer"></span>
+    <span class="pl-count">{{ total() }} requisition{{ total() === 1 ? '' : 's' }}</span>
+  </div>
+
+  <div class="pl-table-card">
+    @if (loading()) {
+      <div class="pl-skeleton" aria-busy="true" aria-label="Loading requisitions">
+        @for (row of skeletonRows; track $index) {
+          <div class="pl-skeleton__row">
+            <span class="pl-skeleton__cell pl-skeleton__cell--sm"></span>
+            <span class="pl-skeleton__cell pl-skeleton__cell--lg"></span>
+            <span class="pl-skeleton__cell pl-skeleton__cell--md"></span>
+          </div>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="pl-state pl-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error() }}</p>
+        <button mat-stroked-button (click)="refresh()"><mat-icon>refresh</mat-icon> Retry</button>
+      </div>
+    } @else if (rows().length === 0) {
+      <div class="pl-state">
+        <mat-icon>{{ pendingOnly() ? 'task_alt' : 'inbox' }}</mat-icon>
+        <p class="pl-state__title">{{ pendingOnly() ? 'Nothing waiting for you' : 'No requisitions assigned to you' }}</p>
+        <p class="pl-state__hint">
+          @if (pendingOnly()) {
+            You're all caught up. Requisitions appear here when they need your {{ reviewing() ? 'review' : 'approval' }}.
+          } @else {
+            Requisitions you are named on as {{ reviewing() ? 'reviewer' : 'approver' }} appear here.
+          }
+        </p>
+      </div>
+    } @else {
+      <div class="pl-table-scroll">
+        <table mat-table [dataSource]="rows()">
+          <ng-container matColumnDef="mrNumber">
+            <th mat-header-cell *matHeaderCellDef>MR Number</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="pl-code">{{ r.mrNumber }}</span>
+              @if (r.trackingId) { <span class="pl-cell__sub">{{ r.trackingId }}</span> }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="project">
+            <th mat-header-cell *matHeaderCellDef>Project</th>
+            <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="projectText(r)">{{ projectText(r) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="client">
+            <th mat-header-cell *matHeaderCellDef>Client</th>
+            <td mat-cell *matCellDef="let r" class="pl-cell--truncate">{{ r.clientName || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="ros">
+            <th mat-header-cell *matHeaderCellDef>Required on Site</th>
+            <td mat-cell *matCellDef="let r">{{ r.requiredOnSiteDate ? (r.requiredOnSiteDate | date: 'mediumDate') : '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="items">
+            <th mat-header-cell *matHeaderCellDef>Items</th>
+            <td mat-cell *matCellDef="let r">{{ r.itemCount }}</td>
+          </ng-container>
+          <ng-container matColumnDef="submitted">
+            <th mat-header-cell *matHeaderCellDef>Submitted</th>
+            <td mat-cell *matCellDef="let r">
+              {{ r.submittedAt ? (r.submittedAt | date: 'medium') : '—' }}
+              <span class="pl-cell__sub">{{ r.submittedBy || r.createdBy }}@if (r.reviewRound > 1) { · round {{ r.reviewRound }} }</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let r">
+              <mat-chip [class]="statusClass(r.status)">
+                <span class="status-chip__dot" aria-hidden="true"></span>
+                {{ statusLabel(r.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns" class="pl-row" (click)="open(row)"></tr>
+        </table>
+      </div>
+
+      <div class="pl-cards">
+        @for (r of rows(); track r.id) {
+          <button type="button" class="pl-card inbox-card" (click)="open(r)">
+            <div class="pl-card__head">
+              <div>
+                <div class="pl-code">{{ r.mrNumber }}</div>
+                <div class="pl-card__desc">{{ projectText(r) }}</div>
+              </div>
+              <mat-chip [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</mat-chip>
+            </div>
+            <div class="inbox-card__meta">
+              {{ r.itemCount }} item{{ r.itemCount === 1 ? '' : 's' }}
+              · ROS {{ r.requiredOnSiteDate ? (r.requiredOnSiteDate | date: 'mediumDate') : '—' }}
+            </div>
+          </button>
+        }
+      </div>
+
+      <mat-paginator
+        class="pl-paginator"
+        [length]="total()"
+        [pageIndex]="page()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        showFirstLastButtons
+        (page)="onPage($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>

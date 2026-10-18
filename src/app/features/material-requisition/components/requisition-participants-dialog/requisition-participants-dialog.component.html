@@ -1,0 +1,66 @@
+<h2 mat-dialog-title class="participants-dialog__title">
+  <mat-icon>group_add</mat-icon> Reviewers &amp; Approvers
+  <span class="mr-muted participants-dialog__mr">{{ data.mrNumber }}@if (mr()) { · {{ statusText() }} }</span>
+</h2>
+
+<mat-dialog-content class="participants-dialog">
+  @if (loading()) {
+    <div class="participants-dialog__state"><mat-spinner diameter="32" /> Loading…</div>
+  } @else if (loadError()) {
+    <div class="step-error"><mat-icon>error_outline</mat-icon> {{ loadError() }}</div>
+  } @else {
+    <p class="info-note">
+      <mat-icon>info</mat-icon>
+      Reviewers can be changed until the requisition is reviewed, approvers until it is approved. Anyone already
+      assigned keeps the decision they made; anyone added to a live review or approval is emailed.
+    </p>
+
+    <app-requisition-user-picker
+      label="Reviewers"
+      placeholder="Select one or more reviewers"
+      stepPrefix="R"
+      tone="reviewer"
+      [options]="allOptions()"
+      [selectedIds]="reviewerIds()"
+      (selectedIdsChange)="reviewerIds.set($event)"
+      [blockedIds]="approverIds()"
+      blockedReason="Already an approver of this requisition"
+      [locked]="reviewersLocked()"
+      [lockedReason]="reviewersLocked() ? reviewersLockedReason() : null"
+    />
+
+    <app-requisition-user-picker
+      label="Approvers"
+      placeholder="Select one or more approvers"
+      stepPrefix="A"
+      tone="approver"
+      [options]="allOptions()"
+      [selectedIds]="approverIds()"
+      (selectedIdsChange)="approverIds.set($event)"
+      [blockedIds]="reviewerIds()"
+      blockedReason="Already a reviewer of this requisition"
+      [locked]="approversLocked()"
+      [lockedReason]="approversLocked() ? approversLockedReason() : null"
+    />
+
+    @if (problem()) {
+      <div class="step-error"><mat-icon>error_outline</mat-icon> {{ problem() }}</div>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving()">{{ editable() ? 'Cancel' : 'Close' }}</button>
+  @if (editable()) {
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="save()"
+      [disabled]="saving() || loading() || !dirty() || !!problem()"
+    >
+      @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> }
+      Save
+    </button>
+  }
+</mat-dialog-actions>

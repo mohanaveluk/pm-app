@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
@@ -14,19 +13,27 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { PermissionService } from '../../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../../core/rbac/permissions.const';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { AuthService } from '../../../services';
 import { MaterialRequisitionService } from '../services/material-requisition.service';
 import {
-  DOCUMENT_TYPE_LABELS, MaterialRequisition, MaterialRequisitionStatus, SOURCE_LABELS,
-  isRequisitionEditable, requisitionStatusLabel,
+  MaterialRequisition, MaterialRequisitionStatus, requisitionStatusLabel,
 } from '../models/material-requisition.model';
+import { RequisitionDetailsComponent } from '../components/requisition-details/requisition-details.component';
+import { RequisitionParticipantsComponent } from '../components/requisition-participants/requisition-participants.component';
+import { RequisitionHistoryComponent } from '../components/requisition-history/requisition-history.component';
 
-/** Read-only presentation of one requisition. Drafts offer Edit / Submit / Delete. */
+/**
+ * Read-only presentation of one requisition: its details, reviewers and
+ * approvers with their decisions, and its full history. The actions offered
+ * (edit, submit / resubmit, review, approve, delete) are the ones the API says
+ * the signed-in user may take now.
+ */
 @Component({
   selector: 'app-material-requisition-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, DatePipe, MatButtonModule, MatIconModule, MatChipsModule, MatTableModule,
-    MatTooltipModule, MatProgressSpinnerModule,
+    CommonModule, MatButtonModule, MatIconModule, MatChipsModule, MatTooltipModule, MatProgressSpinnerModule,
+    RequisitionDetailsComponent, RequisitionParticipantsComponent, RequisitionHistoryComponent,
   ],
   templateUrl: './material-requisition-view.component.html',
   styleUrls: ['../components/requisition-step.shared.scss', './material-requisition-view.component.scss'],
@@ -38,11 +45,10 @@ export class MaterialRequisitionViewComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly auth = inject(AuthService);
 
   protected readonly PERMISSIONS = PERMISSIONS;
-  protected readonly typeLabels: Record<string, string> = DOCUMENT_TYPE_LABELS;
-  protected readonly sourceLabels: Record<string, string> = SOURCE_LABELS;
-  protected readonly lineColumns = ['no', 'code', 'description', 'uom', 'quantity', 'stock', 'source'];
+  protected readonly myEmail = computed(() => this.auth.user()?.email ?? null);
 
   protected readonly loading = signal(true);
   protected readonly loadError = signal('');
@@ -50,8 +56,16 @@ export class MaterialRequisitionViewComponent implements OnInit {
   protected readonly mr = signal<MaterialRequisition | null>(null);
 
   protected readonly isDraft = computed(() => this.mr()?.status === MaterialRequisitionStatus.DRAFT);
-  /** Draft or Under Review — the API accepts edits to both. */
-  protected readonly canEdit = computed(() => isRequisitionEditable(this.mr()?.status));
+  protected readonly isReturned = computed(() => this.mr()?.status === MaterialRequisitionStatus.RETURNED);
+  /** What the API says the signed-in user may do on this requisition. */
+  protected readonly perms = computed(() => this.mr()?.permissions ?? null);
+
+  /** Why it came back: the return(s) recorded in the last round. */
+  protected readonly returnNotes = computed(() => {
+    const mr = this.mr();
+    if (!mr) return [];
+    return mr.history.filter((e) => e.action === 'RETURNED' && e.round === mr.reviewRound && e.comments);
+  });
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -83,6 +97,16 @@ export class MaterialRequisitionViewComponent implements OnInit {
     void this.router.navigate(['/material-requisitions']);
   }
 
+  protected openReview(): void {
+    const id = this.mr()?.id;
+    if (id) void this.router.navigate(['/material-requisitions', 'reviews', id]);
+  }
+
+  protected openApproval(): void {
+    const id = this.mr()?.id;
+    if (id) void this.router.navigate(['/material-requisitions', 'approvals', id]);
+  }
+
   protected edit(): void {
     const id = this.mr()?.id;
     if (id) void this.router.navigate(['/material-requisitions', id, 'edit']);
@@ -94,9 +118,11 @@ export class MaterialRequisitionViewComponent implements OnInit {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       width: '480px',
       data: {
-        title: 'Submit for Approval?',
-        message: `Submit ${mr.mrNumber}? It will move to Under Review.`,
-        confirmText: 'Submit',
+        title: this.isReturned() ? 'Resubmit for Review?' : 'Submit for Review?',
+        message: this.isReturned()
+          ? `Resubmit ${mr.mrNumber}? A new review round starts and every reviewer is notified that the requested changes have been made.`
+          : `Submit ${mr.mrNumber}? It moves to Under Review and every reviewer is notified.`,
+        confirmText: this.isReturned() ? 'Resubmit' : 'Submit',
         icon: 'send',
       },
     });
@@ -106,7 +132,7 @@ export class MaterialRequisitionViewComponent implements OnInit {
     try {
       const res = await lastValueFrom(this.service.submitRequisition(mr.id));
       this.mr.set(res.data);
-      this.snack.open(`${res.data.mrNumber} submitted — now Under Review`, 'OK', { duration: 4000 });
+      this.snack.open(`${res.data.mrNumber} submitted — the reviewers have been notified`, 'OK', { duration: 4000 });
     } catch (err) {
       this.fail(err, 'The requisition could not be submitted.');
     } finally {
@@ -158,12 +184,4 @@ export class MaterialRequisitionViewComponent implements OnInit {
     return requisitionStatusLabel(status);
   }
 
-  protected clientText(mr: MaterialRequisition): string {
-    if (!mr.clientName) return '—';
-    return mr.clientCode ? `${mr.clientCode} — ${mr.clientName}` : mr.clientName;
-  }
-
-  protected open(url: string): void {
-    window.open(url, '_blank', 'noopener');
-  }
 }

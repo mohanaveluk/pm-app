@@ -422,3 +422,67 @@ table[mat-table] {
   &--obsolete { background: #efebe9; color: #6d4c41; }
   &--cancelled { background: #eceff1; color: #78909c; }
 }
+
+.status-chip {
+  &--reviewed { background: #e0f2f1; color: #00695c; }
+  &--returned { background: #e3f2fd; color: #1565c0; }
+}
+
+.pl-cell__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.pl-lock {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  color: #8098b8;
+}
+
+// ── Reviewers / Approvers column ──────────────────────────────────────
+
+.list-people {
+  min-width: 200px;
+  max-width: 320px;
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+  }
+
+  &__role {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.64rem;
+    font-weight: 700;
+
+    &--approver { background: var(--success); }
+  }
+}
+
+.list-person {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  background: #eceff1;
+  color: #455a64;
+
+  &--reviewed,
+  &--approved  { background: #e8f5e9; color: var(--success); }
+  &--returned  { background: #e3f2fd; color: #1565c0; }
+  &--rejected,
+  &--cancelled { background: #fbe9e7; color: #c62828; }
+}

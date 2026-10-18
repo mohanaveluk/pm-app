@@ -11,6 +11,16 @@ export const MANAGER_MENU: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/manager/dashboard', order: 1, permission: PERMISSIONS.DASHBOARD_VIEW },
   { id: 'projects', label: 'Projects', icon: 'folder_open', route: '/projects', order: 2, permission: PERMISSIONS.PROJECTS_VIEW },
   { id: 'materials', label: 'Materials', icon: 'inventory_2', route: '/materials', order: 3, permission: PERMISSIONS.MATERIALS_VIEW },
+  {
+    // Reviewers and approvers can hold any manager role, so the inboxes live here
+    // too; each entry is pruned unless the role has its permission.
+    id: 'material-requisition', label: 'Material Requisition', tooltip: 'Material Requisition', icon: 'shopping_cart', order: 3,
+    children: [
+      { id: 'material-requisition-list', label: 'Material Requisitions', route: '/material-requisitions', order: 1, permission: PERMISSIONS.MATERIAL_REQUISITIONS_VIEW },
+      { id: 'material-requisition-reviews', label: 'Requisition Reviews', route: '/material-requisitions/reviews', order: 2, permission: PERMISSIONS.MATERIAL_REQUISITIONS_REVIEW },
+      { id: 'material-requisition-approvals', label: 'Requisition Approvals', route: '/material-requisitions/approvals', order: 3, permission: PERMISSIONS.MATERIAL_REQUISITIONS_APPROVE },
+    ],
+  },
   { id: 'vendors', label: 'Vendors', icon: 'storefront', route: '/vendors', order: 4, permission: PERMISSIONS.VENDORS_VIEW },
   { id: 'vendors-evaluation', label: 'Vendors Evaluation', icon: 'storefront', route: '/vendor-evaluation', order: 4, permission: PERMISSIONS.VENDOR_EVALUATION_VIEW },
   { id: 'purchase-orders', label: 'Purchase Orders', icon: 'receipt_long', route: '/purchase-orders', order: 5, permission: PERMISSIONS.PO_VIEW },

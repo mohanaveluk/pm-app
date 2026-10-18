@@ -154,6 +154,10 @@ export const PERMISSIONS = {
   MATERIAL_REQUISITIONS_DELETE: 'material-requisitions.delete',
   MATERIAL_REQUISITIONS_SUBMIT: 'material-requisitions.submit',
   MATERIAL_REQUISITIONS_EXPORT: 'material-requisitions.export',
+  // Reach the reviewer / approver inboxes. Who may actually decide on a given
+  // requisition is decided by the API: the users assigned to it.
+  MATERIAL_REQUISITIONS_REVIEW: 'material-requisitions.review',
+  MATERIAL_REQUISITIONS_APPROVE: 'material-requisitions.approve',
   ENGINEERING_VIEW: 'engineering.view',
 
   MATERIALS_VIEW: 'materials.view',

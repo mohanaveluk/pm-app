@@ -1,6 +1,6 @@
 import { ProjectOption } from '../../project/models/project.model';
 
-/** Lightweight discipline reference embedded in a WBS / Cost Code record. */
+/** Lightweight discipline reference embedded in a WBS record. */
 export interface WbsCostCodeDiscipline {
   id: string;
   name?: string;
@@ -8,7 +8,7 @@ export interface WbsCostCodeDiscipline {
 }
 
 /**
- * WBS / Cost Code master — one entry of a project's work breakdown / cost-code
+ * WBS master — one entry of a project's work breakdown / cost-code
  * structure. Mirrors WbsCostCodeResponseDto exactly
  * (pm-api/src/modules/wbs-cost-code/dto/wbs-cost-code-response.dto.ts).
  *

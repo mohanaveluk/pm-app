@@ -1,0 +1,72 @@
+<div class="pw-page">
+  @if (loading()) {
+    <div class="pw-state">
+      <mat-spinner diameter="40" />
+      <p>Loading requisition…</p>
+    </div>
+  } @else if (loadError()) {
+    <div class="pw-state pw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToInbox()">
+        <mat-icon>arrow_back</mat-icon> Back to {{ inboxLabel() }}
+      </button>
+    </div>
+  } @else if (mr(); as r) {
+
+    <header class="pw-header">
+      <div class="pw-header__main">
+        <button mat-icon-button [matTooltip]="'Back to ' + inboxLabel()" (click)="backToInbox()" [attr.aria-label]="'Back to ' + inboxLabel()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div>
+          <div class="pw-header__eyebrow">{{ reviewing() ? 'Material Requisition Review' : 'Material Requisition Approval' }}</div>
+          <h1 class="pw-header__title">
+            <span class="pw-code">{{ r.mrNumber }}</span>
+            <span class="pw-header__desc">{{ r.projectCode }} — {{ r.projectName }}</span>
+          </h1>
+        </div>
+      </div>
+      <div class="pw-header__main">
+        <mat-chip [class]="statusClass(r.status)">{{ statusText(r.status) }}</mat-chip>
+        @if (canEdit()) {
+          <button mat-stroked-button type="button" (click)="edit()" matTooltip="Change the requisition before you review it">
+            <mat-icon>edit</mat-icon> Edit Requisition
+          </button>
+        }
+        <button mat-button type="button" (click)="viewFull()"><mat-icon>open_in_new</mat-icon> Open</button>
+      </div>
+    </header>
+
+    @if (notice(); as n) {
+      <div class="info-note decision-notice"><mat-icon>{{ n.icon }}</mat-icon> {{ n.text }}</div>
+    } @else if (reviewing()) {
+      <div class="info-note decision-notice">
+        <mat-icon>rate_review</mat-icon>
+        Check the requisition below. You can edit it before you decide; if you do, say what you changed in your comments.
+      </div>
+    } @else {
+      <div class="info-note decision-notice">
+        <mat-icon>verified_user</mat-icon>
+        The review is complete. Read the review comments, then record your decision — approvers cannot edit the requisition.
+      </div>
+    }
+
+    @if (canDecide()) {
+      <app-requisition-decision-panel
+        [title]="reviewing() ? 'Your review' : 'Your approval decision'"
+        [options]="options()"
+        [commentsRequired]="reviewing() && !!me()?.editedInRound"
+        [commentsRequiredReason]="reviewing() && me()?.editedInRound ? 'You edited this requisition — describe your changes in the comments.' : null"
+        [busy]="busy()"
+        (submitted)="decide($event)"
+      />
+    }
+
+    <app-requisition-participants [mr]="r" [currentUserEmail]="myEmail()" />
+
+    <app-requisition-details [mr]="r" />
+
+    <app-requisition-history [events]="r.history" [trackingId]="r.trackingId" />
+  }
+</div>

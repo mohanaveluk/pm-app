@@ -1,13 +1,13 @@
 <h2 mat-dialog-title class="dlg-title">
   <mat-icon>{{ isEdit ? 'edit' : 'add_circle' }}</mat-icon>
-  {{ isEdit ? 'Edit WBS / Cost Code' : 'New WBS / Cost Code' }}
+  {{ isEdit ? 'Edit WBS' : 'New WBS' }}
 </h2>
 
 <mat-dialog-content class="dlg-content">
   @if (loading()) {
     <div class="dlg-loading">
       <mat-spinner diameter="36" />
-      <p>Loading WBS / cost code…</p>
+      <p>Loading WBS</p>
     </div>
   } @else if (loadError()) {
     <div class="dlg-error">

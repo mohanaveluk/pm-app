@@ -168,20 +168,33 @@ describe('RequisitionFormService', () => {
       const issues = s.submitIssues();
 
       expect(issues).toContain('Select a project.');
-      expect(issues).toContain('Select a WBS / cost code.');
+      expect(issues).toContain('Select a WBS.');
       expect(issues).toContain('Set the required-on-site date.');
       expect(issues).toContain('Enter a quantity for at least one material.');
+      expect(issues).toContain('Assign at least one reviewer.');
+      expect(issues).toContain('Assign at least one approver.');
     });
 
     it('is empty once the requisition is complete', () => {
       const s = setup();
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      s.header.patchValue({ projectId: 'p1', wbsCostCodeId: 'w1', requiredOnSiteDate: tomorrow });
+      s.header.patchValue({
+        projectId: 'p1', wbsCostCodeId: 'w1', requiredOnSiteDate: tomorrow,
+        reviewerIds: ['u-r1'], approverIds: ['u-a1'],
+      });
       s.setQuantity(PIPE, 5, MM, null);
       s.commitQuantity('m1');
 
       expect(s.submitIssues()).toEqual([]);
+    });
+
+    it('refuses the same person as reviewer and approver', () => {
+      const s = setup();
+      s.userOptions.set([{ id: 'u-1', name: 'Asha Nair', email: 'a@x.com', position: null, role: null }]);
+      s.header.patchValue({ reviewerIds: ['u-1'], approverIds: ['u-1'] });
+
+      expect(s.submitIssues()).toContain('Asha Nair cannot be both a reviewer and an approver.');
     });
 
     it('rejects a required-on-site date in the past', () => {
@@ -232,6 +245,65 @@ describe('RequisitionFormService', () => {
       expect(req.mrNumber).toBeNull();
       expect(req.submit).toBe(false);
       expect(Object.keys(req)).not.toContain('code');
+    });
+
+    it('sends the reviewers and approvers in the order chosen', () => {
+      const s = setup();
+      s.header.patchValue({ projectId: 'p1', reviewerIds: ['u-r2', 'u-r1'], approverIds: ['u-a1'] });
+
+      const req = s.toRequest(false);
+
+      expect(req.reviewerIds).toEqual(['u-r2', 'u-r1']);
+      expect(req.approverIds).toEqual(['u-a1']);
+    });
+
+    const loaded = (status: string, permissions: Record<string, boolean> | null) => ({
+      id: 'mr-1', code: '0001', mrNumber: '0001', status, projectId: 'p1',
+      projectCode: '0042', projectName: 'Unit 4', clientCode: null, clientName: null,
+      wbsCostCodeId: 'w1', budgetHead: null, requiredOnSiteDate: '2030-01-15', mtoReference: null,
+      pidReference: null, isometricReference: null, areaUnit: null, remarks: null,
+      items: [], documents: [], permissions,
+      participants: [
+        { id: 'p1', role: 'REVIEWER', userId: 'u-r1', userName: 'R One', userEmail: 'r1@x.com', sequence: 1 },
+        { id: 'p2', role: 'APPROVER', userId: 'u-a1', userName: 'A One', userEmail: 'a1@x.com', sequence: 1 },
+      ],
+    }) as never;
+
+    it('lets the requester change both lists while under review', () => {
+      const s = setup();
+      s.load(loaded('UNDER_REVIEW', { canEditReviewers: true, canEditApprovers: true }));
+
+      expect(s.reviewersLocked()).toBe(false);
+      expect(s.approversLocked()).toBe(false);
+      expect(s.toRequest(false)).toMatchObject({ reviewerIds: ['u-r1'], approverIds: ['u-a1'] });
+    });
+
+    it('locks the reviewers once reviewed but keeps the approvers open', () => {
+      const s = setup();
+      s.load(loaded('REVIEWED', { canEditReviewers: false, canEditApprovers: true }));
+
+      expect(s.reviewersLocked()).toBe(true);
+      expect(s.header.get('reviewerIds')!.disabled).toBe(true);
+      expect(s.selectedReviewers().map((u) => u.name)).toEqual(['R One']);
+      const keys = Object.keys(s.toRequest(false));
+      expect(keys).not.toContain('reviewerIds');
+      expect(keys).toContain('approverIds');
+    });
+
+    it('locks both for someone who is not the requester (a reviewer editing)', () => {
+      const s = setup();
+      s.load(loaded('UNDER_REVIEW', { canEditReviewers: false, canEditApprovers: false }));
+
+      expect(s.reviewersLocked()).toBe(true);
+      expect(s.approversLocked()).toBe(true);
+      expect(s.submitIssues().some((i) => i.includes('Assign at least'))).toBe(false);
+    });
+
+    it('falls back to the status when the API sent no permissions', () => {
+      const s = setup();
+      s.load(loaded('APPROVED', null));
+      expect(s.reviewersLocked()).toBe(true);
+      expect(s.approversLocked()).toBe(true);
     });
   });
 });

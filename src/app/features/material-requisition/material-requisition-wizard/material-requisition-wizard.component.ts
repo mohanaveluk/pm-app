@@ -21,7 +21,7 @@ import {
 import { HasUnsavedRequisitionChanges } from '../guards/unsaved-requisition.guard';
 import { RequisitionHeaderStepComponent } from '../components/requisition-header-step/requisition-header-step.component';
 import { RequisitionMaterialsStepComponent } from '../components/requisition-materials-step/requisition-materials-step.component';
-import { MaterialRequisitionReviewComponent } from '../components/material-requisition-review/material-requisition-review.component';
+import { RequisitionSummaryStepComponent } from '../components/requisition-summary-step/requisition-summary-step.component';
 
 /**
  * The create / edit-draft wizard: Header & Documents → Materials → Review.
@@ -37,7 +37,7 @@ import { MaterialRequisitionReviewComponent } from '../components/material-requi
   imports: [
     CommonModule, MatStepperModule, MatButtonModule, MatIconModule, MatChipsModule,
     MatTooltipModule, MatProgressSpinnerModule, RequisitionHeaderStepComponent,
-    RequisitionMaterialsStepComponent, MaterialRequisitionReviewComponent,
+    RequisitionMaterialsStepComponent, RequisitionSummaryStepComponent,
   ],
   templateUrl: './material-requisition-wizard.component.html',
   styleUrls: ['../components/requisition-step.shared.scss', './material-requisition-wizard.component.scss'],
@@ -74,6 +74,21 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     () => this.saved()?.status === MaterialRequisitionStatus.UNDER_REVIEW,
   );
 
+  /** Sent back for changes: edited, then resubmitted for a new review round. */
+  protected readonly isReturned = computed(
+    () => this.saved()?.status === MaterialRequisitionStatus.RETURNED,
+  );
+
+  /** A reviewer editing from the review screen goes back there after saving. */
+  protected readonly fromReview = computed(() => this.route.snapshot.queryParamMap.get('returnTo') === 'review');
+
+  /** What was asked for when it was returned (the last round's return comments). */
+  protected readonly returnNotes = computed(() => {
+    const mr = this.saved();
+    if (!mr || mr.status !== MaterialRequisitionStatus.RETURNED) return [];
+    return (mr.history ?? []).filter((e) => e.action === 'RETURNED' && e.round === mr.reviewRound && e.comments);
+  });
+
   private bypassGuard = false;
 
   ngOnInit(): void {
@@ -94,8 +109,13 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     this.loadError.set('');
     try {
       const res = await lastValueFrom(this.service.getRequisitionById(id));
-      if (!isRequisitionEditable(res.data.status)) {
-        this.snack.open('Only a draft or a requisition under review can be edited.', 'OK', { duration: 4000 });
+      if (!isRequisitionEditable(res.data.status) || res.data.permissions?.canEdit === false) {
+        this.snack.open(
+          res.data.lockedAt
+            ? 'This requisition is locked — a purchase order has been raised against it.'
+            : 'You cannot edit this requisition in its current status.',
+          'OK', { duration: 4000 },
+        );
         this.leaveTo(['/material-requisitions', id]);
         return;
       }
@@ -122,7 +142,7 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
   private blocker(fromIndex: number): string {
     if (fromIndex === 0) {
       this.form.header.markAllAsTouched();
-      if (this.form.header.invalid) return 'Complete the project, WBS / cost code and required-on-site date.';
+      if (this.form.header.invalid) return 'Complete the project, WBS and required-on-site date.';
     }
     if (fromIndex === 1) {
       const missing = this.form.incompleteLines().length;
@@ -165,10 +185,14 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     }
   }
 
-  /** Saves corrections to a requisition under review, then shows it. */
+  /**
+   * Saves corrections to a requisition under review (by its requester, or by a
+   * reviewer — who then returns to their review screen), or to a returned one.
+   */
   protected async saveChanges(): Promise<void> {
     if (this.saving()) return;
-    const issues = this.form.submitIssues();
+    // Corrections under review must leave it submittable; a returned one is resubmitted separately.
+    const issues = this.isUnderReview() ? this.form.submitIssues() : [];
     if (issues.length) {
       this.form.header.markAllAsTouched();
       this.snack.open(issues[0], 'Close', { duration: 5000, panelClass: ['error-snackbar'] });
@@ -177,8 +201,13 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     this.saving.set(true);
     try {
       const mr = await this.persist();
-      this.snack.open(`${mr.mrNumber} updated.`, 'OK', { duration: 3000 });
-      this.leaveTo(['/material-requisitions', mr.id]);
+      this.snack.open(
+        this.fromReview()
+          ? `${mr.mrNumber} updated — describe your changes in your review comments.`
+          : `${mr.mrNumber} updated.`,
+        'OK', { duration: 4000 },
+      );
+      this.leaveTo(this.fromReview() ? ['/material-requisitions', 'reviews', mr.id] : ['/material-requisitions', mr.id]);
     } catch (err) {
       this.fail(err);
     } finally {
@@ -262,6 +291,11 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
   // ── Navigation / unsaved changes ────────────────────────────────────
 
   protected backToList(): void {
+    const id = this.saved()?.id;
+    if (this.fromReview() && id) {
+      void this.router.navigate(['/material-requisitions', 'reviews', id]);
+      return;
+    }
     void this.router.navigate(['/material-requisitions']);
   }
 

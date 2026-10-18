@@ -3,14 +3,16 @@
  * (pm-api/src/modules/material-requisition/dto/material-requisition-response.dto.ts).
  *
  * The client is never part of a requisition's own data: it is the client of the
- * project, read-only. The WBS / cost code likewise carries the area, system,
+ * project, read-only. The WBS likewise carries the area, system,
  * discipline, department, work package and activities.
  */
 
 export enum MaterialRequisitionStatus {
   DRAFT = 'DRAFT',
   UNDER_REVIEW = 'UNDER_REVIEW',
+  REVIEWED = 'REVIEWED',
   APPROVED = 'APPROVED',
+  RETURNED = 'RETURNED',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
   ON_HOLD = 'ON_HOLD',
@@ -28,13 +30,18 @@ export const REQUISITION_STATUS_TRANSITIONS: Record<MaterialRequisitionStatus, M
   [MaterialRequisitionStatus.UNDER_REVIEW]: [
     MaterialRequisitionStatus.ON_HOLD, MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE,
   ],
+  [MaterialRequisitionStatus.REVIEWED]: [
+    MaterialRequisitionStatus.ON_HOLD, MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE,
+  ],
   [MaterialRequisitionStatus.APPROVED]: [
     MaterialRequisitionStatus.ON_HOLD, MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE,
   ],
+  [MaterialRequisitionStatus.RETURNED]: [MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE],
   [MaterialRequisitionStatus.REJECTED]: [MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE],
   [MaterialRequisitionStatus.CANCELLED]: [MaterialRequisitionStatus.OBSOLETE],
   [MaterialRequisitionStatus.ON_HOLD]: [
-    MaterialRequisitionStatus.UNDER_REVIEW, MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE,
+    MaterialRequisitionStatus.UNDER_REVIEW, MaterialRequisitionStatus.REVIEWED, MaterialRequisitionStatus.APPROVED,
+    MaterialRequisitionStatus.DISABLED, MaterialRequisitionStatus.OBSOLETE,
   ],
   [MaterialRequisitionStatus.DISABLED]: [MaterialRequisitionStatus.UNDER_REVIEW, MaterialRequisitionStatus.OBSOLETE],
   [MaterialRequisitionStatus.OBSOLETE]: [],
@@ -53,6 +60,21 @@ export enum RequisitionDocumentType {
   COVERING_DOCUMENT = 'COVERING_DOCUMENT',
   SPECIFICATION = 'SPECIFICATION',
   PROJECT_DOCUMENT = 'PROJECT_DOCUMENT',
+}
+
+/** The two parts an internal user can play on a requisition. */
+export enum RequisitionParticipantRole {
+  REVIEWER = 'REVIEWER',
+  APPROVER = 'APPROVER',
+}
+
+/** A reviewer's or approver's decision for the current round. */
+export enum RequisitionDecision {
+  REVIEWED = 'REVIEWED',
+  APPROVED = 'APPROVED',
+  RETURNED = 'RETURNED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
 }
 
 // ── Server records ──────────────────────────────────────────────────────
@@ -83,7 +105,7 @@ export interface RequisitionDocument {
   uploadedAt: string;
 }
 
-/** The WBS / cost code's descriptive fields, read from it. */
+/** The WBS descriptive fields, read from it. */
 export interface RequisitionWbs {
   id: string;
   code: string;
@@ -115,11 +137,89 @@ export interface MaterialRequisitionListItem {
   /** YYYY-MM-DD */
   requiredOnSiteDate: string | null;
   itemCount: number;
+  /** Reviewers in order, with their decision this round. */
+  reviewers: RequisitionParticipantSummary[];
+  /** Approvers in order, with their decision this round. */
+  approvers: RequisitionParticipantSummary[];
+  /** Ties the requisition to every document raised from it (TRK-XXXXXXXX-XXXXXXXX-XXXXXXXX). */
+  trackingId: string | null;
+  /** 1 for the first submission; +1 on every resubmission. */
+  reviewRound: number;
+  reviewedAt: string | null;
+  approvedAt: string | null;
+  /** Where an on-hold requisition returns to when released. */
+  statusBeforeHold: MaterialRequisitionStatus | null;
+  /** Set once a purchase order is raised — no further edits. */
+  lockedAt: string | null;
+  lockedReason: string | null;
   submittedBy: string | null;
   submittedAt: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A reviewer or approver as the list shows them. */
+export interface RequisitionParticipantSummary {
+  userId: string;
+  name: string;
+  decision: RequisitionDecision | null;
+}
+
+/** A reviewer or approver, with their decision in the current round. */
+export interface RequisitionParticipant {
+  id: string;
+  role: RequisitionParticipantRole;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  sequence: number;
+  decision: RequisitionDecision | null;
+  decisionComments: string | null;
+  decidedAt: string | null;
+  /** A reviewer who changed the requisition this round. */
+  editedInRound: boolean;
+}
+
+/** One step on the workflow timeline (mirrors WorkflowEventResponseDto). */
+export interface WorkflowEvent {
+  id: string;
+  trackingId: string;
+  entityType: string;
+  entityId: string;
+  entityReference: string | null;
+  action: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  round: number | null;
+  actorId: string | null;
+  actorName: string | null;
+  actorEmail: string | null;
+  comments: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/** What the signed-in user may do on the requisition right now (from the API). */
+export interface RequisitionPermissions {
+  canEdit: boolean;
+  canSubmit: boolean;
+  canReview: boolean;
+  canApprove: boolean;
+  /** Reviewers can still be changed (until reviewed) by this user. */
+  canEditReviewers: boolean;
+  /** Approvers can still be changed (until approved) by this user. */
+  canEditApprovers: boolean;
+  myRoles: RequisitionParticipantRole[];
+}
+
+/** An internal user who can be assigned as reviewer or approver. */
+export interface RequisitionUserOption {
+  id: string;
+  name: string;
+  email: string;
+  position: string | null;
+  role: string | null;
 }
 
 export interface MaterialRequisition extends MaterialRequisitionListItem {
@@ -133,6 +233,10 @@ export interface MaterialRequisition extends MaterialRequisitionListItem {
   remarks: string | null;
   items: RequisitionItem[];
   documents: RequisitionDocument[];
+  participants: RequisitionParticipant[];
+  /** Every step taken on the requisition — all rounds — oldest first. */
+  history: WorkflowEvent[];
+  permissions: RequisitionPermissions | null;
   updatedBy: string | null;
 }
 
@@ -222,8 +326,10 @@ export const REQUISITION_STATUS_OPTIONS: readonly {
   value: MaterialRequisitionStatus; label: string; hint: string;
 }[] = [
   { value: MaterialRequisitionStatus.DRAFT, label: 'Draft', hint: 'Saved, not yet submitted' },
-  { value: MaterialRequisitionStatus.UNDER_REVIEW, label: 'Under Review', hint: 'Submitted, awaiting approval' },
+  { value: MaterialRequisitionStatus.UNDER_REVIEW, label: 'Under Review', hint: 'Submitted, waiting for the reviewers' },
+  { value: MaterialRequisitionStatus.REVIEWED, label: 'Reviewed', hint: 'Reviewed, waiting for the approvers' },
   { value: MaterialRequisitionStatus.APPROVED, label: 'Approved', hint: 'Approved' },
+  { value: MaterialRequisitionStatus.RETURNED, label: 'Returned', hint: 'Sent back to the requester for changes' },
   { value: MaterialRequisitionStatus.REJECTED, label: 'Rejected', hint: 'Not approved' },
   { value: MaterialRequisitionStatus.CANCELLED, label: 'Cancelled', hint: 'Withdrawn' },
   { value: MaterialRequisitionStatus.ON_HOLD, label: 'On Hold', hint: 'Paused until released' },
@@ -281,8 +387,97 @@ export const SOURCE_LABELS: Record<RequisitionLineSource, string> = {
 
 /** Statuses whose content can still be edited (mirrors the API). */
 export const EDITABLE_REQUISITION_STATUSES: readonly MaterialRequisitionStatus[] = [
-  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.UNDER_REVIEW,
+  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.UNDER_REVIEW, MaterialRequisitionStatus.RETURNED,
 ];
+
+/** Reviewers can be changed until the requisition is reviewed (mirrors the API). */
+export const REVIEWER_EDITABLE_STATUSES: readonly MaterialRequisitionStatus[] = [
+  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.RETURNED, MaterialRequisitionStatus.UNDER_REVIEW,
+];
+
+/** Approvers can be changed until the requisition is approved (mirrors the API). */
+export const APPROVER_EDITABLE_STATUSES: readonly MaterialRequisitionStatus[] = [
+  ...REVIEWER_EDITABLE_STATUSES, MaterialRequisitionStatus.REVIEWED,
+];
+
+/** Statuses from which a requisition is (re)submitted for review. */
+export const SUBMITTABLE_REQUISITION_STATUSES: readonly MaterialRequisitionStatus[] = [
+  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.RETURNED,
+];
+
+export interface DecisionOption {
+  value: RequisitionDecision;
+  label: string;
+  hint: string;
+  icon: string;
+  /** Comments are mandatory for this decision. */
+  needsComments: boolean;
+  tone: 'positive' | 'neutral' | 'negative';
+}
+
+export const REVIEW_DECISION_OPTIONS: readonly DecisionOption[] = [
+  {
+    value: RequisitionDecision.REVIEWED, label: 'Reviewed', icon: 'task_alt', tone: 'positive', needsComments: false,
+    hint: 'Ready for the approvers. Add anything they should know.',
+  },
+  {
+    value: RequisitionDecision.RETURNED, label: 'Return for Clarification', icon: 'undo', tone: 'neutral', needsComments: true,
+    hint: 'Back to the requester to change and resubmit. Say what needs changing.',
+  },
+  {
+    value: RequisitionDecision.REJECTED, label: 'Reject', icon: 'block', tone: 'negative', needsComments: true,
+    hint: 'Closes the requisition. Explain why.',
+  },
+  {
+    value: RequisitionDecision.CANCELLED, label: 'Cancel', icon: 'cancel', tone: 'negative', needsComments: true,
+    hint: 'Withdraws the requisition. Explain why.',
+  },
+];
+
+export const APPROVAL_DECISION_OPTIONS: readonly DecisionOption[] = [
+  {
+    value: RequisitionDecision.APPROVED, label: 'Approve', icon: 'verified', tone: 'positive', needsComments: false,
+    hint: 'Approves the requisition. Comments are optional.',
+  },
+  {
+    value: RequisitionDecision.RETURNED, label: 'Return for Clarification', icon: 'undo', tone: 'neutral', needsComments: true,
+    hint: 'Back to the requester to change and resubmit. Say what needs changing.',
+  },
+  {
+    value: RequisitionDecision.REJECTED, label: 'Reject', icon: 'block', tone: 'negative', needsComments: true,
+    hint: 'Closes the requisition. Explain why.',
+  },
+  {
+    value: RequisitionDecision.CANCELLED, label: 'Cancel', icon: 'cancel', tone: 'negative', needsComments: true,
+    hint: 'Withdraws the requisition. Explain why.',
+  },
+];
+
+export const DECISION_LABELS: Record<RequisitionDecision, string> = {
+  [RequisitionDecision.REVIEWED]: 'Reviewed',
+  [RequisitionDecision.APPROVED]: 'Approved',
+  [RequisitionDecision.RETURNED]: 'Returned for clarification',
+  [RequisitionDecision.REJECTED]: 'Rejected',
+  [RequisitionDecision.CANCELLED]: 'Cancelled',
+};
+
+/** Timeline wording for each workflow action. */
+export const WORKFLOW_ACTION_LABELS: Record<string, string> = {
+  CREATED: 'Created',
+  UPDATED: 'Updated',
+  SUBMITTED: 'Submitted for review',
+  RESUBMITTED: 'Resubmitted for review',
+  EDITED_IN_REVIEW: 'Edited during review',
+  REVIEWED: 'Reviewed',
+  REVIEW_COMPLETED: 'Review completed',
+  APPROVED: 'Approved',
+  APPROVAL_COMPLETED: 'Approval completed',
+  RETURNED: 'Returned for clarification',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
+  STATUS_CHANGED: 'Status changed',
+  LOCKED: 'Locked by purchase order',
+};
 
 export function isRequisitionEditable(status: MaterialRequisitionStatus | string | null | undefined): boolean {
   return EDITABLE_REQUISITION_STATUSES.includes(status as MaterialRequisitionStatus);

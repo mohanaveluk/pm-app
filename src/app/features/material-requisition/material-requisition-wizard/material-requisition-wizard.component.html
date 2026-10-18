@@ -18,14 +18,15 @@
     <!-- ── Confirmation ──────────────────────────────────────────── -->
     <section class="pw-success" aria-live="polite">
       <mat-icon class="pw-success__icon">check_circle</mat-icon>
-      <h1>Requisition submitted</h1>
-      <p>It is now waiting for review.</p>
+      <h1>{{ done.reviewRound > 1 ? 'Requisition resubmitted' : 'Requisition submitted' }}</h1>
+      <p>It is now waiting for review — every reviewer has been emailed.</p>
       <dl class="pw-success__facts">
         <div><dt>MR Number</dt><dd><span class="pw-code">{{ done.mrNumber }}</span></dd></div>
         <div><dt>Status</dt>
           <dd><mat-chip [class]="statusClass(done.status)">{{ statusText(done.status) }}</mat-chip></dd>
         </div>
         <div><dt>Project</dt><dd>{{ done.projectCode }} — {{ done.projectName }}</dd></div>
+        <div><dt>Tracking ID</dt><dd><span class="pw-code">{{ done.trackingId || '—' }}</span></dd></div>
       </dl>
       <div class="pw-success__actions">
         <button mat-raised-button color="primary" type="button" (click)="viewSubmitted()">
@@ -51,7 +52,10 @@
             <h1 class="pw-header__title">
               <span class="pw-code">{{ s.mrNumber }}</span>
               <span class="pw-header__desc">
-                {{ isUnderReview() ? 'Under review — changes are saved in place' : 'Draft requisition' }}
+                {{ isUnderReview()
+                  ? (fromReview() ? 'Editing as reviewer — changes are saved in place' : 'Under review — changes are saved in place')
+                  : isReturned() ? 'Returned — update it and resubmit for review'
+                  : 'Draft requisition' }}
               </span>
             </h1>
           } @else {
@@ -66,6 +70,15 @@
         <mat-chip [class]="statusClass(s.status)">{{ statusText(s.status) }}</mat-chip>
       }
     </header>
+
+    @if (returnNotes().length) {
+      <div class="step-caution" role="status" style="margin-top: 0; flex-direction: column; align-items: flex-start">
+        <strong><mat-icon style="vertical-align: middle">undo</mat-icon> Changes requested</strong>
+        @for (n of returnNotes(); track n.id) {
+          <span>“{{ n.comments }}” — {{ n.actorName || n.actorEmail }}</span>
+        }
+      </div>
+    }
 
     @if (form.referenceError()) {
       <div class="step-error">
@@ -94,7 +107,7 @@
       </mat-step>
 
       <mat-step label="Review & Submit">
-        <app-material-requisition-review [code]="saved()?.code ?? null" />
+        <app-requisition-summary-step [code]="saved()?.code ?? null" />
       </mat-step>
     </mat-stepper>
 
@@ -114,6 +127,10 @@
             <mat-icon>save</mat-icon> Save Changes
           </button>
         }
+      } @else if (isReturned()) {
+        <button mat-stroked-button type="button" (click)="saveChanges()" [disabled]="saving()">
+          <mat-icon>save</mat-icon> Save Changes
+        </button>
       } @else {
         <button mat-stroked-button type="button" (click)="saveDraft()" [disabled]="saving()">
           <mat-icon>save</mat-icon> Save Draft
@@ -128,7 +145,7 @@
       } @else if (isLast()) {
         <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
           @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>send</mat-icon> }
-          Submit for Approval
+          {{ isReturned() ? 'Resubmit for Review' : 'Submit for Review' }}
         </button>
       } @else {
         <button mat-raised-button color="primary" type="button" (click)="next(stepper)" [disabled]="saving()">

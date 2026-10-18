@@ -1,6 +1,6 @@
 ---
 name: pm-simple-master
-description: Build a small lookup/master screen in the PM app — one list page with create/edit/view/delete dialogs, like Department, Material Category, Project Type, Vendor Type, Client Type, WBS/Cost Codes. Use when asked for a "<X> Master" or "<X> Type" with a handful of fields (name, short name, description, display order, status), or "similar to Vendor Type / Project Type / Department".
+description: Build a small lookup/master screen in the PM app — one list page with create/edit/view/delete dialogs, like Department, Material Category, Project Type, Vendor Type, Client Type, WBS. Use when asked for a "<X> Master" or "<X> Type" with a handful of fields (name, short name, description, display order, status), or "similar to Vendor Type / Project Type / Department".
 ---
 
 # Simple master (list page + dialogs)

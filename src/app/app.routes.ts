@@ -106,7 +106,15 @@ export const routes: Routes = [
         path: 'material-requisitions',
         loadChildren: () => import('./features/material-requisition/material-requisition.routes').then(m => m.MATERIAL_REQUISITION_ROUTES),
         canActivate: [permissionGuard],
-        data: { breadcrumb: 'Material Requisitions', title: 'Material Requisitions', icon: 'shopping_cart', permission: PERMISSIONS.MATERIAL_REQUISITIONS_VIEW },
+        // Reviewers and approvers reach their inboxes without the list permission.
+        data: {
+          breadcrumb: 'Material Requisitions', title: 'Material Requisitions', icon: 'shopping_cart',
+          permission: [
+            PERMISSIONS.MATERIAL_REQUISITIONS_VIEW,
+            PERMISSIONS.MATERIAL_REQUISITIONS_REVIEW,
+            PERMISSIONS.MATERIAL_REQUISITIONS_APPROVE,
+          ],
+        },
       },
       {
         path: 'materials',
@@ -245,7 +253,7 @@ export const routes: Routes = [
           {
             path: 'wbs-cost-codes',
             loadComponent: () => import('./features/wbs-cost-code/wbs-cost-code.component').then(m => m.WbsCostCodeComponent),
-            data: { breadcrumb: 'WBS / Cost Codes', permission: PERMISSIONS.WBS_COST_CODES_VIEW },
+            data: { breadcrumb: 'WBS', permission: PERMISSIONS.WBS_COST_CODES_VIEW },
           },
           {
             path: 'client-types',

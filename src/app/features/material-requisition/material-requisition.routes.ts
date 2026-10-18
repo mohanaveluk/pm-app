@@ -15,7 +15,40 @@ export const MATERIAL_REQUISITION_ROUTES: Routes = [
     loadComponent: () =>
       import('./material-requisition-list/material-requisition-list.component')
         .then((m) => m.MaterialRequisitionListComponent),
-    data: { breadcrumb: '' },
+    canActivate: [permissionGuard],
+    data: { breadcrumb: '', permission: PERMISSIONS.MATERIAL_REQUISITIONS_VIEW },
+  },
+  {
+    path: 'reviews',
+    loadComponent: () =>
+      import('./material-requisition-review-list/material-requisition-review-list.component')
+        .then((m) => m.MaterialRequisitionReviewListComponent),
+    canActivate: [permissionGuard],
+    data: { breadcrumb: 'Reviews', permission: PERMISSIONS.MATERIAL_REQUISITIONS_REVIEW },
+  },
+  {
+    path: 'reviews/:id',
+    loadComponent: () =>
+      import('./material-requisition-review/material-requisition-review.component')
+        .then((m) => m.MaterialRequisitionReviewComponent),
+    canActivate: [permissionGuard],
+    data: { breadcrumb: 'Review', permission: PERMISSIONS.MATERIAL_REQUISITIONS_REVIEW },
+  },
+  {
+    path: 'approvals',
+    loadComponent: () =>
+      import('./material-requisition-approval-list/material-requisition-approval-list.component')
+        .then((m) => m.MaterialRequisitionApprovalListComponent),
+    canActivate: [permissionGuard],
+    data: { breadcrumb: 'Approvals', permission: PERMISSIONS.MATERIAL_REQUISITIONS_APPROVE },
+  },
+  {
+    path: 'approvals/:id',
+    loadComponent: () =>
+      import('./material-requisition-approval/material-requisition-approval.component')
+        .then((m) => m.MaterialRequisitionApprovalComponent),
+    canActivate: [permissionGuard],
+    data: { breadcrumb: 'Approval', permission: PERMISSIONS.MATERIAL_REQUISITIONS_APPROVE },
   },
   {
     path: 'create',
@@ -33,7 +66,10 @@ export const MATERIAL_REQUISITION_ROUTES: Routes = [
         .then((m) => m.MaterialRequisitionWizardComponent),
     canActivate: [permissionGuard],
     canDeactivate: [unsavedRequisitionGuard],
-    data: { breadcrumb: 'Edit', mode: 'edit', permission: PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE },
+    data: {
+      breadcrumb: 'Edit', mode: 'edit',
+      permission: [PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE, PERMISSIONS.MATERIAL_REQUISITIONS_REVIEW],
+    },
   },
   {
     path: ':id',

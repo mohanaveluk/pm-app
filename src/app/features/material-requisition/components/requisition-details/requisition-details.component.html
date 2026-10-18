@@ -1,0 +1,126 @@
+@let r = mr();
+<div class="step">
+  <div class="review-grid">
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>assignment</mat-icon> Header Information</h3>
+      <dl class="review-fields">
+        <div><dt>MR Number</dt><dd>{{ r.mrNumber }}</dd></div>
+        <div><dt>System Code</dt><dd>{{ r.code }}</dd></div>
+        <div><dt>Project</dt><dd>{{ r.projectCode }} — {{ r.projectName }}</dd></div>
+        <div><dt>Client</dt><dd>{{ clientText(r) }}</dd></div>
+        <div><dt>WBS</dt>
+          <dd>@if (r.wbs) { {{ r.wbs.code }} — {{ r.wbs.name }} } @else { — }</dd>
+        </div>
+        <div><dt>Area / Facility</dt><dd>{{ r.wbs?.areaFacility || '—' }}</dd></div>
+        <div><dt>System / Sub-system</dt><dd>{{ r.wbs?.systemSubsystem || '—' }}</dd></div>
+        <div><dt>Discipline</dt><dd>{{ r.wbs?.disciplineName || '—' }}</dd></div>
+        <div><dt>Department</dt><dd>{{ r.wbs?.departmentName || '—' }}</dd></div>
+        <div><dt>Work Package</dt><dd>{{ r.wbs?.workPackage || '—' }}</dd></div>
+        <div><dt>Activities</dt><dd>{{ r.wbs?.activities || '—' }}</dd></div>
+        <div><dt>Budget Head</dt><dd>{{ r.budgetHead || '—' }}</dd></div>
+        <div><dt>Required on Site</dt>
+          <dd>{{ r.requiredOnSiteDate ? (r.requiredOnSiteDate | date: 'mediumDate') : '—' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="step-section">
+      <h3 class="step-section__title"><mat-icon>notes</mat-icon> Additional Information</h3>
+      <dl class="review-fields">
+        <div><dt>MTO Reference</dt><dd>{{ r.mtoReference || '—' }}</dd></div>
+        <div><dt>P&amp;ID Reference</dt><dd>{{ r.pidReference || '—' }}</dd></div>
+        <div><dt>Isometric Reference</dt><dd>{{ r.isometricReference || '—' }}</dd></div>
+        <div><dt>Area / Unit</dt><dd>{{ r.areaUnit || '—' }}</dd></div>
+        <div class="review-fields__full"><dt>Remarks</dt><dd>{{ r.remarks || '—' }}</dd></div>
+      </dl>
+
+      <h3 class="step-section__title" style="margin-top: 18px"><mat-icon>account_tree</mat-icon> Workflow</h3>
+      <dl class="review-fields">
+        <div><dt>Tracking ID</dt><dd><span class="mr-code">{{ r.trackingId || '—' }}</span></dd></div>
+        <div><dt>Status</dt><dd>{{ statusText(r.status) }}</dd></div>
+        <div><dt>Created by</dt><dd>{{ r.createdBy || '—' }}</dd></div>
+        <div><dt>Created</dt><dd>{{ r.createdAt | date: 'medium' }}</dd></div>
+        <div><dt>Submitted</dt>
+          <dd>{{ r.submittedAt ? (r.submittedAt | date: 'medium') : 'Not submitted' }}
+            @if (r.reviewRound > 1) { <span class="mr-muted">· round {{ r.reviewRound }}</span> }
+          </dd>
+        </div>
+        @if (r.reviewedAt) { <div><dt>Reviewed</dt><dd>{{ r.reviewedAt | date: 'medium' }}</dd></div> }
+        @if (r.approvedAt) { <div><dt>Approved</dt><dd>{{ r.approvedAt | date: 'medium' }}</dd></div> }
+        @if (r.lockedAt) {
+          <div class="review-fields__full"><dt>Locked</dt>
+            <dd><mat-icon class="inline-icon">lock</mat-icon> {{ r.lockedReason || 'Purchase order raised' }}
+              <span class="mr-muted">· {{ r.lockedAt | date: 'medium' }}</span></dd>
+          </div>
+        }
+      </dl>
+    </section>
+  </div>
+
+  <section class="step-section">
+    <h3 class="step-section__title">
+      <mat-icon>shopping_cart</mat-icon> Materials ({{ r.items.length }})
+    </h3>
+    <div class="mr-table-wrap">
+      <table mat-table class="mr-table" [dataSource]="r.items">
+        <ng-container matColumnDef="no">
+          <th mat-header-cell *matHeaderCellDef>#</th>
+          <td mat-cell *matCellDef="let i">{{ i.lineNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Material Code</th>
+          <td mat-cell *matCellDef="let i"><span class="mr-code">{{ i.materialCode }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Material Description</th>
+          <td mat-cell *matCellDef="let i">{{ i.materialDescription }}</td>
+        </ng-container>
+        <ng-container matColumnDef="uom">
+          <th mat-header-cell *matHeaderCellDef>UOM</th>
+          <td mat-cell *matCellDef="let i">{{ i.uom || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Requested Qty</th>
+          <td mat-cell *matCellDef="let i"><strong>{{ i.requestedQty }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>Stock on Hand</th>
+          <td mat-cell *matCellDef="let i"><span class="mr-muted">{{ i.stockOnHand }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Source</th>
+          <td mat-cell *matCellDef="let i">
+            {{ sourceLabels[i.source] }}
+            @if (i.sourceReference) { <span class="mr-muted">· {{ i.sourceReference }}</span> }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="lineColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: lineColumns"></tr>
+      </table>
+      @if (r.items.length === 0) {
+        <p class="table-empty">This requisition has no materials yet.</p>
+      }
+    </div>
+  </section>
+
+  <section class="step-section">
+    <h3 class="step-section__title"><mat-icon>attach_file</mat-icon> Documents ({{ r.documents.length }})</h3>
+    <div class="doc-list" style="padding-top: 0">
+      @for (d of r.documents; track d.id) {
+        <div class="doc-row">
+          <mat-icon class="doc-row__icon">description</mat-icon>
+          <div class="doc-row__meta">
+            <div class="doc-row__name">{{ d.fileName || d.documentName }}</div>
+            <div class="doc-row__sub">{{ typeLabels[d.documentType] }}</div>
+          </div>
+          <button mat-icon-button type="button" matTooltip="Open" (click)="open(d.documentUrl)">
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </div>
+      } @empty {
+        <p class="doc-empty">No documents attached.</p>
+      }
+    </div>
+  </section>
+</div>

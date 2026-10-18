@@ -1,0 +1,28 @@
+<section class="step-section">
+  <h3 class="step-section__title">
+    <mat-icon>timeline</mat-icon> History
+    @if (trackingId()) { <span class="mr-muted round-tag">Tracking {{ trackingId() }}</span> }
+  </h3>
+
+  @if (newestFirst().length) {
+    <ol class="timeline">
+      @for (e of newestFirst(); track e.id) {
+        <li class="timeline__item">
+          <span [class]="tone(e)"><mat-icon>{{ icon(e) }}</mat-icon></span>
+          <div class="timeline__body">
+            <div class="timeline__title">
+              {{ label(e) }}
+              <span class="timeline__stage">{{ stage(e) }}@if (e.round) { · round {{ e.round }} }</span>
+            </div>
+            <div class="timeline__meta">
+              {{ e.actorName || e.actorEmail || 'System' }} · {{ e.createdAt | date: 'medium' }}
+            </div>
+            @if (e.comments) { <p class="timeline__comment">“{{ e.comments }}”</p> }
+          </div>
+        </li>
+      }
+    </ol>
+  } @else {
+    <p class="doc-empty" style="padding: 12px">Nothing recorded yet.</p>
+  }
+</section>

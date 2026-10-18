@@ -18,15 +18,16 @@ import { RequisitionFormService } from '../../services/requisition-form.service'
 import {
   DOCUMENT_TYPE_LABELS, RequisitionDocumentDraft, RequisitionDocumentType,
 } from '../../models/material-requisition.model';
+import { RequisitionUserPickerComponent } from '../requisition-user-picker/requisition-user-picker.component';
 
 const MAX_FILE_MB = 25;
 const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.dwg';
 
 /**
- * Step 1 — project, WBS / cost code, dates and references, with the supporting
+ * Step 1 — project, WBS, dates and references, with the supporting
  * documents beside them.
  *
- * Picking a project shows its client; picking a WBS / cost code shows the area,
+ * Picking a project shows its client; picking a WBS shows the area,
  * system, discipline, department, work package and activities it carries. All
  * of that is read from the master data and never typed here.
  */
@@ -36,7 +37,7 @@ const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.dwg';
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatDatepickerModule, MatNativeDateModule, MatButtonModule, MatIconModule,
-    MatTooltipModule, MatProgressSpinnerModule,
+    MatTooltipModule, MatProgressSpinnerModule, RequisitionUserPickerComponent,
   ],
   templateUrl: './requisition-header-step.component.html',
   styleUrl: '../requisition-step.shared.scss',
@@ -89,6 +90,10 @@ export class RequisitionHeaderStepComponent {
       : all;
   });
 
+  /** The chosen ids, in order — read from the form for the two pickers. */
+  protected readonly reviewerIds = computed(() => (this.form.reviewerIdsValue() as string[] | null) ?? []);
+  protected readonly approverIds = computed(() => (this.form.approverIdsValue() as string[] | null) ?? []);
+
   /** "0007 — Gulf Petrochemical Holdings" for the chosen project, or ''. */
   protected readonly clientText = computed(() => {
     const p = this.form.selectedProject();
@@ -102,7 +107,7 @@ export class RequisitionHeaderStepComponent {
     if (control.errors['required']) {
       switch (controlName) {
         case 'projectId': return 'Select a project';
-        case 'wbsCostCodeId': return 'Select a WBS / cost code';
+        case 'wbsCostCodeId': return 'Select a WBS';
         case 'requiredOnSiteDate': return 'Required on site date is required';
         default: return 'This field is required';
       }

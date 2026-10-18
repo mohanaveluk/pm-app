@@ -1,0 +1,22 @@
+// Card rows are buttons here (the whole card opens the requisition).
+.inbox-card {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &__meta {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: #6b7a99;
+  }
+}
+
+mat-button-toggle-group mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: text-bottom;
+  margin-right: 4px;
+}

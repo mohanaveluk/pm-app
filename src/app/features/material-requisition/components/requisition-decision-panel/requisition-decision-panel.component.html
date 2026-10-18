@@ -1,0 +1,52 @@
+<section class="step-section decision-panel">
+  <h3 class="step-section__title"><mat-icon>gavel</mat-icon> {{ title() }}</h3>
+
+  <div class="decision-options" role="radiogroup" [attr.aria-label]="title()">
+    @for (o of options(); track o.value) {
+      <button
+        type="button"
+        role="radio"
+        class="decision-option decision-option--{{ o.tone }}"
+        [class.decision-option--selected]="decision() === o.value"
+        [attr.aria-checked]="decision() === o.value"
+        [disabled]="busy()"
+        (click)="choose(o.value)"
+      >
+        <mat-icon>{{ o.icon }}</mat-icon>
+        <span class="decision-option__label">{{ o.label }}</span>
+        <span class="decision-option__hint">{{ o.hint }}</span>
+      </button>
+    }
+  </div>
+
+  @if (commentsRequiredReason()) {
+    <p class="info-note"><mat-icon>edit_note</mat-icon> {{ commentsRequiredReason() }}</p>
+  }
+
+  <mat-form-field appearance="outline" class="decision-panel__comments">
+    <mat-label>Comments{{ needsComments() ? ' (required)' : '' }}</mat-label>
+    <textarea
+      matInput
+      rows="4"
+      [maxlength]="maxComments"
+      [placeholder]="placeholder()"
+      [ngModel]="comments()"
+      (ngModelChange)="comments.set($event)"
+      [disabled]="busy()"
+    ></textarea>
+    <mat-hint align="end">{{ comments().length }}/{{ maxComments }}</mat-hint>
+  </mat-form-field>
+  @if (touched() && commentsMissing()) {
+    <div class="step-error"><mat-icon>error_outline</mat-icon> Please add a comment explaining your decision.</div>
+  }
+  @if (touched() && !decision()) {
+    <div class="step-error"><mat-icon>error_outline</mat-icon> Choose a decision.</div>
+  }
+
+  <div class="panel-actions" style="justify-content: flex-end; margin-top: 12px">
+    <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="busy()">
+      @if (busy()) { <mat-spinner diameter="18" /> } @else { <mat-icon>{{ selected()?.icon || 'send' }}</mat-icon> }
+      Submit {{ selected() ? '— ' + selected()!.label : 'Decision' }}
+    </button>
+  </div>
+</section>

@@ -1,0 +1,55 @@
+<div class="user-picker">
+  <mat-form-field appearance="outline" class="user-picker__field">
+    <mat-label>{{ label() }}</mat-label>
+    <mat-select
+      multiple
+      [value]="selectedIds()"
+      [disabled]="locked()"
+      [placeholder]="placeholder()"
+      (selectionChange)="onSelectionChange($event.value)"
+      (openedChange)="onOpened($event)"
+    >
+      <mat-select-trigger>{{ triggerText() }}</mat-select-trigger>
+      <mat-option class="select-search-option">
+        <input
+          class="select-search"
+          type="text"
+          placeholder="Search by name, email or role…"
+          [attr.aria-label]="'Search ' + label()"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+        />
+      </mat-option>
+      @for (u of visible(); track u.id) {
+        <mat-option [value]="u.id" [disabled]="isBlocked(u.id)" [matTooltip]="isBlocked(u.id) ? blockedReason() : ''">
+          {{ u.name }} <span class="user-option__sub">· {{ u.position || u.role || u.email }}</span>
+        </mat-option>
+      } @empty {
+        <mat-option disabled>{{ loading() ? 'Loading users…' : 'No matching users' }}</mat-option>
+      }
+    </mat-select>
+    @if (locked() && lockedReason()) {
+      <mat-icon matSuffix [matTooltip]="lockedReason()!">lock</mat-icon>
+    }
+  </mat-form-field>
+
+  <div class="participant-chips">
+    @for (u of selected(); track u.id; let i = $index) {
+      <span class="participant-chip" [class.participant-chip--approver]="tone() === 'approver'">
+        <span class="participant-chip__step">{{ stepPrefix() }}{{ i + 1 }}</span> {{ u.name }}
+        @if (!locked()) {
+          <button type="button" class="participant-chip__remove" [attr.aria-label]="'Remove ' + u.name" (click)="remove(u.id)">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </span>
+    } @empty {
+      <span class="mr-muted user-picker__empty">No one chosen yet.</span>
+    }
+  </div>
+  @if (locked() && lockedReason()) {
+    <p class="user-picker__locked"><mat-icon>lock</mat-icon> {{ lockedReason() }}</p>
+  }
+</div>
