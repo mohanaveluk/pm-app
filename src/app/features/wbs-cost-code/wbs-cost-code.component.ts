@@ -43,7 +43,7 @@ interface ColumnDef {
 const COLUMN_DEFS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', alwaysVisible: true },
   { key: 'code', label: 'Code', alwaysVisible: true, sortField: 'code' },
-  { key: 'projectDetails', label: 'WBS / Cost Name', alwaysVisible: true, sortField: 'projectDetails' },
+  { key: 'projectDetails', label: 'WBS Name', alwaysVisible: true, sortField: 'projectDetails' },
   { key: 'project', label: 'Project', sortField: 'project' },
   { key: 'client', label: 'Client' },
   { key: 'areaFacility', label: 'Area / Facility', sortField: 'areaFacility' },
@@ -58,7 +58,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'updatedAt', label: 'Updated At' },
 ];
 
-const DEFAULT_HIDDEN_COLUMNS = new Set(['createdBy', 'updatedBy', 'updatedAt']);
+const DEFAULT_HIDDEN_COLUMNS = new Set(['areaFacility', 'systemSubsystem','workPackage','createdBy', 'updatedBy', 'updatedAt']);
 
 /**
  * WBS master — the work-breakdown / cost-code entries of a
