@@ -40,7 +40,7 @@
             } @else { — }
           </dd>
         </div>
-        <div><dt>WBS / Cost Code</dt>
+        <div><dt>WBS</dt>
           <dd>
             @if (form.selectedWbs(); as w) { {{ w.code }} — {{ w.projectDetails }} } @else { — }
           </dd>
@@ -67,10 +67,24 @@
         <div><dt>Remarks</dt><dd>{{ value().remarks || '—' }}</dd></div>
       </dl>
 
-      <h3 class="step-section__title" style="margin-top: 18px"><mat-icon>account_tree</mat-icon> Approval</h3>
+      <h3 class="step-section__title" style="margin-top: 18px"><mat-icon>account_tree</mat-icon> Review &amp; Approval</h3>
       <dl class="review-fields">
         <div><dt>Submitted by</dt><dd>{{ submitter() }}</dd></div>
-        <div><dt>On submission</dt><dd>Goes to <strong>Under Review</strong> for approval</dd></div>
+        <div><dt>On submission</dt><dd>Goes to <strong>Under Review</strong>; every reviewer is emailed</dd></div>
+        <div><dt>Reviewers</dt>
+          <dd>
+            @for (u of form.selectedReviewers(); track u.id; let i = $index) {
+              <div>{{ i + 1 }}. {{ u.name }} <span class="mr-muted">· {{ u.email }}</span></div>
+            } @empty { <span class="mr-muted">None assigned</span> }
+          </dd>
+        </div>
+        <div><dt>Approvers</dt>
+          <dd>
+            @for (u of form.selectedApprovers(); track u.id; let i = $index) {
+              <div>{{ i + 1 }}. {{ u.name }} <span class="mr-muted">· {{ u.email }}</span></div>
+            } @empty { <span class="mr-muted">None assigned</span> }
+          </dd>
+        </div>
       </dl>
     </section>
   </div>

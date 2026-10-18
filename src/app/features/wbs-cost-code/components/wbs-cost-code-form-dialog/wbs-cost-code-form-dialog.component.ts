@@ -38,7 +38,7 @@ export interface WbsCostCodePrefill {
 }
 
 /**
- * Create/Edit dialog for the WBS / Cost Code master. `code` is
+ * Create/Edit dialog for the WBS master. `code` is
  * server-generated (a per-organization sequence starting at 0001), so its
  * control exists only to show the value in edit mode — it is disabled and never
  * submitted to the API.
@@ -183,7 +183,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
       });
       this.form.markAsPristine();
     } catch {
-      this.loadError.set('Unable to load WBS / Cost Code details. Please try again.');
+      this.loadError.set('Unable to load WBS details. Please try again.');
     } finally {
       this.loading.set(false);
     }

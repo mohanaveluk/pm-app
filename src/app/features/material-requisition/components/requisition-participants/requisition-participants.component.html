@@ -1,0 +1,46 @@
+<section class="step-section">
+  <h3 class="step-section__title">
+    <mat-icon>how_to_reg</mat-icon> Reviewers &amp; Approvers
+    @if (mr().reviewRound > 0) { <span class="mr-muted round-tag">Round {{ mr().reviewRound }}</span> }
+  </h3>
+
+  <div class="review-grid">
+    @for (group of [{ title: 'Reviewers', people: reviewers() }, { title: 'Approvers', people: approvers() }]; track group.title) {
+      <div>
+        <p class="doc-heading">{{ group.title }}</p>
+        @for (p of group.people; track p.id) {
+          <div class="participant-row" [class.participant-row--me]="isMe(p)">
+            <div class="participant-row__head">
+              <span class="participant-row__step">{{ p.sequence }}</span>
+              <div class="participant-row__who">
+                <div class="participant-row__name">
+                  {{ p.userName }}
+                  @if (isMe(p)) { <span class="mr-muted">(you)</span> }
+                </div>
+                <div class="participant-row__email">{{ p.userEmail }}</div>
+              </div>
+              <span [class]="decisionClass(p.decision)">
+                {{ p.decision ? decisionLabels[p.decision] : 'Pending' }}
+              </span>
+            </div>
+            @if (p.decidedAt || p.decisionComments || p.editedInRound) {
+              <div class="participant-row__body">
+                @if (p.decisionComments) { <p class="participant-row__comment">“{{ p.decisionComments }}”</p> }
+                <p class="participant-row__meta">
+                  @if (p.decidedAt) { {{ p.decidedAt | date: 'medium' }} }
+                  @if (p.editedInRound) {
+                    <span class="participant-row__edited" matTooltip="This reviewer changed the requisition during review">
+                      <mat-icon>edit_note</mat-icon> edited
+                    </span>
+                  }
+                </p>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="doc-empty" style="padding: 12px">None assigned.</p>
+        }
+      </div>
+    }
+  </div>
+</section>

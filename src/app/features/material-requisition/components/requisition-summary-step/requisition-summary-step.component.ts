@@ -12,13 +12,13 @@ import { DOCUMENT_TYPE_LABELS, SOURCE_LABELS } from '../../models/material-requi
  * in the way of submitting it. Nothing is typed here.
  */
 @Component({
-  selector: 'app-material-requisition-review',
+  selector: 'app-requisition-summary-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, DatePipe, MatIconModule, MatTableModule],
-  templateUrl: './material-requisition-review.component.html',
+  templateUrl: './requisition-summary-step.component.html',
   styleUrl: '../requisition-step.shared.scss',
 })
-export class MaterialRequisitionReviewComponent {
+export class RequisitionSummaryStepComponent {
   protected readonly form = inject(RequisitionFormService);
   private readonly auth = inject(AuthService);
 

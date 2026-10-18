@@ -5,20 +5,21 @@ import { MaterialRequisitionStatus } from '../models/material-requisition.model'
 import { environment } from '../../../../environments/environment';
 import { WbsCostCode } from '../../wbs-cost-code/models/wbs-cost-code.model';
 import {
-  CreateMaterialRequisitionRequest, MaterialRequisitionQueryParams,
-  RequisitionMaterialQueryParams, UpdateMaterialRequisitionRequest,
+  AssignedRequisitionQueryParams, CreateMaterialRequisitionRequest, MaterialRequisitionQueryParams,
+  RequisitionDecisionRequest, RequisitionMaterialQueryParams, UpdateMaterialRequisitionRequest,
+  UpdateRequisitionParticipantsRequest,
 } from '../models/material-requisition-request.model';
 import {
   ApiEnvelope, BomColumnsResponse, BomPreviewResponse, CandidateListResponse, CandidatesResponse,
   DeleteResponse, DocumentUploadResponse, MaterialRequisitionResponse,
-  PagedMaterialRequisitionResponse,
+  PagedMaterialRequisitionResponse, RequisitionUserOptionsResponse, WorkflowTimelineResponse,
 } from '../models/material-requisition-response.model';
 
 /**
  * Thin HTTP layer over MaterialRequisitionController. Every method maps 1:1 to a
  * documented endpoint. The requisition's code is never sent — the server
  * generates it — and neither are the client or any WBS detail: both are read
- * from the project and the WBS / cost code the requisition points at.
+ * from the project and the WBS the requisition points at.
  */
 @Injectable({ providedIn: 'root' })
 export class MaterialRequisitionService {
@@ -55,7 +56,54 @@ export class MaterialRequisitionService {
     return this.http.put<MaterialRequisitionResponse>(`${this.baseUrl}/${id}`, request);
   }
 
-  /** PATCH /material-requisitions/:id/submit — DRAFT → UNDER_REVIEW. */
+  // ── Review & approval ───────────────────────────────────────────────
+
+  /** GET /material-requisitions/my-reviews — assigned to me as reviewer. */
+  getMyReviews(params: AssignedRequisitionQueryParams): Observable<PagedMaterialRequisitionResponse> {
+    return this.http.get<PagedMaterialRequisitionResponse>(`${this.baseUrl}/my-reviews`, { params: this.assignedParams(params) });
+  }
+
+  /** GET /material-requisitions/my-approvals — assigned to me as approver. */
+  getMyApprovals(params: AssignedRequisitionQueryParams): Observable<PagedMaterialRequisitionResponse> {
+    return this.http.get<PagedMaterialRequisitionResponse>(`${this.baseUrl}/my-approvals`, { params: this.assignedParams(params) });
+  }
+
+  /** GET /material-requisitions/participant-options — internal users for the pickers. */
+  getParticipantOptions(): Observable<RequisitionUserOptionsResponse> {
+    return this.http.get<RequisitionUserOptionsResponse>(`${this.baseUrl}/participant-options`);
+  }
+
+  /** PUT /material-requisitions/:id/participants — reviewers until reviewed, approvers until approved. */
+  updateParticipants(id: string, request: UpdateRequisitionParticipantsRequest): Observable<MaterialRequisitionResponse> {
+    return this.http.put<MaterialRequisitionResponse>(`${this.baseUrl}/${id}/participants`, request);
+  }
+
+  /** POST /material-requisitions/:id/review — my review decision. */
+  reviewRequisition(id: string, request: RequisitionDecisionRequest): Observable<MaterialRequisitionResponse> {
+    return this.http.post<MaterialRequisitionResponse>(`${this.baseUrl}/${id}/review`, request);
+  }
+
+  /** POST /material-requisitions/:id/approval — my approval decision. */
+  approveRequisition(id: string, request: RequisitionDecisionRequest): Observable<MaterialRequisitionResponse> {
+    return this.http.post<MaterialRequisitionResponse>(`${this.baseUrl}/${id}/approval`, request);
+  }
+
+  /** GET /workflow-tracking/:trackingId — every document and step of the workflow. */
+  getWorkflowTimeline(trackingId: string): Observable<WorkflowTimelineResponse> {
+    return this.http.get<WorkflowTimelineResponse>(
+      `${environment.apiUrl}/v1/workflow-tracking/${encodeURIComponent(trackingId)}`,
+    );
+  }
+
+  private assignedParams(params: AssignedRequisitionQueryParams): HttpParams {
+    let p = new HttpParams().set('page', params.page).set('limit', params.limit);
+    if (params.search) p = p.set('search', params.search);
+    if (params.pendingOnly !== undefined) p = p.set('pendingOnly', params.pendingOnly);
+    if (params.status) p = p.set('status', params.status);
+    return p;
+  }
+
+  /** PATCH /material-requisitions/:id/submit — DRAFT or RETURNED → UNDER_REVIEW. */
   submitRequisition(id: string): Observable<MaterialRequisitionResponse> {
     return this.http.patch<MaterialRequisitionResponse>(`${this.baseUrl}/${id}/submit`, {});
   }
@@ -114,9 +162,9 @@ export class MaterialRequisitionService {
     return this.http.post<DocumentUploadResponse>(`${this.baseUrl}/documents/upload`, form);
   }
 
-  // ── WBS / cost codes ────────────────────────────────────────────────
+  // ── WBS ────────────────────────────────────────────────────────
 
-  /** GET /wbs-cost-codes/active?projectId= — the WBS / cost codes of one project. */
+  /** GET /wbs-cost-codes/active?projectId= — the WBS of one project. */
   getWbsCostCodes(projectId: string): Observable<ApiEnvelope<WbsCostCode[]>> {
     const params = new HttpParams().set('projectId', projectId);
     return this.http.get<ApiEnvelope<WbsCostCode[]>>(`${environment.apiUrl}/v1/wbs-cost-codes/active`, { params });

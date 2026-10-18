@@ -1,5 +1,6 @@
 import {
   BomColumns, BomPreview, MaterialRequisition, MaterialRequisitionListItem, RequisitionCandidate,
+  RequisitionUserOption, WorkflowEvent,
 } from './material-requisition.model';
 
 /**
@@ -34,3 +35,20 @@ export interface DocumentUploadResponse {
   message: string;
   url: string;
 }
+
+export type RequisitionUserOptionsResponse = ApiEnvelope<RequisitionUserOption[]>;
+
+/** GET /workflow-tracking/:trackingId */
+export interface WorkflowTimeline {
+  trackingId: string;
+  documents: Array<{
+    entityType: string;
+    entityId: string;
+    entityReference: string | null;
+    status: string | null;
+    firstSeenAt: string;
+    lastUpdatedAt: string;
+  }>;
+  events: WorkflowEvent[];
+}
+export type WorkflowTimelineResponse = ApiEnvelope<WorkflowTimeline>;

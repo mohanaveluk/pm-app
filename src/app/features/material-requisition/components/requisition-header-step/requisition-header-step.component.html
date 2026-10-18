@@ -71,9 +71,9 @@
         <mat-icon matSuffix matTooltip="Read from the project — for information only">info_outline</mat-icon>
       </mat-form-field>
 
-      <!-- WBS / cost code of the chosen project -->
+      <!-- WBS of the chosen project -->
       <mat-form-field appearance="outline" class="info-grid__wide">
-        <mat-label>Cost Code / WBS</mat-label>
+        <mat-label>WBS</mat-label>
         <mat-select
           formControlName="wbsCostCodeId"
           required
@@ -84,8 +84,8 @@
             <input
               class="select-search"
               type="text"
-              placeholder="Search WBS / cost codes…"
-              aria-label="Search WBS / cost codes"
+              placeholder="Search WBS"
+              aria-label="Search WBS"
               [ngModel]="wbsSearch()"
               (ngModelChange)="wbsSearch.set($event)"
               [ngModelOptions]="{ standalone: true }"
@@ -98,12 +98,12 @@
           }
           @if (visibleWbs().length === 0) {
             <mat-option disabled>
-              {{ form.wbsLoading() ? 'Loading…' : 'No WBS / cost codes for this project' }}
+              {{ form.wbsLoading() ? 'Loading…' : 'No WBS for this project' }}
             </mat-option>
           }
         </mat-select>
         @if (header.get('projectId')?.value && !form.wbsLoading() && form.wbsCodes().length === 0) {
-          <mat-hint>This project has no WBS / cost codes yet</mat-hint>
+          <mat-hint>This project has no WBS for this project</mat-hint>
         }
         @if (err('wbsCostCodeId')) { <mat-error>{{ err('wbsCostCodeId') }}</mat-error> }
       </mat-form-field>
@@ -115,9 +115,9 @@
       </mat-form-field>
     </div>
 
-    <!-- Information only: what the chosen WBS / cost code carries. -->
+    <!-- Information only: what the chosen WBS carries. -->
     @if (form.selectedWbs(); as wbs) {
-      <dl class="info-grid wbs-info" aria-label="Details of the chosen WBS / cost code">
+      <dl class="info-grid wbs-info" aria-label="Details of the chosen WBS">
         <div class="wbs-info__item"><dt>Area / Facility</dt><dd>{{ wbs.areaFacility || '—' }}</dd></div>
         <div class="wbs-info__item"><dt>System / Sub-system</dt><dd>{{ wbs.systemSubsystem || '—' }}</dd></div>
         <div class="wbs-info__item"><dt>Discipline</dt><dd>{{ wbs.disciplineName || '—' }}</dd></div>
@@ -184,6 +184,56 @@
         <mat-label>Remarks</mat-label>
         <textarea matInput formControlName="remarks" rows="2" maxlength="4000"></textarea>
       </mat-form-field>
+    </div>
+
+    <!-- ── Reviewers & approvers (internal users only) ───────────── -->
+    <h3 class="step-section__title" style="margin-top: 8px">
+      <mat-icon>how_to_reg</mat-icon> Reviewers &amp; Approvers
+    </h3>
+
+    <p class="info-note">
+      <mat-icon>info</mat-icon>
+      Any one reviewer's review is enough — then the approvers are asked, and any one approver's approval is
+      enough. Internal users only — one person cannot be both. Reviewers can be changed until it is reviewed,
+      approvers until it is approved.
+    </p>
+    @if (form.userOptionsError()) {
+      <div class="step-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ form.userOptionsError() }}</span>
+        <button mat-button type="button" (click)="form.loadUserOptions()">Retry</button>
+      </div>
+    }
+
+    <div class="info-grid participants-grid">
+      <app-requisition-user-picker
+        label="Reviewers"
+        placeholder="Select one or more reviewers"
+        stepPrefix="R"
+        tone="reviewer"
+        [options]="form.allUserOptions()"
+        [selectedIds]="reviewerIds()"
+        (selectedIdsChange)="form.setParticipants('reviewerIds', $event)"
+        [blockedIds]="approverIds()"
+        blockedReason="Already an approver of this requisition"
+        [locked]="form.reviewersLocked()"
+        [lockedReason]="form.reviewersLocked() ? 'Locked — it has been reviewed, or only the requester can change it' : null"
+        [loading]="form.userOptionsLoading()"
+      />
+      <app-requisition-user-picker
+        label="Approvers"
+        placeholder="Select one or more approvers"
+        stepPrefix="A"
+        tone="approver"
+        [options]="form.allUserOptions()"
+        [selectedIds]="approverIds()"
+        (selectedIdsChange)="form.setParticipants('approverIds', $event)"
+        [blockedIds]="reviewerIds()"
+        blockedReason="Already a reviewer of this requisition"
+        [locked]="form.approversLocked()"
+        [lockedReason]="form.approversLocked() ? 'Locked — it has been approved, or only the requester can change it' : null"
+        [loading]="form.userOptionsLoading()"
+      />
     </div>
 
     <!-- ── Supporting documents (below Remarks) ───────────────────── -->

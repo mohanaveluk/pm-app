@@ -1,6 +1,6 @@
 ---
 name: pm-conventions
-description: House rules for the Project Management app (Angular 20 pm-app + NestJS pm-api) — auto-generated codes, RBAC/menu/route wiring, API envelope, error handling, signals/OnPush, forms, dates, responsive layout, verification. Read this before building or changing any feature in pm-app or pm-api; the pm-simple-master and pm-workspace-master skills build on it.
+description: House rules for the Project Management app (Angular 20 pm-app + NestJS pm-api) — auto-generated codes, workflow_events + notifications for every user action (review/approve/reject/cancel/hold/enable/disable/delete…), RBAC/menu/route wiring, API envelope, error handling, signals/OnPush, forms, dates, responsive layout, verification. Read this before building or changing any feature in pm-app or pm-api; the pm-simple-master and pm-workspace-master skills build on it.
 ---
 
 # Project Management app — conventions
@@ -77,6 +77,87 @@ update (`@IsOptional()` already allows null); Swagger `@ApiProperty` examples.
 
 Schema: TypeORM `synchronize` is not relied on — **list every new table/column/
 enum change as SQL in the final report** for the user to run.
+
+## 3a. Workflow events & notifications (every action, every time)
+
+Applies to Material Master, Vendor Master, Material Requisition, RFQ, Purchase
+Order and **any new module or endpoint**. You do not need to be asked: every
+user action that creates, changes, decides on or removes a record is written to
+`workflow_events`, and that write fans out to the `notifications` table.
+
+What counts as an action: create / clone, update, submit / resubmit, review,
+approve, reject, return, cancel / withdraw, request (maker–checker), hold /
+release, enable / disable, obsolete, lock, delete. Reads, exports and uploads
+of a file are not actions.
+
+**Backend checklist**
+
+1. Entity type — add the document to `WorkflowEntityType`
+   (`pm-api/src/modules/workflow-tracking/enums/workflow-tracking.enums.ts`).
+   Existing: MATERIAL_REQUISITION, MR_REVIEW, MR_APPROVAL, RFQ, RFQ_APPROVAL,
+   PURCHASE_ORDER, GOODS_RECEIPT, INVOICE, MATERIAL, VENDOR.
+2. Actions — reuse `WorkflowAction`: CREATED, UPDATED, SUBMITTED,
+   RESUBMITTED, EDITED_IN_REVIEW, REVIEWED, REVIEW_COMPLETED, APPROVED,
+   APPROVAL_COMPLETED, RETURNED, REJECTED, CANCELLED, REQUESTED, DELETED,
+   STATUS_CHANGED, LOCKED, NOTIFIED. Enable / disable / obsolete / hold /
+   release are **STATUS_CHANGED with fromStatus → toStatus** (no new action).
+   Add a new action only for a genuinely new kind of step, and give it a phrase
+   in `ACTION_PHRASES` (notification.service.ts).
+3. trackingId — every step needs one.
+   - Procurement documents (RFQ, PO, GRN, invoice) **copy the trackingId of the
+     document they were raised from** (the MR's); never generate their own.
+   - Records with their own history (masters, MR) get a nullable
+     `trackingId varchar(30)` column, assigned on the first step. Strip it in
+     `clone()` so a clone starts its own history.
+4. Record the step —
+   - Record with its own trackingId column: inject
+     `@Optional() private readonly workflow?: WorkflowTrackingService` and call
+     `this.workflow.track(Entity, record, { entityType, entityReference: record.code,
+     action, fromStatus, toStatus, comments, actor, metadata })`. It assigns the
+     trackingId when missing. Wrap it in a private `trackX()` helper that
+     resolves the actor (`{ userId, name, email }`) and never throws — copy
+     `trackVendor` (vendor.service.ts) / `trackMaterial` (material.service.ts).
+   - Inside a transaction (MR style): `ensureTrackingId` then
+     `this.tracking.record({...}, manager)` so the step and the notification
+     roll back with the change.
+   - Record **after** the change is saved, capturing `fromStatus` before it.
+5. Audience — the module registers who is concerned, once, in `onModuleInit`:
+   `this.notifications?.registerWorkflowAudience([WorkflowEntityType.X], async (event, manager) => userIds)`
+   (creator / requester / participants / owners). The actor is always excluded
+   automatically. Per-step extras go in the step's `metadata`:
+   - `notifyUserIds: string[]`, `notifyEmails: string[]` — extra recipients
+     (e.g. the nominated approvers of a request);
+   - `emailedTo: string[]` — people who were emailed about this same step
+     (via EmailService); they already get the email's notification, so the
+     workflow one is not repeated for them.
+6. Link — add the document's route to `linkFor()` in notification.service.ts
+   (MATERIAL → /admin/materials/:id, VENDOR → /vendors/:id/view,
+   MR → /material-requisitions/:id, RFQ → /rfqs/:id, PO → /purchase-orders/:id)
+   and its display name to `DOCUMENT_LABELS`.
+7. Emails — send through `EmailService.sendEmail` with an `EmailType` value
+   (add one to `email.enums.ts` if missing), `reference: { type, id }` and
+   `metadata.trackingId`; it lands in `email_history` and becomes **two**
+   notifications by itself: the EMAIL one (opens the email) and an in-app item
+   of the same type (WORKFLOW for document emails, SYSTEM for account mail,
+   sourceType EMAIL_WORKFLOW) that still reaches the user if delivery fails.
+   Register `notifications.registerEmailDescriber([referenceType], fn)` in
+   `onModuleInit` so that item carries the document details (message +
+   `metadata.details: [{ label, value }]`) — copy `describeForEmail` in
+   material-requisition-workflow.service.ts (project, description, client, WBS).
+8. Module — import `WorkflowTrackingModule` and `NotificationModule`; keep the
+   injections `@Optional()` so specs that don't provide them still compile.
+9. Silent steps — CREATED, REVIEW_COMPLETED, APPROVAL_COMPLETED and NOTIFIED are
+   recorded but never notified (`SILENT_ACTIONS`).
+10. Spec — assert the step is recorded (entityType, action, from/to status) for
+    each status/decision method.
+11. SQL — `entityType` and `action` are MySQL ENUM columns: a new value means
+    an `ALTER TABLE workflow_events MODIFY ...` in the report, plus
+    `ALTER TABLE <table> ADD COLUMN trackingId varchar(30) NULL` for a new
+    tracked record. Dev synchronizes; production does not.
+
+**Frontend**: nothing per feature — the drawer and `/notifications` read the
+feed. Only add an icon rule in `notificationVisual()` (models/notification.model.ts)
+when you add a new WorkflowAction, and keep the document's `link` route valid.
 
 ## 4. Frontend feature layout (`pm-app/src/app/features/<feature>/`)
 
@@ -169,8 +250,8 @@ The build must have **no warnings** (unused imports such as RouterLink = NG8113)
 Known pre-existing failures to ignore: AppController "Hello World!", two
 VendorService.update guard tests.
 
-Final report: what was built, decisions/interpretations, SQL to run, anything
-not done.
+Final report: what was built, decisions/interpretations, which actions now
+record workflow steps (§3a), SQL to run, anything not done.
 
 ## 10. Tooling quirks (Windows / Git Bash)
 

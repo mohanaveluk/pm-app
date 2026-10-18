@@ -61,7 +61,7 @@ const COLUMN_DEFS: ColumnDef[] = [
 const DEFAULT_HIDDEN_COLUMNS = new Set(['createdBy', 'updatedBy', 'updatedAt']);
 
 /**
- * WBS / Cost Codes master — the work-breakdown / cost-code entries of a
+ * WBS master — the work-breakdown / cost-code entries of a
  * project: area / facility, system / sub-system, discipline, work package and
  * schedule-level activities.
  *

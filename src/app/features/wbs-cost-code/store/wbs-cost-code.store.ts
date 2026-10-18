@@ -16,7 +16,7 @@ import {
 const SEARCH_DEBOUNCE_MS = 350;
 
 /**
- * Page-level signal store for the WBS / Cost Code master. Provided by
+ * Page-level signal store for the WBS master. Provided by
  * WbsCostCodeComponent (not root) so state resets on each visit and its
  * subscriptions tear down with the component via takeUntilDestroyed.
  *
@@ -130,12 +130,12 @@ export class WbsCostCodeStore {
     this.saving.set(true);
     try {
       const res = await lastValueFrom(this.service.createWbsCostCode(request));
-      this.snack.open('WBS / Cost Code created successfully', 'OK', { duration: 3000 });
+      this.snack.open('WBS created successfully', 'OK', { duration: 3000 });
       this.reload$.next();
       return res.data;
     } catch (err) {
-      throw this.toStoreError(err, 'Unable to save WBS / Cost Code', {
-        409: 'A WBS / Cost Code with this code already exists in your organization.',
+      throw this.toStoreError(err, 'Unable to save WBS', {
+        409: 'A WBS with this code already exists in your organization.',
         422: 'Please check the highlighted fields and try again.',
       });
     } finally {
@@ -147,11 +147,11 @@ export class WbsCostCodeStore {
     this.saving.set(true);
     try {
       const res = await lastValueFrom(this.service.updateWbsCostCode(id, request));
-      this.snack.open('WBS / Cost Code updated successfully', 'OK', { duration: 3000 });
+      this.snack.open('WBS updated successfully', 'OK', { duration: 3000 });
       this.reload$.next();
       return res.data;
     } catch (err) {
-      throw this.toStoreError(err, 'Unable to save WBS / Cost Code', {
+      throw this.toStoreError(err, 'Unable to save WBS', {
         422: 'Please check the highlighted fields and try again.',
       });
     } finally {
@@ -163,11 +163,11 @@ export class WbsCostCodeStore {
     this.deleting.set(true);
     try {
       await lastValueFrom(this.service.deleteWbsCostCode(wbsCostCode.id));
-      this.snack.open('WBS / Cost Code deleted successfully', 'OK', { duration: 3000 });
+      this.snack.open('WBS deleted successfully', 'OK', { duration: 3000 });
       this.reload$.next();
     } catch (err) {
-      throw this.toStoreError(err, 'Unable to delete WBS / Cost Code', {
-        409: 'This WBS / Cost Code is currently in use and cannot be deleted.',
+      throw this.toStoreError(err, 'Unable to delete WBS', {
+        409: 'This WBS is currently in use and cannot be deleted.',
       });
     } finally {
       this.deleting.set(false);
@@ -182,11 +182,11 @@ export class WbsCostCodeStore {
     const nextActive = !wbsCostCode.isActive;
     try {
       await lastValueFrom(this.service.updateWbsCostCode(wbsCostCode.id, { isActive: nextActive }));
-      this.snack.open(nextActive ? 'WBS / Cost Code activated' : 'WBS / Cost Code deactivated', 'OK', { duration: 3000 });
+      this.snack.open(nextActive ? 'WBS activated' : 'WBS deactivated', 'OK', { duration: 3000 });
       this.reload$.next();
     } catch (err) {
-      throw this.toStoreError(err, `Unable to ${nextActive ? 'activate' : 'deactivate'} WBS / Cost Code`, {
-        409: 'This WBS / Cost Code is currently in use and its status cannot be changed.',
+      throw this.toStoreError(err, `Unable to ${nextActive ? 'activate' : 'deactivate'} WBS`, {
+        409: 'This WBS is currently in use and its status cannot be changed.',
       });
     }
   }
@@ -257,8 +257,8 @@ export class WbsCostCodeStore {
       // Keeps the long-lived reload$ pipeline alive after a failed request
       // instead of letting the error terminate the outer subscription.
       catchError((err: HttpErrorResponse) => {
-        this.error.set(this.messageForStatus(err, 'Unable to load WBS / Cost Codes. Please try again.', {
-          403: 'You do not have permission to view WBS / Cost Codes.',
+        this.error.set(this.messageForStatus(err, 'Unable to load WBS. Please try again.', {
+          403: 'You do not have permission to view WBS',
         }));
         this.wbsCostCodes.set([]);
         this.totalCount.set(0);
@@ -285,7 +285,7 @@ export class WbsCostCodeStore {
       case 400: return err.error?.message || 'The submitted data is invalid. Please review and try again.';
       case 401: return 'Your session has expired. Please sign in again.';
       case 403: return 'You do not have permission to perform this operation.';
-      case 404: return 'WBS / Cost Code could not be found. It may have been deleted.';
+      case 404: return 'WBS could not be found. It may have been deleted.';
       case 409: return err.error?.message || 'This operation conflicts with existing data.';
       case 422: return err.error?.message || 'The submitted data failed validation. Please review and try again.';
       case 500: return 'Something went wrong. Please try again.';

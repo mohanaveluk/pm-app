@@ -250,8 +250,21 @@
           <mat-form-field appearance="outline">
             <mat-label>Project Manager</mat-label>
             <mat-select formControlName="projectManagerId">
+              <mat-option>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search managers…"
+                  aria-label="Search managers"
+                  [ngModel]="managerSearch()"
+                  (ngModelChange)="managerSearch.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
               <mat-option value="">— None —</mat-option>
-              @for (m of formService.managers(); track m.id) {
+              @for (m of visibleManagers(); track m.id) {
                 <mat-option [value]="m.id">{{ m.name }}</mat-option>
               }
             </mat-select>
@@ -288,8 +301,21 @@
           <mat-form-field appearance="outline">
             <mat-label>Country</mat-label>
             <mat-select formControlName="countryCode">
+              <mat-option>
+                <input
+                  class="select-search"
+                  type="text"
+                  placeholder="Search countries…"
+                  aria-label="Search countries"
+                  [ngModel]="countrySearch()"
+                  (ngModelChange)="countrySearch.set($event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="$event.stopPropagation()"
+                />
+              </mat-option>
               <mat-option value="">— None —</mat-option>
-              @for (c of countries; track c.code) {
+              @for (c of visibleCountries(); track c.code) {
                 <mat-option [value]="c.code">{{ c.flag }} {{ c.name }}</mat-option>
               }
             </mat-select>

@@ -197,6 +197,14 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="trackingId">
+            <th mat-header-cell *matHeaderCellDef>Tracking ID</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="pl-cell__mono">{{ r.trackingId || '—' }}</span>
+              @if (r.lockedAt) { <mat-icon class="pl-lock" matTooltip="Locked — a purchase order has been raised">lock</mat-icon> }
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="project">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="project">Project</th>
             <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="projectText(r)">
@@ -212,7 +220,7 @@
           </ng-container>
 
           <ng-container matColumnDef="wbs">
-            <th mat-header-cell *matHeaderCellDef>WBS / Cost Code</th>
+            <th mat-header-cell *matHeaderCellDef>WBS</th>
             <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="r.wbsName || ''">
               {{ r.wbsName || '—' }}
             </td>
@@ -225,6 +233,24 @@
                 <span class="status-chip__dot" aria-hidden="true"></span>
                 {{ statusLabel(r.status) }}
               </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="participants">
+            <th mat-header-cell *matHeaderCellDef>Reviewers / Approvers</th>
+            <td mat-cell *matCellDef="let r" class="list-people">
+              <div class="list-people__row">
+                <span class="list-people__role" matTooltip="Reviewers">R</span>
+                @for (p of r.reviewers; track p.userId) {
+                  <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>
+                } @empty { <span class="mr-muted">—</span> }
+              </div>
+              <div class="list-people__row">
+                <span class="list-people__role list-people__role--approver" matTooltip="Approvers">A</span>
+                @for (p of r.approvers; track p.userId) {
+                  <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>
+                } @empty { <span class="mr-muted">—</span> }
+              </div>
             </td>
           </ng-container>
 
@@ -299,6 +325,8 @@
                 <div><dt>WBS</dt><dd>{{ r.wbsName || '—' }}</dd></div>
                 <div><dt>Required on site</dt><dd>{{ r.requiredOnSiteDate ? (r.requiredOnSiteDate | date: 'mediumDate') : '—' }}</dd></div>
                 <div><dt>Items</dt><dd>{{ r.itemCount }}</dd></div>
+                <div><dt>Reviewers</dt><dd>@for (p of r.reviewers; track p.userId; let last = $last) { {{ p.name }}@if (!last) {, } } @empty { — }</dd></div>
+                <div><dt>Approvers</dt><dd>@for (p of r.approvers; track p.userId; let last = $last) { {{ p.name }}@if (!last) {, } } @empty { — }</dd></div>
               </dl>
             </details>
 
@@ -347,7 +375,7 @@
 
     @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
       <button mat-menu-item [disabled]="!canEdit(r)" (click)="edit(r, $event)"
-        [matTooltip]="canEdit(r) ? '' : 'Only a draft or a requisition under review can be edited'">
+        [matTooltip]="canEdit(r) ? '' : r.lockedAt ? 'Locked — a purchase order has been raised' : 'Only a draft, returned or under-review requisition can be edited'">
         <mat-icon>edit</mat-icon> Edit Requisition
       </button>
     }
@@ -358,13 +386,20 @@
       </button>
     }
 
+    @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
+      <button mat-menu-item [disabled]="!canManageParticipants(r)" (click)="manageParticipants(r, $event)"
+        [matTooltip]="canManageParticipants(r) ? '' : (r.lockedAt ? 'Locked — a purchase order has been raised' : 'Locked — the requisition has been approved or closed')">
+        <mat-icon>group_add</mat-icon> Reviewers &amp; Approvers
+      </button>
+    }
+
     <button mat-menu-item (click)="copyNumber(r, $event)">
       <mat-icon>content_paste</mat-icon> Copy MR Number
     </button>
 
-    @if (isDraft(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_SUBMIT)) {
+    @if (canSubmit(r) && can(PERMISSIONS.MATERIAL_REQUISITIONS_SUBMIT)) {
       <button mat-menu-item (click)="submit(r, $event)">
-        <mat-icon>send</mat-icon> Submit for Approval
+        <mat-icon>send</mat-icon> {{ isReturned(r) ? 'Resubmit for Review' : 'Submit for Review' }}
       </button>
     }
 
@@ -398,7 +433,7 @@
     } @else if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
       <mat-divider />
       @if (isOnHold(r)) {
-        <button mat-menu-item (click)="changeStatus(r, Status.UNDER_REVIEW, $event)">
+        <button mat-menu-item (click)="changeStatus(r, releaseTarget(r), $event)">
           <mat-icon>play_circle</mat-icon> Release Hold
         </button>
       } @else {

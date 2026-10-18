@@ -1,5 +1,5 @@
 import {
-  MaterialRequisitionSortField, MaterialRequisitionStatus, RequisitionDocumentType,
+  MaterialRequisitionSortField, MaterialRequisitionStatus, RequisitionDecision, RequisitionDocumentType,
   RequisitionLineSource,
 } from './material-requisition.model';
 
@@ -41,8 +41,34 @@ export interface CreateMaterialRequisitionRequest {
   items?: RequisitionItemRequest[];
   /** The complete set of documents. */
   documents?: RequisitionDocumentRequest[];
-  /** true saves and submits — the requisition goes to Under Review. */
+  /** true saves and (re)submits — the requisition goes to Under Review. */
   submit?: boolean;
+  /** Internal users who review it, in order — the complete set. */
+  reviewerIds?: string[];
+  /** Internal users who approve it once reviewed — the complete set. */
+  approverIds?: string[];
+}
+
+/** PUT /material-requisitions/:id/participants — each list, when given, is the complete set. */
+export interface UpdateRequisitionParticipantsRequest {
+  reviewerIds?: string[];
+  approverIds?: string[];
+}
+
+/** POST /material-requisitions/:id/review and /:id/approval. */
+export interface RequisitionDecisionRequest {
+  decision: RequisitionDecision;
+  comments?: string;
+}
+
+/** GET /material-requisitions/my-reviews and /my-approvals. */
+export interface AssignedRequisitionQueryParams {
+  page: number;
+  limit: number;
+  search?: string;
+  /** Default true: only those still waiting for my decision. */
+  pendingOnly?: boolean;
+  status?: MaterialRequisitionStatus;
 }
 
 export type UpdateMaterialRequisitionRequest = Partial<CreateMaterialRequisitionRequest>;

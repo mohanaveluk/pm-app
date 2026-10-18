@@ -1,0 +1,99 @@
+<div class="nt-page">
+
+  <header class="nt-header">
+    <div>
+      <h1>Notifications</h1>
+      <p>
+        Emails you were sent, and updates on the requisitions, quotations, orders and vendors you are involved in.
+        @if (service.unreadCount()) { <strong>{{ service.unreadCount() }} unread.</strong> }
+      </p>
+    </div>
+    <div class="nt-header__actions">
+      <button mat-stroked-button (click)="reload()" matTooltip="Reload">
+        <mat-icon>refresh</mat-icon> Refresh
+      </button>
+      <button mat-flat-button color="primary" (click)="markAllRead()" [disabled]="!service.unreadCount()">
+        <mat-icon>done_all</mat-icon> Mark all read
+      </button>
+    </div>
+  </header>
+
+  <div class="nt-filters">
+    <div class="nt-tabs" role="tablist" aria-label="Which notifications">
+      @for (t of [{ v: 'all', l: 'All' }, { v: 'unread', l: 'Unread' }, { v: 'archived', l: 'Archived' }]; track t.v) {
+        <button
+          type="button"
+          role="tab"
+          class="nt-tab"
+          [class.nt-tab--active]="tab() === t.v"
+          [attr.aria-selected]="tab() === t.v"
+          (click)="setTab($any(t.v))"
+        >
+          {{ t.l }}
+          @if (t.v === 'unread' && service.unreadCount()) { <span class="nt-tab__count">{{ service.unreadCount() }}</span> }
+        </button>
+      }
+    </div>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="nt-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Search notifications…" [value]="search()" (input)="onSearch($event)" aria-label="Search notifications" />
+      @if (search()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+  </div>
+
+  <mat-chip-listbox class="nt-categories" aria-label="Filter by category">
+    <mat-chip-option [selected]="category() === null" (click)="setCategory(null)">All</mat-chip-option>
+    @for (c of categories; track c.value) {
+      <mat-chip-option [selected]="category() === c.value" (click)="setCategory(c.value)">
+        <mat-icon matChipAvatar>{{ c.icon }}</mat-icon> {{ c.label }}
+      </mat-chip-option>
+    }
+  </mat-chip-listbox>
+
+  @if (loading()) {
+    <div class="nt-state"><mat-spinner diameter="36" /><p>Loading notifications…</p></div>
+  } @else if (error()) {
+    <div class="nt-state nt-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-stroked-button (click)="reload()"><mat-icon>refresh</mat-icon> Retry</button>
+    </div>
+  } @else if (!items().length) {
+    <div class="nt-state">
+      <mat-icon>{{ tab() === 'unread' ? 'mark_email_read' : 'notifications_none' }}</mat-icon>
+      <p class="nt-state__title">
+        {{ tab() === 'unread' ? 'You are all caught up' : tab() === 'archived' ? 'Nothing archived' : 'No notifications yet' }}
+      </p>
+      @if (search() || category()) { <p>Try another search or category.</p> }
+    </div>
+  } @else {
+    @for (g of groups(); track g.label) {
+      <h2 class="nt-day">{{ g.label }}</h2>
+      <div class="nt-list">
+        @for (n of g.items; track n.id) {
+          <app-notification-card
+            [notification]="n"
+            [expanded]="expandedId() === n.id"
+            (toggled)="toggle(n)"
+            (changed)="afterChange($event)"
+            (removed)="onRemoved($event)"
+          />
+        }
+      </div>
+    }
+
+    @if (hasMore()) {
+      <div class="nt-more">
+        <button mat-stroked-button (click)="loadMore()" [disabled]="loadingMore()">
+          @if (loadingMore()) { <mat-spinner diameter="18" /> } @else { <mat-icon>expand_more</mat-icon> }
+          Load more ({{ items().length }} of {{ total() }})
+        </button>
+      </div>
+    }
+  }
+</div>

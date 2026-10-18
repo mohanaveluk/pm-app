@@ -23,10 +23,14 @@ import { firstValueFrom } from 'rxjs';
 import { PermissionService } from '../../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../../core/rbac/permissions.const';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  RequisitionParticipantsDialogComponent, RequisitionParticipantsDialogData, RequisitionParticipantsDialogResult,
+} from '../components/requisition-participants-dialog/requisition-participants-dialog.component';
 import { MaterialRequisitionListStore } from '../store/material-requisition-list.store';
 import {
   MaterialRequisitionListItem, MaterialRequisitionSortField, MaterialRequisitionStatus,
-  REQUISITION_STATUS_OPTIONS, REQUISITION_STATUS_TRANSITIONS, isRequisitionEditable, requisitionStatusLabel,
+  APPROVER_EDITABLE_STATUSES, DECISION_LABELS, REQUISITION_STATUS_OPTIONS, REQUISITION_STATUS_TRANSITIONS,
+  RequisitionParticipantSummary, isRequisitionEditable, requisitionStatusLabel,
 } from '../models/material-requisition.model';
 
 interface ColumnDef {
@@ -38,19 +42,23 @@ interface ColumnDef {
 
 const COLUMN_DEFS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', alwaysVisible: true },
-  { key: 'mrNumber', label: 'MR Number', alwaysVisible: true, sortField: 'mrNumber' },
+  { key: 'mrNumber', label: 'MR Number', sortField: 'mrNumber' },
+  { key: 'trackingId', label: 'Tracking ID' },
   { key: 'project', label: 'Project', sortField: 'project' },
   { key: 'client', label: 'Client' },
-  { key: 'wbs', label: 'WBS / Cost Code' },
+  { key: 'wbs', label: 'WBS' },
   { key: 'status', label: 'Status', alwaysVisible: true, sortField: 'status' },
+  { key: 'participants', label: 'Reviewers / Approvers' },
   { key: 'ros', label: 'Required on Site', sortField: 'requiredOnSiteDate' },
   { key: 'items', label: 'Items' },
   { key: 'createdAt', label: 'Created', sortField: 'createdAt' },
   { key: 'updatedAt', label: 'Updated', sortField: 'updatedAt' },
 ];
 
-const DEFAULT_HIDDEN_COLUMNS = new Set(['updatedAt']);
-const COLUMN_PREF_KEY = 'pm_material_requisition_columns';
+const DEFAULT_HIDDEN_COLUMNS = new Set(['mrNumber', 'trackingId', 'ros', 'updatedAt']);
+// v2: new defaults (MR Number, Tracking ID and Required on Site hidden) and the
+// Reviewers / Approvers column — older saved preferences would hide neither.
+const COLUMN_PREF_KEY = 'pm_material_requisition_columns_v2';
 
 /** Material Requisition list — entry point into the requisition screens. */
 @Component({
@@ -99,13 +107,44 @@ export class MaterialRequisitionListComponent {
     return item.id;
   }
 
-  /** Draft or Under Review — the API accepts edits to both. */
+  /** Draft, Returned or Under Review — the API decides who exactly may edit. */
   protected canEdit(item: MaterialRequisitionListItem): boolean {
+    if (item.lockedAt) return false;
     return isRequisitionEditable(item.status);
   }
 
   protected isDraft(item: MaterialRequisitionListItem): boolean {
     return item.status === MaterialRequisitionStatus.DRAFT;
+  }
+
+  /**
+   * Reviewers change until reviewed, approvers until approved — so the dialog is
+   * offered until it is approved; it locks whichever list can no longer change.
+   */
+  protected canManageParticipants(item: MaterialRequisitionListItem): boolean {
+    return !item.lockedAt && APPROVER_EDITABLE_STATUSES.includes(item.status);
+  }
+
+  protected decisionTip(p: RequisitionParticipantSummary): string {
+    return `${p.name} — ${p.decision ? DECISION_LABELS[p.decision] : 'Pending'}`;
+  }
+
+  protected decisionClass(p: RequisitionParticipantSummary): string {
+    return `list-person list-person--${(p.decision ?? 'pending').toLowerCase()}`;
+  }
+
+  protected isReturned(item: MaterialRequisitionListItem): boolean {
+    return item.status === MaterialRequisitionStatus.RETURNED;
+  }
+
+  /** Draft → submit; returned → resubmit for a new review round. */
+  protected canSubmit(item: MaterialRequisitionListItem): boolean {
+    return !item.lockedAt && (this.isDraft(item) || this.isReturned(item));
+  }
+
+  /** Releasing a hold returns the requisition to where it was held. */
+  protected releaseTarget(item: MaterialRequisitionListItem): MaterialRequisitionStatus {
+    return item.statusBeforeHold ?? MaterialRequisitionStatus.UNDER_REVIEW;
   }
 
   protected isUnderReview(item: MaterialRequisitionListItem): boolean {
@@ -234,7 +273,7 @@ export class MaterialRequisitionListComponent {
       return;
     }
     const header = [
-      'MR Number', 'Code', 'Project No.', 'Project', 'Client Code', 'Client', 'WBS / Cost Code',
+      'MR Number', 'Code', 'Project No.', 'Project', 'Client Code', 'Client', 'WBS',
       'Budget Head', 'Status', 'Required on Site', 'Items', 'Created By', 'Created At', 'Updated At',
     ];
     const lines = rows.map((r) => [
@@ -295,9 +334,11 @@ export class MaterialRequisitionListComponent {
       maxWidth: '95vw',
       viewContainerRef: this.viewContainerRef,
       data: {
-        title: 'Submit for Approval?',
-        message: `Submit ${item.mrNumber}? It will move to Under Review.`,
-        confirmText: 'Submit',
+        title: this.isReturned(item) ? 'Resubmit for Review?' : 'Submit for Review?',
+        message: this.isReturned(item)
+          ? `Resubmit ${item.mrNumber}? A new review round starts and every reviewer is notified that the requested changes have been made.`
+          : `Submit ${item.mrNumber}? It moves to Under Review and every reviewer is notified.`,
+        confirmText: this.isReturned(item) ? 'Resubmit' : 'Submit',
         icon: 'send',
       },
     });
@@ -308,6 +349,19 @@ export class MaterialRequisitionListComponent {
     } catch {
       // Store already surfaced a snackbar with the failure reason.
     }
+  }
+
+  async manageParticipants(item: MaterialRequisitionListItem, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    const ref = this.dialog.open<
+      RequisitionParticipantsDialogComponent, RequisitionParticipantsDialogData, RequisitionParticipantsDialogResult
+    >(RequisitionParticipantsDialogComponent, {
+      width: '640px',
+      maxWidth: '95vw',
+      viewContainerRef: this.viewContainerRef,
+      data: { requisitionId: item.id, mrNumber: item.mrNumber },
+    });
+    if (await firstValueFrom(ref.afterClosed())) this.store.refresh();
   }
 
   async clone(item: MaterialRequisitionListItem, event?: Event): Promise<void> {
@@ -353,7 +407,13 @@ export class MaterialRequisitionListComponent {
         confirm: releasing ? 'Release' : 'Enable', icon: 'play_circle',
       },
     };
-    const text = texts[status];
+    const text = releasing && status !== MaterialRequisitionStatus.DISABLED && status !== MaterialRequisitionStatus.OBSOLETE
+      ? {
+        title: 'Release Hold?',
+        message: `${item.mrNumber} will return to ${requisitionStatusLabel(status)}.`,
+        confirm: 'Release', icon: 'play_circle',
+      }
+      : texts[status];
     if (!text) return;
 
     const ref = this.dialog.open(ConfirmDialogComponent, {
