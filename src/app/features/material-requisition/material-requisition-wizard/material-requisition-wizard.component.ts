@@ -67,20 +67,38 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
   protected readonly isEdit = computed(() => this.route.snapshot.data['mode'] === 'edit');
 
   /**
-   * Already submitted: it is corrected in place — no Save Draft, no Submit —
-   * and keeps its Under Review status.
+   * Already submitted and waiting for review or approval: it is corrected in
+   * place — no Save Draft, no Submit — and keeps its status.
    */
-  protected readonly isUnderReview = computed(
-    () => this.saved()?.status === MaterialRequisitionStatus.UNDER_REVIEW,
-  );
+  protected readonly isUnderReview = computed(() => {
+    const status = this.saved()?.status;
+    return status === MaterialRequisitionStatus.UNDER_REVIEW || status === MaterialRequisitionStatus.REVIEWED;
+  });
 
   /** Sent back for changes: edited, then resubmitted for a new review round. */
   protected readonly isReturned = computed(
     () => this.saved()?.status === MaterialRequisitionStatus.RETURNED,
   );
 
-  /** A reviewer editing from the review screen goes back there after saving. */
+  /** A reviewer / approver editing from their decision screen goes back there after saving. */
   protected readonly fromReview = computed(() => this.route.snapshot.queryParamMap.get('returnTo') === 'review');
+  protected readonly fromApproval = computed(() => this.route.snapshot.queryParamMap.get('returnTo') === 'approval');
+
+  /** What the header says while editing a requisition that is already submitted. */
+  protected readonly inPlaceLabel = computed(() => {
+    if (this.fromReview()) return 'Editing as reviewer — changes are saved in place';
+    if (this.fromApproval()) return 'Editing as approver — changes are saved in place';
+    return this.saved()?.status === MaterialRequisitionStatus.REVIEWED
+      ? 'Reviewed — changes are saved in place'
+      : 'Under review — changes are saved in place';
+  });
+
+  /** Where saving or cancelling returns to: the decision screen the edit started from, if any. */
+  private decisionScreen(id: string): string[] | null {
+    if (this.fromReview()) return ['/material-requisitions', 'reviews', id];
+    if (this.fromApproval()) return ['/material-requisitions', 'approvals', id];
+    return null;
+  }
 
   /** What was asked for when it was returned (the last round's return comments). */
   protected readonly returnNotes = computed(() => {
@@ -113,7 +131,9 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
         this.snack.open(
           res.data.lockedAt
             ? 'This requisition is locked — a purchase order has been raised against it.'
-            : 'You cannot edit this requisition in its current status.',
+            : res.data.status === MaterialRequisitionStatus.APPROVED
+              ? 'This requisition is approved and locked — it can no longer be edited.'
+              : 'You cannot edit this requisition in its current status.',
           'OK', { duration: 4000 },
         );
         this.leaveTo(['/material-requisitions', id]);
@@ -204,10 +224,12 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
       this.snack.open(
         this.fromReview()
           ? `${mr.mrNumber} updated — describe your changes in your review comments.`
-          : `${mr.mrNumber} updated.`,
+          : this.fromApproval()
+            ? `${mr.mrNumber} updated — describe your changes in your approval comments.`
+            : `${mr.mrNumber} updated.`,
         'OK', { duration: 4000 },
       );
-      this.leaveTo(this.fromReview() ? ['/material-requisitions', 'reviews', mr.id] : ['/material-requisitions', mr.id]);
+      this.leaveTo(this.decisionScreen(mr.id) ?? ['/material-requisitions', mr.id]);
     } catch (err) {
       this.fail(err);
     } finally {
@@ -292,8 +314,9 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
 
   protected backToList(): void {
     const id = this.saved()?.id;
-    if (this.fromReview() && id) {
-      void this.router.navigate(['/material-requisitions', 'reviews', id]);
+    const back = id ? this.decisionScreen(id) : null;
+    if (back) {
+      void this.router.navigate(back);
       return;
     }
     void this.router.navigate(['/material-requisitions']);

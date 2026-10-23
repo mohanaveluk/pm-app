@@ -385,9 +385,13 @@ export const SOURCE_LABELS: Record<RequisitionLineSource, string> = {
   [RequisitionLineSource.PROJECT]: 'Project / WBS',
 };
 
-/** Statuses whose content can still be edited (mirrors the API). */
+/**
+ * Statuses whose content can still be edited (mirrors the API): reviewers edit
+ * while Under Review, approvers while Reviewed; Approved is locked.
+ */
 export const EDITABLE_REQUISITION_STATUSES: readonly MaterialRequisitionStatus[] = [
-  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.UNDER_REVIEW, MaterialRequisitionStatus.RETURNED,
+  MaterialRequisitionStatus.DRAFT, MaterialRequisitionStatus.UNDER_REVIEW,
+  MaterialRequisitionStatus.REVIEWED, MaterialRequisitionStatus.RETURNED,
 ];
 
 /** Reviewers can be changed until the requisition is reviewed (mirrors the API). */

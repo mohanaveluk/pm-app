@@ -1,0 +1,210 @@
+<div class="upd">
+  <header class="upd__head">
+    <div class="upd__head-text">
+      <h2>{{ title() }}</h2>
+      <p>Give internal users access to a project. Roles still decide what they can do in it.</p>
+    </div>
+    <button mat-icon-button type="button" (click)="cancel()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="upd__body">
+    <!-- 1. Project -->
+    <section class="upd__step">
+      <div class="upd__step-label"><span class="upd__num">1</span> Project</div>
+      @if (isEdit()) {
+        @let p = project();
+        <div class="upd__readonly">
+          <mat-icon>folder</mat-icon>
+          <div>
+            <div class="upd__readonly-main"><span class="upd__code">{{ p?.code }}</span> {{ p?.projectName }}</div>
+            <div class="upd__readonly-sub">The project of an existing mapping cannot be changed.</div>
+          </div>
+        </div>
+      } @else {
+        <mat-form-field appearance="outline" class="upd__full" subscriptSizing="dynamic">
+          <mat-label>Project</mat-label>
+          <mat-select
+            [value]="projectId()"
+            (selectionChange)="onProjectChange($event.value)"
+            (openedChange)="!$event && projectSearch.set('')"
+            required
+            aria-label="Project"
+          >
+            <mat-option class="upd__search-option">
+              <input
+                class="select-search"
+                type="text"
+                placeholder="Search by project code or name…"
+                aria-label="Search projects"
+                [ngModel]="projectSearch()"
+                (ngModelChange)="projectSearch.set($event)"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+              />
+            </mat-option>
+            @for (p of visibleProjects(); track p.id) {
+              <mat-option [value]="p.id">{{ p.code }} — {{ p.projectName }}</mat-option>
+            } @empty {
+              <mat-option disabled>No open projects match</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Open projects (planned, active, on hold)</mat-hint>
+        </mat-form-field>
+        @if (projectError()) { <p class="upd__error" role="alert">{{ projectError() }}</p> }
+
+        @if (checkingProject()) {
+          <div class="upd__inline"><mat-spinner diameter="18" /> Checking existing assignments…</div>
+        } @else if (existing(); as ex) {
+          <div class="upd__notice" role="status">
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>{{ ex.projectCode }}</strong> already has {{ ex.userCount }} user{{ ex.userCount === 1 ? '' : 's' }} mapped.
+              Edit that mapping to add or remove users.
+            </div>
+            <button mat-stroked-button type="button" (click)="editExisting()">Edit existing mapping</button>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- 2. Client (read only) -->
+    <section class="upd__step">
+      <div class="upd__step-label"><span class="upd__num">2</span> Client</div>
+      @if (project(); as p) {
+        <div class="upd__readonly">
+          <mat-icon>business</mat-icon>
+          <div>
+            <div class="upd__readonly-main">
+              @if (p.clientCode) { <span class="upd__code">{{ p.clientCode }}</span> }
+              {{ p.clientName || '—' }}
+            </div>
+            <div class="upd__readonly-sub">From the project — change it in the Project Master.</div>
+          </div>
+        </div>
+      } @else {
+        <p class="upd__muted">Select a project to see its client.</p>
+      }
+    </section>
+
+    <!-- 3. Users -->
+    <section class="upd__step">
+      <div class="upd__step-label">
+        <span class="upd__num">3</span> Internal users
+        <span class="upd__count" aria-live="polite">{{ selected().size }} selected</span>
+      </div>
+
+      <div class="upd__user-tools">
+        <label class="upd__user-search">
+          <mat-icon>search</mat-icon>
+          <input
+            type="text"
+            placeholder="Search by name, email, position or role…"
+            aria-label="Search users"
+            [ngModel]="userSearch()"
+            (ngModelChange)="userSearch.set($event)"
+          />
+          @if (userSearch()) {
+            <button mat-icon-button type="button" (click)="userSearch.set('')" aria-label="Clear user search">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </label>
+        <div class="upd__user-actions">
+          <mat-checkbox
+            [checked]="allVisibleSelected()"
+            [indeterminate]="someVisibleSelected()"
+            [disabled]="!selectableVisible().length"
+            (change)="toggleAllVisible()"
+          >
+            Select all {{ userSearch() ? 'shown' : '' }} ({{ selectableVisible().length }})
+          </mat-checkbox>
+          <span class="upd__spacer"></span>
+          @if (selected().size) {
+            <button mat-button type="button" (click)="clearSelection()">
+              <mat-icon>clear_all</mat-icon> Clear
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="upd__user-list" role="listbox" aria-multiselectable="true" aria-label="Internal users">
+        @if (store.usersLoading()) {
+          <div class="upd__inline"><mat-spinner diameter="20" /> Loading users…</div>
+        } @else if (store.usersError()) {
+          <div class="upd__inline upd__danger">
+            <mat-icon>error_outline</mat-icon> {{ store.usersError() }}
+            <button mat-button type="button" (click)="store.loadUsers()">Retry</button>
+          </div>
+        } @else {
+          @for (u of visibleUsers(); track u.id) {
+            <div
+              class="upd__user"
+              role="option"
+              [attr.aria-selected]="isSelected(u.id)"
+              [class.upd__user--selected]="isSelected(u.id)"
+              [class.upd__user--stale]="u.inactiveAccount"
+            >
+              <mat-checkbox
+                [checked]="isSelected(u.id)"
+                [disabled]="u.inactiveAccount && !isSelected(u.id)"
+                (change)="toggleUser(u)"
+                [attr.aria-label]="u.name"
+              />
+              <span class="upd__avatar" aria-hidden="true">{{ initialsOf(u.name) }}</span>
+              <span class="upd__user-text" (click)="toggleUser(u)">
+                <span class="upd__user-name">
+                  {{ u.name }}
+                  @if (u.inactiveAccount) { <span class="upd__tag upd__tag--warn">Account inactive</span> }
+                </span>
+                <span class="upd__user-sub">
+                  {{ u.email }}@if (u.position) { · {{ u.position }} }@if (u.role) { · {{ u.role }} }
+                </span>
+              </span>
+            </div>
+          } @empty {
+            <p class="upd__muted upd__pad">{{ userSearch() ? 'No users match "' + userSearch() + '".' : 'No active internal users found.' }}</p>
+          }
+        }
+      </div>
+      @if (usersError()) { <p class="upd__error" role="alert">{{ usersError() }}</p> }
+    </section>
+
+    <!-- 4. Review -->
+    <section class="upd__step">
+      <div class="upd__step-label"><span class="upd__num">4</span> Review selection</div>
+      @if (selectedUsers().length) {
+        <mat-chip-set aria-label="Selected users" class="upd__chips">
+          @for (u of selectedUsers(); track u.id) {
+            <mat-chip (removed)="removeUser(u.id)" [class.upd__chip--stale]="u.inactiveAccount">
+              <span class="upd__chip-avatar" matChipAvatar>{{ initialsOf(u.name) }}</span>
+              {{ u.name }}
+              <button matChipRemove [attr.aria-label]="'Remove ' + u.name"><mat-icon>cancel</mat-icon></button>
+            </mat-chip>
+          }
+        </mat-chip-set>
+      } @else {
+        <p class="upd__muted">No users selected yet.</p>
+      }
+    </section>
+  </div>
+
+  <footer class="upd__foot">
+    <span class="upd__foot-summary">
+      @if (project(); as p) { {{ p.code }} · }{{ selected().size }} user{{ selected().size === 1 ? '' : 's' }}
+    </span>
+    <span class="upd__spacer"></span>
+    <button mat-button type="button" (click)="cancel()" [disabled]="store.saving()">Cancel</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="save()"
+      [disabled]="store.saving() || !!existing() || checkingProject()"
+    >
+      @if (store.saving()) { <mat-spinner diameter="18" class="upd__btn-spinner" /> }
+      {{ isEdit() ? 'Save Mapping' : 'Assign Project' }}
+    </button>
+  </footer>
+</div>

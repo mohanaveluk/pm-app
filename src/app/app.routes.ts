@@ -297,6 +297,11 @@ export const routes: Routes = [
             data: { breadcrumb: 'Service Groups', permission: PERMISSIONS.SERVICE_GROUPS_VIEW },
           },
           {
+            path: 'user-project-mappings',
+            loadComponent: () => import('./features/user-project-mapping/user-project-mapping.component').then(m => m.UserProjectMappingComponent),
+            data: { breadcrumb: 'User–Project Mapping', permission: PERMISSIONS.USER_PROJECT_MAPPINGS_VIEW },
+          },
+          {
             path: 'service-group-users',
             loadComponent: () => import('./features/service-group-user/service-group-user.component').then(m => m.ServiceGroupUserComponent),
             data: { breadcrumb: 'Service Group User Assignment', permission: PERMISSIONS.SERVICE_GROUP_USERS_VIEW },
@@ -318,7 +323,8 @@ export const routes: Routes = [
               { path: 'ad-groups', loadComponent: comingSoon, data: { breadcrumb: 'Active Directory Groups', title: 'Active Directory Groups', icon: 'groups', permission: PERMISSIONS.PERMISSIONS_MANAGE } },
               { path: 'activities', loadComponent: comingSoon, data: { breadcrumb: 'Activities', title: 'Activity Mapping', icon: 'timeline', permission: PERMISSIONS.ACTIVITIES_MANAGE } },
               { path: 'features', loadComponent: comingSoon, data: { breadcrumb: 'Features', title: 'Feature Mapping', icon: 'extension', permission: PERMISSIONS.FEATURES_MANAGE } },
-              { path: 'projects', loadComponent: comingSoon, data: { breadcrumb: 'Projects', title: 'Project Mapping', icon: 'folder_shared', permission: PERMISSIONS.PROJECTS_MANAGE } },
+              // Replaced by the User–Project Mapping master.
+              { path: 'projects', redirectTo: '/admin/user-project-mappings', pathMatch: 'full' },
               { path: 'permission-matrix', loadComponent: comingSoon, data: { breadcrumb: 'Permission Matrix', title: 'Permission Matrix', icon: 'grid_view', permission: PERMISSIONS.PERMISSIONS_MANAGE } },
             ],
           },

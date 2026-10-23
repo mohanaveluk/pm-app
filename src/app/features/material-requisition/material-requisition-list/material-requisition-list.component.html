@@ -375,7 +375,7 @@
 
     @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_UPDATE)) {
       <button mat-menu-item [disabled]="!canEdit(r)" (click)="edit(r, $event)"
-        [matTooltip]="canEdit(r) ? '' : r.lockedAt ? 'Locked — a purchase order has been raised' : 'Only a draft, returned or under-review requisition can be edited'">
+        [matTooltip]="canEdit(r) ? '' : r.lockedAt ? 'Locked — a purchase order has been raised' : (r.status === 'APPROVED' ? 'Approved — locked for changes' : 'Only a draft, returned, under-review or reviewed requisition can be edited')">
         <mat-icon>edit</mat-icon> Edit Requisition
       </button>
     }

@@ -1,0 +1,118 @@
+.upv__title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upv__code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+  margin-right: 4px;
+}
+
+.upv__status {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--active { background: #e8f5e9; color: var(--success); }
+  &--inactive { background: #eceff1; color: #607d8b; }
+}
+
+.upv__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 18px;
+  margin: 0 0 8px;
+
+  dt { color: #7d93ad; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  dd { margin: 2px 0 0; font-size: 0.9rem; }
+}
+
+.upv__heading { margin: 18px 0 8px; font-size: 0.95rem; }
+
+.upv__users {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.upv__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  &:last-child { border-bottom: 0; }
+}
+
+.upv__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e3f0fd;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.upv__user-text { flex: 1 1 auto; min-width: 0; }
+.upv__user-name { font-weight: 500; }
+.upv__user-sub { color: #7d93ad; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.upv__user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.upv__tag {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #fff3e0;
+  color: #b26a00;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.upv__muted { color: #8a9bb0; font-size: 0.78rem; }
+.upv__danger { color: var(--error); }
+
+.upv__inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5a7a9e;
+}
+
+.upv__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    &:last-child { border-bottom: 0; }
+  }
+}
+
+.upv__tl-icon { color: var(--primary); flex-shrink: 0; }
+.upv__tl-title { font-weight: 500; }
+.upv__tl-comment { font-size: 0.85rem; color: #33475b; margin: 2px 0; }
+
+@media (max-width: 600px) {
+  .upv__user { flex-wrap: wrap; }
+  .upv__user-meta { flex-direction: row; align-items: center; width: 100%; padding-left: 42px; }
+}

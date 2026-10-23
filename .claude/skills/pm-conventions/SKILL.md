@@ -95,11 +95,11 @@ of a file are not actions.
 1. Entity type — add the document to `WorkflowEntityType`
    (`pm-api/src/modules/workflow-tracking/enums/workflow-tracking.enums.ts`).
    Existing: MATERIAL_REQUISITION, MR_REVIEW, MR_APPROVAL, RFQ, RFQ_APPROVAL,
-   PURCHASE_ORDER, GOODS_RECEIPT, INVOICE, MATERIAL, VENDOR.
+   PURCHASE_ORDER, GOODS_RECEIPT, INVOICE, MATERIAL, VENDOR, PROJECT_ASSIGNMENT.
 2. Actions — reuse `WorkflowAction`: CREATED, UPDATED, SUBMITTED,
    RESUBMITTED, EDITED_IN_REVIEW, REVIEWED, REVIEW_COMPLETED, APPROVED,
    APPROVAL_COMPLETED, RETURNED, REJECTED, CANCELLED, REQUESTED, DELETED,
-   STATUS_CHANGED, LOCKED, NOTIFIED. Enable / disable / obsolete / hold /
+   ASSIGNED, UNASSIGNED, STATUS_CHANGED, LOCKED, NOTIFIED. Enable / disable / obsolete / hold /
    release are **STATUS_CHANGED with fromStatus → toStatus** (no new action).
    Add a new action only for a genuinely new kind of step, and give it a phrase
    in `ACTION_PHRASES` (notification.service.ts).
@@ -158,6 +158,16 @@ of a file are not actions.
 **Frontend**: nothing per feature — the drawer and `/notifications` read the
 feed. Only add an icon rule in `notificationVisual()` (models/notification.model.ts)
 when you add a new WorkflowAction, and keep the document's `link` route valid.
+
+## 3b. Project visibility (every project-scoped read)
+
+Non-administrators see only the projects they are actively mapped to
+(`user_project_mappings`), manage, or created; OrganizationAdmin / SuperAdmin
+see all. Any new endpoint that lists, returns or accepts a project must apply
+`UserProjectAccessService` (import `UserProjectMappingModule`): `scope(qb, alias, viewer)`
+for lists/dropdowns, `assertCanSee` (404) for one project, `canSee` before
+accepting a projectId. The viewer is `{ userId, email, role }` from `req.user`.
+Visibility never replaces role permissions.
 
 ## 4. Frontend feature layout (`pm-app/src/app/features/<feature>/`)
 

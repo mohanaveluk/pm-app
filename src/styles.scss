@@ -204,3 +204,19 @@ button mat-spinner {
     background: transparent;
   }
 }
+
+// Right-hand drawer (a MatDialog pinned to the right edge) — User–Project Mapping.
+.upm-drawer-panel {
+  .mat-mdc-dialog-surface {
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+  .mat-mdc-dialog-container {
+    animation: upm-drawer-in 220ms cubic-bezier(0.2, 0, 0, 1);
+  }
+}
+
+@keyframes upm-drawer-in {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

@@ -83,6 +83,8 @@ export function notificationVisual(n: Pick<AppNotification, 'type' | 'category' 
     : n.severity === 'error' ? 'danger'
     : 'primary';
 
+  if (/UNASSIGNED/.test(t)) return { icon: 'person_remove', tone: 'warning' };
+  if (/ASSIGNED/.test(t)) return { icon: 'person_add', tone: 'success' };
   if (/VERIF/.test(t)) return { icon: 'verified', tone: 'success' };
   if (/OTC|OTP|PASSWORD/.test(t)) return { icon: 'key', tone: 'neutral' };
   if (/^REVIEW_|SUBMITTED|RESUBMIT|EDITED_IN_REVIEW/.test(t)) return { icon: 'rate_review', tone: 'primary' };

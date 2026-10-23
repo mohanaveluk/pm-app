@@ -29,7 +29,7 @@
                 <p class="participant-row__meta">
                   @if (p.decidedAt) { {{ p.decidedAt | date: 'medium' }} }
                   @if (p.editedInRound) {
-                    <span class="participant-row__edited" matTooltip="This reviewer changed the requisition during review">
+                    <span class="participant-row__edited" [matTooltip]="p.role === 'APPROVER' ? 'This approver changed the requisition before deciding' : 'This reviewer changed the requisition during review'">
                       <mat-icon>edit_note</mat-icon> edited
                     </span>
                   }

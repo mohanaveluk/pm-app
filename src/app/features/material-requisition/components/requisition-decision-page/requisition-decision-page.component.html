@@ -30,7 +30,8 @@
       <div class="pw-header__main">
         <mat-chip [class]="statusClass(r.status)">{{ statusText(r.status) }}</mat-chip>
         @if (canEdit()) {
-          <button mat-stroked-button type="button" (click)="edit()" matTooltip="Change the requisition before you review it">
+          <button mat-stroked-button type="button" (click)="edit()"
+            [matTooltip]="reviewing() ? 'Change the requisition before you review it' : 'Change the requisition before you approve it'">
             <mat-icon>edit</mat-icon> Edit Requisition
           </button>
         }
@@ -48,7 +49,8 @@
     } @else {
       <div class="info-note decision-notice">
         <mat-icon>verified_user</mat-icon>
-        The review is complete. Read the review comments, then record your decision — approvers cannot edit the requisition.
+        The review is complete. Read the review comments, then record your decision. You can edit the requisition before
+        you decide; if you do, say what you changed in your comments. Once approved, it is locked.
       </div>
     }
 
@@ -56,8 +58,8 @@
       <app-requisition-decision-panel
         [title]="reviewing() ? 'Your review' : 'Your approval decision'"
         [options]="options()"
-        [commentsRequired]="reviewing() && !!me()?.editedInRound"
-        [commentsRequiredReason]="reviewing() && me()?.editedInRound ? 'You edited this requisition — describe your changes in the comments.' : null"
+        [commentsRequired]="editedByMe()"
+        [commentsRequiredReason]="editedByMe() ? 'You edited this requisition — describe your changes in the comments.' : null"
         [busy]="busy()"
         (submitted)="decide($event)"
       />

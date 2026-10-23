@@ -1,0 +1,69 @@
+@let m = detail() ?? data.mapping;
+<h2 mat-dialog-title class="upv__title">
+  <span class="upv__code">{{ m.projectCode }}</span> {{ m.projectName }}
+  <span class="upv__status upv__status--{{ m.status === 'ACTIVE' ? 'active' : 'inactive' }}">{{ statusLabel(m.status) }}</span>
+</h2>
+
+<mat-dialog-content class="upv">
+  <dl class="upv__facts">
+    <div><dt>Client</dt><dd>@if (m.clientCode) { <span class="upv__code">{{ m.clientCode }}</span> }{{ m.clientName || '—' }}</dd></div>
+    <div><dt>Users</dt><dd>{{ m.activeUserCount }} active of {{ m.userCount }}</dd></div>
+    <div><dt>Created</dt><dd>{{ m.createdAt | date: 'mediumDate' }}@if (m.createdBy) { · {{ m.createdBy }} }</dd></div>
+    <div><dt>Updated</dt><dd>{{ m.updatedAt | date: 'medium' }}@if (m.updatedBy) { · {{ m.updatedBy }} }</dd></div>
+  </dl>
+
+  <h3 class="upv__heading">Assigned users</h3>
+  <div class="upv__users">
+    @for (u of m.users; track u.mappingId) {
+      <div class="upv__user">
+        <span class="upv__avatar" aria-hidden="true">{{ initialsOf(u.name) }}</span>
+        <div class="upv__user-text">
+          <div class="upv__user-name">
+            {{ u.name }}
+            @if (!u.userActive) { <span class="upv__tag" matTooltip="The user account was deactivated">Account inactive</span> }
+          </div>
+          <div class="upv__user-sub">{{ u.email }}@if (u.position) { · {{ u.position }} }</div>
+        </div>
+        <div class="upv__user-meta">
+          <span class="upv__status upv__status--{{ u.status === 'ACTIVE' ? 'active' : 'inactive' }}">{{ statusLabel(u.status) }}</span>
+          @if (u.assignedAt) { <span class="upv__muted">since {{ u.assignedAt | date: 'mediumDate' }}</span> }
+        </div>
+      </div>
+    }
+  </div>
+
+  <h3 class="upv__heading">Assignment history</h3>
+  @if (loading()) {
+    <div class="upv__inline"><mat-spinner diameter="20" /> Loading history…</div>
+  } @else if (loadError()) {
+    <div class="upv__inline upv__danger">
+      <mat-icon>error_outline</mat-icon> The history could not be loaded.
+      <button mat-button type="button" (click)="load()">Retry</button>
+    </div>
+  } @else {
+    <ol class="upv__timeline">
+      @for (e of detail()?.history ?? []; track e.id) {
+        <li>
+          <mat-icon class="upv__tl-icon">{{ actionIcon(e) }}</mat-icon>
+          <div>
+            <div class="upv__tl-title">
+              {{ actionLabel(e) }}
+              @if (e.action === 'STATUS_CHANGED' && e.toStatus) { — {{ statusLabel(e.toStatus) }} }
+            </div>
+            @if (e.comments) { <div class="upv__tl-comment">{{ e.comments }}</div> }
+            <div class="upv__muted">{{ e.createdAt | date: 'medium' }} · {{ e.actorName || e.actorEmail || 'System' }}</div>
+          </div>
+        </li>
+      } @empty {
+        <p class="upv__muted">No history recorded yet.</p>
+      }
+    </ol>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close type="button">Close</button>
+  @if (data.canEdit) {
+    <button mat-flat-button color="primary" type="button" (click)="edit()"><mat-icon>edit</mat-icon> Edit Mapping</button>
+  }
+</mat-dialog-actions>

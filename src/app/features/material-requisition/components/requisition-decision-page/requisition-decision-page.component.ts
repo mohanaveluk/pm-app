@@ -26,8 +26,10 @@ import {
  * The screen a reviewer or approver acts from: the whole requisition, who else
  * is involved and what they decided, its history, and the decision panel.
  *
- * A reviewer may also edit the requisition (the wizard, then back here); their
- * review must then say what they changed. An approver cannot edit.
+ * A reviewer (while under review) or an approver (while reviewed) may also edit
+ * the requisition — the wizard, then back here — until they record their
+ * decision; their decision must then say what they changed. Once approved it is
+ * locked.
  */
 @Component({
   selector: 'app-requisition-decision-page',
@@ -78,10 +80,11 @@ export class RequisitionDecisionPageComponent implements OnInit {
     return !this.done() && !!p && (this.reviewing() ? p.canReview : p.canApprove);
   });
 
-  /** A reviewer can still change the requisition while their review is due. */
-  protected readonly canEdit = computed(
-    () => this.reviewing() && this.canDecide() && !!this.mr()?.permissions?.canEdit,
-  );
+  /** A reviewer or approver can still change the requisition while their decision is due. */
+  protected readonly canEdit = computed(() => this.canDecide() && !!this.mr()?.permissions?.canEdit);
+
+  /** I changed it this round, so my decision must say what changed. */
+  protected readonly editedByMe = computed(() => !!this.me()?.editedInRound);
 
   /** Why there is no decision panel — shown instead of it. */
   protected readonly notice = computed(() => {
@@ -91,6 +94,9 @@ export class RequisitionDecisionPageComponent implements OnInit {
     const done = this.done();
     if (done) return { icon: 'task_alt', text: `Your decision has been recorded: ${DECISION_LABELS[done]}.` };
     if (mr.lockedAt) return { icon: 'lock', text: 'This requisition is locked — a purchase order has been raised.' };
+    if (mr.status === MaterialRequisitionStatus.APPROVED) {
+      return { icon: 'lock', text: 'This requisition is approved and locked — it can no longer be edited.' };
+    }
     if (!me) {
       return { icon: 'info', text: `You are not ${this.reviewing() ? 'a reviewer' : 'an approver'} of this requisition.` };
     }
@@ -169,10 +175,14 @@ export class RequisitionDecisionPageComponent implements OnInit {
     }
   }
 
-  /** Opens the wizard; saving there brings the reviewer back here. */
+  /** Opens the wizard; saving there brings the reviewer / approver back here. */
   protected edit(): void {
     const id = this.mr()?.id;
-    if (id) void this.router.navigate(['/material-requisitions', id, 'edit'], { queryParams: { returnTo: 'review' } });
+    if (id) {
+      void this.router.navigate(['/material-requisitions', id, 'edit'], {
+        queryParams: { returnTo: this.reviewing() ? 'review' : 'approval' },
+      });
+    }
   }
 
   protected backToInbox(): void {

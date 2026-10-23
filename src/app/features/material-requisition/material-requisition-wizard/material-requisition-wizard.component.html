@@ -53,7 +53,7 @@
               <span class="pw-code">{{ s.mrNumber }}</span>
               <span class="pw-header__desc">
                 {{ isUnderReview()
-                  ? (fromReview() ? 'Editing as reviewer — changes are saved in place' : 'Under review — changes are saved in place')
+                  ? inPlaceLabel()
                   : isReturned() ? 'Returned — update it and resubmit for review'
                   : 'Draft requisition' }}
               </span>
