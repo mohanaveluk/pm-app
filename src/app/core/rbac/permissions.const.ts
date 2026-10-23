@@ -56,6 +56,11 @@ export const PERMISSIONS = {
   DEPARTMENT_DISCIPLINES_UPDATE: 'department-disciplines.update',
   DEPARTMENT_DISCIPLINES_DELETE: 'department-disciplines.delete',
   DEPARTMENT_DISCIPLINES_EXPORT: 'department-disciplines.export',
+  USER_PROJECT_MAPPINGS_VIEW: 'user-project-mappings.view',
+  USER_PROJECT_MAPPINGS_CREATE: 'user-project-mappings.create',
+  USER_PROJECT_MAPPINGS_UPDATE: 'user-project-mappings.update',
+  USER_PROJECT_MAPPINGS_DELETE: 'user-project-mappings.delete',
+  USER_PROJECT_MAPPINGS_EXPORT: 'user-project-mappings.export',
 
   INDUSTRY_CATEGORIES_VIEW: 'industry-categories.view',
   INDUSTRY_CATEGORIES_CREATE: 'industry-categories.create',

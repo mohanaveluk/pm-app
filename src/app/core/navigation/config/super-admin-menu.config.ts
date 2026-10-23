@@ -54,7 +54,7 @@ export const SUPER_ADMIN_MENU: MenuItem[] = [
       { id: 'rbac-permission-matrix', label: 'Permission Matrix', route: '/admin/access/permission-matrix', order: 3, permission: PERMISSIONS.PERMISSIONS_MANAGE },
       { id: 'rbac-activity-mapping', label: 'Activity Mapping', route: '/admin/access/activities', order: 4, permission: PERMISSIONS.ACTIVITIES_MANAGE },
       { id: 'rbac-feature-mapping', label: 'Feature Mapping', route: '/admin/access/features', order: 5, permission: PERMISSIONS.FEATURES_MANAGE },
-      { id: 'rbac-project-mapping', label: 'Project Mapping', route: '/admin/access/projects', order: 6, permission: PERMISSIONS.PROJECTS_MANAGE },
+      { id: 'rbac-project-mapping', label: 'User–Project Mapping', route: '/admin/user-project-mappings', order: 6, permission: PERMISSIONS.USER_PROJECT_MAPPINGS_VIEW },
     ],
   },
 

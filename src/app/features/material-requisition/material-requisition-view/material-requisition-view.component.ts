@@ -109,7 +109,10 @@ export class MaterialRequisitionViewComponent implements OnInit {
 
   protected edit(): void {
     const id = this.mr()?.id;
-    if (id) void this.router.navigate(['/material-requisitions', id, 'edit']);
+    if (!id) return;
+    // While reviewed only an approver can edit: saving takes them back to their approval screen.
+    const returnTo = this.mr()?.status === MaterialRequisitionStatus.REVIEWED ? { returnTo: 'approval' } : undefined;
+    void this.router.navigate(['/material-requisitions', id, 'edit'], { queryParams: returnTo });
   }
 
   protected async submit(): Promise<void> {

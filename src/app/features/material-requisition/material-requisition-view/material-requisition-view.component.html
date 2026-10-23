@@ -59,6 +59,10 @@
       </div>
     </header>
 
+    @if (r.status === 'APPROVED' && !r.lockedAt) {
+      <div class="info-note" role="status"><mat-icon>lock</mat-icon> Approved — this requisition is locked and can no longer be edited.</div>
+    }
+
     @if (isReturned() && returnNotes().length) {
       <div class="step-caution" role="status" style="margin-top: 0; flex-direction: column; align-items: flex-start">
         <strong><mat-icon style="vertical-align: middle">undo</mat-icon> Returned for clarification</strong>

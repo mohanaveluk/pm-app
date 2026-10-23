@@ -107,7 +107,7 @@ export class MaterialRequisitionListComponent {
     return item.id;
   }
 
-  /** Draft, Returned or Under Review — the API decides who exactly may edit. */
+  /** Draft, Returned, Under Review or Reviewed — the API decides who exactly may edit. */
   protected canEdit(item: MaterialRequisitionListItem): boolean {
     if (item.lockedAt) return false;
     return isRequisitionEditable(item.status);

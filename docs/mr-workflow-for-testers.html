@@ -1,0 +1,454 @@
+<title>MR Approval Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  /* Layout: one reading column; the lifecycle drawing first, then roles, mail matrix, rules and a test checklist. */
+  :root {
+    --bg: #f6f8fb;
+    --panel: #ffffff;
+    --fg: #1b2433;
+    --muted: #5b6b80;
+    --line: #d6dee8;
+    --accent: #1f5fae;
+    --s-draft: #6b7787;   --s-draft-bg: #eef1f5;
+    --s-review: #1f5fae;  --s-review-bg: #e4eefb;
+    --s-reviewed: #0e7c86;--s-reviewed-bg: #def3f4;
+    --s-approved: #237a3b;--s-approved-bg: #e2f3e6;
+    --s-returned: #a86200;--s-returned-bg: #fdf0dc;
+    --s-ended: #b3261e;   --s-ended-bg: #fbe5e3;
+    --s-lock: #4b4f9e;    --s-lock-bg: #e9e9f8;
+    --font-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151d; --panel: #171e29; --fg: #e3e9f2; --muted: #9aa8bb; --line: #2b3646; --accent: #7fb0f0;
+      --s-draft: #a9b4c3;   --s-draft-bg: #232c38;
+      --s-review: #8bb8f2;  --s-review-bg: #1b2b42;
+      --s-reviewed: #6fd0d8;--s-reviewed-bg: #15333a;
+      --s-approved: #7fd494;--s-approved-bg: #183322;
+      --s-returned: #f2b75e;--s-returned-bg: #3a2b14;
+      --s-ended: #f19389;   --s-ended-bg: #3b1d1b;
+      --s-lock: #b3b6f5;    --s-lock-bg: #25264a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151d; --panel: #171e29; --fg: #e3e9f2; --muted: #9aa8bb; --line: #2b3646; --accent: #7fb0f0;
+    --s-draft: #a9b4c3;   --s-draft-bg: #232c38;
+    --s-review: #8bb8f2;  --s-review-bg: #1b2b42;
+    --s-reviewed: #6fd0d8;--s-reviewed-bg: #15333a;
+    --s-approved: #7fd494;--s-approved-bg: #183322;
+    --s-returned: #f2b75e;--s-returned-bg: #3a2b14;
+    --s-ended: #f19389;   --s-ended-bg: #3b1d1b;
+    --s-lock: #b3b6f5;    --s-lock-bg: #25264a;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--fg); font: 16px/1.55 var(--font-body); }
+  .wrap {
+    max-width: 1040px; margin: 0 auto;
+    padding-block: 32px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 40px;
+  }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); letter-spacing: -0.01em; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1rem; }
+  p { margin: 0; }
+  .lede { color: var(--muted); max-width: 68ch; margin-top: 8px; }
+  .eyebrow { font: 600 0.75rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.82em; }
+  section { display: grid; gap: 14px; }
+  .section-head p { color: var(--muted); margin-top: 4px; max-width: 70ch; }
+
+  /* Diagram */
+  .diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  .diagram svg { display: block; min-width: 860px; width: 100%; height: auto; }
+  .node rect { stroke-width: 1.5; }
+  .node text { font-family: var(--font-display); font-size: 14px; font-weight: 700; }
+  .node .sub { font-family: var(--font-body); font-size: 11.5px; font-weight: 400; }
+  .node .edit { font-family: var(--font-body); font-size: 11px; font-weight: 600; }
+  .node line { stroke-width: 1; }
+  .edge { fill: none; stroke-width: 1.6; }
+  .lbl { font-family: var(--font-body); font-size: 12px; fill: var(--fg); }
+  .lbl-muted { font-family: var(--font-body); font-size: 11px; fill: var(--muted); }
+  .n-draft rect { fill: var(--s-draft-bg); stroke: var(--s-draft); }    .n-draft text { fill: var(--s-draft); }
+  .n-review rect { fill: var(--s-review-bg); stroke: var(--s-review); } .n-review text { fill: var(--s-review); }
+  .n-reviewed rect { fill: var(--s-reviewed-bg); stroke: var(--s-reviewed); } .n-reviewed text { fill: var(--s-reviewed); }
+  .n-approved rect { fill: var(--s-approved-bg); stroke: var(--s-approved); } .n-approved text { fill: var(--s-approved); }
+  .n-returned rect { fill: var(--s-returned-bg); stroke: var(--s-returned); } .n-returned text { fill: var(--s-returned); }
+  .n-ended rect { fill: var(--s-ended-bg); stroke: var(--s-ended); } .n-ended text { fill: var(--s-ended); }
+  .n-lock rect { fill: var(--s-lock-bg); stroke: var(--s-lock); } .n-lock text { fill: var(--s-lock); }
+  .e-main { stroke: var(--s-review); }
+  .e-ok { stroke: var(--s-approved); }
+  .e-back { stroke: var(--s-returned); stroke-dasharray: 5 4; }
+  .e-end { stroke: var(--s-ended); stroke-dasharray: 2 4; }
+  .e-lock { stroke: var(--s-lock); }
+  .mail { fill: var(--panel); stroke: var(--accent); stroke-width: 1.2; }
+  .mail-t { font-family: var(--font-mono); font-size: 10px; fill: var(--accent); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 16px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .swatch { width: 26px; height: 0; border-top: 2px solid; display: inline-block; }
+
+  /* Admin lane */
+  .lane { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .lane div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+  .lane strong { font-family: var(--font-display); }
+  .lane p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+  /* Pills */
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font: 600 0.74rem/1.6 var(--font-body); letter-spacing: 0.02em; white-space: nowrap; }
+  .p-draft { background: var(--s-draft-bg); color: var(--s-draft); }
+  .p-review { background: var(--s-review-bg); color: var(--s-review); }
+  .p-reviewed { background: var(--s-reviewed-bg); color: var(--s-reviewed); }
+  .p-approved { background: var(--s-approved-bg); color: var(--s-approved); }
+  .p-returned { background: var(--s-returned-bg); color: var(--s-returned); }
+  .p-ended { background: var(--s-ended-bg); color: var(--s-ended); }
+  .p-lock { background: var(--s-lock-bg); color: var(--s-lock); }
+
+  /* Roles */
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .role { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .role ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.93rem; }
+  .role .where { font-size: 0.82rem; color: var(--muted); }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 600 0.74rem/1.3 var(--font-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--bg); }
+  tr:last-child td { border-bottom: 0; }
+  td code { color: var(--accent); }
+
+  /* Rules */
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px 24px; margin: 0; padding: 0; list-style: none; }
+  .rules li { padding-left: 16px; position: relative; min-width: 0; }
+  .rules li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); }
+
+  /* Checklist */
+  .check-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .progress { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress button { margin-left: 10px; font: inherit; color: var(--accent); background: none; border: 0; cursor: pointer; padding: 0; text-decoration: underline; }
+  .progress button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cases { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .case { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 12px; align-items: start; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .case input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--s-approved); }
+  .case .id { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); padding-top: 2px; }
+  .case .body { min-width: 0; }
+  .case .title { font-weight: 600; }
+  .case .expect { color: var(--muted); font-size: 0.9rem; }
+  .case.done { opacity: 0.6; }
+  .case.done .title { text-decoration: line-through; }
+
+  .note { font-size: 0.86rem; color: var(--muted); }
+  .changed { display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--s-returned); border-left-width: 4px; border-radius: 0; padding: 12px 16px; }
+  .changed strong { font-family: var(--font-display); color: var(--s-returned); }
+  .changed ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 0.93rem; }
+  .meta { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+
+  @media (max-width: 520px) {
+    .case { grid-template-columns: auto 1fr; }
+    .case .id { grid-column: 2; grid-row: 1; }
+    .case .body { grid-column: 2; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .case { transition: opacity 0.15s; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Material Requisition · test guide</div>
+    <h1>Material Requisition review and approval flow</h1>
+    <p class="lede">How a requisition moves from draft to approval, who acts at each step, which emails go out, and what to check while testing. Statuses below are exactly what the list and the status chips show.</p>
+    <p class="meta">Version 3 · 23 Oct 2026 · includes the approver edit option</p>
+  </header>
+
+  <aside class="changed" aria-label="What changed in this version">
+    <strong>What changed</strong>
+    <ul>
+      <li>Approvers can now edit the requisition from the approval page while it is <span class="pill p-reviewed">Reviewed</span>, before they decide.</li>
+      <li>An approver who edited must explain the changes in their decision comment.</li>
+      <li>Each person can edit only until they record their decision. Once <span class="pill p-approved">Approved</span>, nobody can edit it.</li>
+      <li>While Reviewed, the requester can no longer edit; only the approvers whose decision is due.</li>
+    </ul>
+  </aside>
+
+  <!-- 1. Lifecycle -->
+  <section>
+    <div class="section-head">
+      <h2>Lifecycle</h2>
+      <p>Solid arrows are the happy path. Dashed amber is "send back for clarification". Dotted red ends the requisition. Envelopes show which email goes out.</p>
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 980 470" role="img" aria-labelledby="dg-t dg-d">
+        <title id="dg-t">Material requisition status flow</title>
+        <desc id="dg-d">Draft is submitted to Under Review. One reviewer marks it Reviewed. One approver marks it Approved. A purchase order locks it. From Under Review or Reviewed it can be Returned, then edited and resubmitted to Under Review in a new round, or ended as Rejected or Cancelled.</desc>
+        <defs>
+          <marker id="ah-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--s-review)"/></marker>
+          <marker id="ah-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--s-approved)"/></marker>
+          <marker id="ah-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--s-returned)"/></marker>
+          <marker id="ah-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--s-ended)"/></marker>
+          <marker id="ah-lock" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--s-lock)"/></marker>
+        </defs>
+
+        <!-- Main row nodes -->
+        <g class="node n-draft"><rect x="20" y="70" width="150" height="84" rx="8"/><text x="95" y="96" text-anchor="middle">DRAFT</text><text class="sub" x="95" y="114" text-anchor="middle">Requester saves</text><line x1="32" y1="124" x2="158" y2="124" style="stroke: var(--line)"/><text class="edit" x="95" y="142" text-anchor="middle">✎ Requester edits</text></g>
+        <g class="node n-review"><rect x="230" y="70" width="160" height="84" rx="8"/><text x="310" y="96" text-anchor="middle">UNDER REVIEW</text><text class="sub" x="310" y="114" text-anchor="middle">Waiting for 1 reviewer</text><line x1="242" y1="124" x2="378" y2="124" style="stroke: var(--line)"/><text class="edit" x="310" y="142" text-anchor="middle">✎ Requester · reviewers</text></g>
+        <g class="node n-reviewed"><rect x="450" y="70" width="160" height="84" rx="8"/><text x="530" y="96" text-anchor="middle">REVIEWED</text><text class="sub" x="530" y="114" text-anchor="middle">Waiting for 1 approver</text><line x1="462" y1="124" x2="598" y2="124" style="stroke: var(--line)"/><text class="edit" x="530" y="142" text-anchor="middle">✎ Approvers (new)</text></g>
+        <g class="node n-approved"><rect x="670" y="70" width="140" height="84" rx="8"/><text x="740" y="96" text-anchor="middle">APPROVED</text><text class="sub" x="740" y="114" text-anchor="middle">Ready for RFQ / PO</text><line x1="682" y1="124" x2="798" y2="124" style="stroke: var(--line)"/><text class="edit" x="740" y="142" text-anchor="middle">🔒 No edits</text></g>
+        <g class="node n-lock"><rect x="850" y="70" width="112" height="84" rx="8"/><text x="906" y="96" text-anchor="middle">LOCKED</text><text class="sub" x="906" y="114" text-anchor="middle">PO raised</text><line x1="862" y1="124" x2="950" y2="124" style="stroke: var(--line)"/><text class="edit" x="906" y="142" text-anchor="middle">🔒 No edits</text></g>
+
+        <!-- Main edges -->
+        <path class="edge e-main" d="M170,101 H226" marker-end="url(#ah-main)"/>
+        <text class="lbl" x="198" y="60" text-anchor="middle">Submit</text>
+        <path class="edge e-ok" d="M390,101 H446" marker-end="url(#ah-ok)"/>
+        <text class="lbl" x="418" y="60" text-anchor="middle">Reviewed</text>
+        <path class="edge e-ok" d="M610,101 H666" marker-end="url(#ah-ok)"/>
+        <text class="lbl" x="638" y="60" text-anchor="middle">Approved</text>
+        <path class="edge e-lock" d="M810,101 H846" marker-end="url(#ah-lock)"/>
+
+        <!-- Mail badges on main edges -->
+        <g><rect class="mail" x="170" y="20" width="56" height="20" rx="4"/><text class="mail-t" x="198" y="34" text-anchor="middle">REVIEW</text></g>
+        <g><rect class="mail" x="374" y="20" width="88" height="20" rx="4"/><text class="mail-t" x="418" y="34" text-anchor="middle">APPROVAL_REQ</text></g>
+        <g><rect class="mail" x="604" y="20" width="68" height="20" rx="4"/><text class="mail-t" x="638" y="34" text-anchor="middle">APPROVE</text></g>
+
+        <!-- Returned -->
+        <g class="node n-returned"><rect x="230" y="270" width="160" height="62" rx="8"/><text x="310" y="292" text-anchor="middle">RETURNED</text><text class="sub" x="310" y="308" text-anchor="middle">Back with requester</text><text class="edit" x="310" y="324" text-anchor="middle">✎ Requester edits</text></g>
+        <!-- Under Review -> Returned -->
+        <path class="edge e-back" d="M330,154 V266" marker-end="url(#ah-back)"/>
+        <!-- Reviewed -> Returned -->
+        <path class="edge e-back" d="M500,154 C500,230 420,286 394,292" marker-end="url(#ah-back)"/>
+        <text class="lbl" x="340" y="192">Return for clarification</text>
+        <text class="lbl-muted" x="340" y="208">comment required</text>
+        <g><rect class="mail" x="340" y="216" width="58" height="20" rx="4"/><text class="mail-t" x="369" y="230" text-anchor="middle">RETURN</text></g>
+        <!-- Returned -> Under Review (resubmit) -->
+        <path class="edge e-back" d="M230,301 C150,301 150,190 268,158" marker-end="url(#ah-back)"/>
+        <text class="lbl" x="60" y="232">Edit &amp; resubmit</text>
+        <text class="lbl-muted" x="60" y="248">new round · reviews reset</text>
+        <g><rect class="mail" x="60" y="256" width="72" height="20" rx="4"/><text class="mail-t" x="96" y="270" text-anchor="middle">RESUBMIT</text></g>
+
+        <!-- Ended -->
+        <g class="node n-ended"><rect x="620" y="270" width="190" height="62" rx="8"/><text x="715" y="297" text-anchor="middle">REJECTED · CANCELLED</text><text class="sub" x="715" y="317" text-anchor="middle">Final for this requisition</text></g>
+        <path class="edge e-end" d="M390,122 C520,170 600,230 640,266" marker-end="url(#ah-end)"/>
+        <path class="edge e-end" d="M570,154 C590,210 660,240 690,266" marker-end="url(#ah-end)"/>
+        <text class="lbl" x="700" y="200">Reject / Cancel</text>
+        <text class="lbl-muted" x="700" y="216">comment required</text>
+        <g><rect class="mail" x="700" y="224" width="112" height="20" rx="4"/><text class="mail-t" x="756" y="238" text-anchor="middle">REJECT / CANCEL</text></g>
+
+        <!-- Draft delete -->
+        <text class="lbl-muted" x="95" y="172" text-anchor="middle">Only a draft can be deleted</text>
+
+        <!-- Footer strip: who decides -->
+        <line x1="20" y1="372" x2="960" y2="372" style="stroke: var(--line)"/>
+        <text class="lbl" x="20" y="400" style="font-weight:600">Who acts</text>
+        <text class="lbl" x="130" y="400">Requester: Draft, Submit, edit &amp; resubmit when Returned</text>
+        <text class="lbl" x="130" y="422">Reviewer (any one): edit, then Reviewed · Return · Reject · Cancel — while Under Review</text>
+        <text class="lbl" x="130" y="444">Approver (any one): edit, then Approved · Return · Reject · Cancel — while Reviewed. Approved = locked</text>
+      </svg>
+      <div class="legend">
+        <span><i class="swatch" style="border-color: var(--s-approved)"></i>Positive decision</span>
+        <span><i class="swatch" style="border-color: var(--s-returned); border-top-style: dashed"></i>Back to the requester</span>
+        <span><i class="swatch" style="border-color: var(--s-ended); border-top-style: dotted"></i>Ends the requisition</span>
+        <span><span class="pill p-review mono" style="font-weight:500">REVIEW</span>Email sent (type shortened)</span>
+        <span>✎ Who can edit in that status · 🔒 nobody</span>
+      </div>
+    </div>
+
+    <div class="lane" aria-label="Administrative statuses">
+      <div><strong>On Hold</strong><p>From Under Review, Reviewed or Approved. Releasing the hold returns it to the status it was held in.</p></div>
+      <div><strong>Disabled</strong><p>From any submitted status. Re-enabling sends it back to Under Review, never straight to Approved.</p></div>
+      <div><strong>Obsolete</strong><p>Final. Allowed from every submitted status.</p></div>
+      <div><strong>No email</strong><p>These come from the list's More Actions menu. They send in-app notifications only.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. Roles -->
+  <section>
+    <div class="section-head">
+      <h2>Who does what</h2>
+      <p>Reviewers and approvers are internal, active users picked on the Header step. Any one of them settles their round.</p>
+    </div>
+    <div class="roles">
+      <article class="role">
+        <h3>Requester</h3>
+        <ul>
+          <li>Creates, saves as draft, deletes a draft.</li>
+          <li>Submits with at least 1 reviewer and 1 approver.</li>
+          <li>Edits and resubmits a <span class="pill p-returned">Returned</span> requisition.</li>
+          <li>Changes reviewers until it is Reviewed, approvers until it is Approved.</li>
+        </ul>
+        <p class="where">Screens: <span class="mono">/material-requisitions</span>, Create, Edit</p>
+      </article>
+      <article class="role">
+        <h3>Reviewer</h3>
+        <ul>
+          <li>Acts only while <span class="pill p-review">Under Review</span>.</li>
+          <li>Decides: Reviewed, Return, Reject, Cancel.</li>
+          <li>Can edit the requisition during review; a comment is then required.</li>
+          <li>One decision per round.</li>
+        </ul>
+        <p class="where">Screens: <span class="mono">/material-requisitions/reviews</span></p>
+      </article>
+      <article class="role">
+        <h3>Approver</h3>
+        <ul>
+          <li>Acts only while <span class="pill p-reviewed">Reviewed</span>.</li>
+          <li>Decides: Approved, Return, Reject, Cancel.</li>
+          <li>Sees the reviewers' comments in the approval page and email.</li>
+          <li><strong>New:</strong> can edit the requisition before deciding (Edit Requisition on the approval page); a comment is then required.</li>
+          <li>One decision per round.</li>
+        </ul>
+        <p class="where">Screens: <span class="mono">/material-requisitions/approvals</span></p>
+      </article>
+      <article class="role">
+        <h3>Administrator</h3>
+        <ul>
+          <li>Hold, release, disable, re-enable, mark obsolete.</li>
+          <li>Edits reviewers and approvers from the list menu.</li>
+          <li>Maps users to projects; requesters only see mapped projects.</li>
+        </ul>
+        <p class="where">Screens: list More Actions, <span class="mono">/admin/user-project-mappings</span></p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3. Emails -->
+  <section>
+    <div class="section-head">
+      <h2>Emails and notifications per step</h2>
+      <p>Every email is stored in <span class="mono">email_history</span>. Each recipient who is an app user also gets two notifications: the email itself and a Workflow item with the project details, which still arrives if the email fails.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Step</th><th>Email type</th><th>To</th><th>Cc</th><th>Status after</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Submit (first time)</td><td><code>REVIEW_MATERIAL_REQUISITION</code></td><td>All reviewers</td><td>—</td><td><span class="pill p-review">Under Review</span></td></tr>
+          <tr><td>Resubmit after Return</td><td><code>RESUBMIT_MATERIAL_REQUISITION</code></td><td>All reviewers (with the return comments)</td><td>—</td><td><span class="pill p-review">Under Review</span></td></tr>
+          <tr><td>Reviewer added during review</td><td><code>REVIEW_MATERIAL_REQUISITION</code></td><td>New reviewer only</td><td>—</td><td>unchanged</td></tr>
+          <tr><td>Reviewer: Reviewed</td><td><code>APPROVAL_REQUEST_MATERIAL_REQUISITION</code></td><td>All approvers</td><td>Requester, reviewers</td><td><span class="pill p-reviewed">Reviewed</span></td></tr>
+          <tr><td>Approver added after review</td><td><code>APPROVAL_REQUEST_MATERIAL_REQUISITION</code></td><td>New approver only</td><td>—</td><td>unchanged</td></tr>
+          <tr><td>Reviewer: Return / Reject / Cancel</td><td><code>RETURN_</code> / <code>REJECT_</code> / <code>CANCEL_MATERIAL_REQUISITION</code></td><td>Requester</td><td>Other reviewers</td><td><span class="pill p-returned">Returned</span> or <span class="pill p-ended">Rejected / Cancelled</span></td></tr>
+          <tr><td>Approver: Approved</td><td><code>APPROVE_MATERIAL_REQUISITION</code></td><td>Requester, reviewers</td><td>Approvers</td><td><span class="pill p-approved">Approved</span></td></tr>
+          <tr><td>Approver: Return / Reject / Cancel</td><td><code>RETURN_</code> / <code>REJECT_</code> / <code>CANCEL_MATERIAL_REQUISITION</code></td><td>Requester, reviewers</td><td>Approvers</td><td><span class="pill p-returned">Returned</span> or <span class="pill p-ended">Rejected / Cancelled</span></td></tr>
+          <tr><td>Reviewer or approver edits the requisition</td><td>No email</td><td colspan="2">Recorded as "edited during review / approval"; in-app notification to the others involved</td><td>unchanged</td></tr>
+          <tr><td>Hold, release, disable, obsolete, delete draft</td><td>No email</td><td colspan="2">In-app notification to requester, reviewers and approvers</td><td>as chosen</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The person who took the action never gets a notification about their own step. Steps are also recorded in <span class="mono">workflow_events</span> under the requisition's tracking id (<span class="mono">TRK-XXXXXXXX-XXXXXXXX-XXXXXXXX</span>).</p>
+  </section>
+
+  <!-- 4. Rules -->
+  <section>
+    <div class="section-head">
+      <h2>Rules to verify</h2>
+    </div>
+    <ul class="rules">
+      <li>Submit needs at least one reviewer, one approver, a WBS, a Required on Site date and at least one material line.</li>
+      <li>Any one reviewer's decision settles the review; the others no longer need to act.</li>
+      <li>Any one approver's decision settles the approval.</li>
+      <li>Return, Reject and Cancel need a comment. Reviewed and Approved don't, unless that reviewer or approver edited the requisition.</li>
+      <li>Reviewers can be changed until the requisition is Reviewed; approvers until it is Approved.</li>
+      <li>Only active internal users can be picked as reviewer or approver.</li>
+      <li>A reviewer acts only while Under Review; an approver only while Reviewed. Acting twice in a round is refused.</li>
+      <li>Resubmitting starts a new round: earlier decisions are cleared and the round number goes up.</li>
+      <li>Only a draft can be deleted.</li>
+      <li>Reviewers can edit until they review; approvers until they approve. Once Approved, nobody can edit it.</li>
+      <li>Once a purchase order is raised, the requisition is locked: no edits or decisions. Its project, client and WBS can't be edited either.</li>
+      <li>The project dropdown only lists projects the requester is mapped to (admins see all).</li>
+      <li>Every notification has an "Open Related Record" link back to the requisition.</li>
+    </ul>
+  </section>
+
+  <!-- 5. Checklist -->
+  <section>
+    <div class="check-head">
+      <div class="section-head">
+        <h2>Test checklist</h2>
+        <p>Use three accounts: a requester, two reviewers and two approvers. Ticks are kept in this browser only.</p>
+      </div>
+      <p class="progress"><span id="done-count">0</span> of <span id="total-count">0</span> done<button type="button" id="reset-checks">Clear ticks</button></p>
+    </div>
+    <ul class="cases" id="cases"></ul>
+  </section>
+</div>
+
+<script>
+  const CASES = [
+    ['TC-01', 'Save a draft, then delete it', 'Draft appears in the list; Delete works only while Draft. No email.'],
+    ['TC-02', 'Submit without an approver', 'Blocked with "Assign … approver before submitting".'],
+    ['TC-03', 'Submit with 2 reviewers and 2 approvers', 'Status Under Review. Both reviewers get the REVIEW email and two notifications each.'],
+    ['TC-04', 'Reviewer A marks Reviewed', 'Status Reviewed. Approvers get APPROVAL_REQUEST; requester and Reviewer B are copied. Reviewer B can no longer decide.'],
+    ['TC-05', 'Approver A approves', 'Status Approved. Requester and reviewers get APPROVE; approvers are copied.'],
+    ['TC-06', 'Reviewer returns without a comment', 'Refused: a comment is required.'],
+    ['TC-07', 'Reviewer returns with a comment', 'Status Returned. Requester gets RETURN with the comment and an Edit link; other reviewers are copied.'],
+    ['TC-08', 'Requester edits and resubmits', 'Status Under Review, round 2. Reviewers get RESUBMIT showing the return comments. Earlier decisions are cleared.'],
+    ['TC-09', 'Approver returns from Reviewed', 'Status Returned. Requester and reviewers emailed, approvers copied.'],
+    ['TC-10', 'Reject or Cancel (reviewer or approver)', 'Status Rejected / Cancelled. Comment required. No further decisions possible.'],
+    ['TC-11', 'Add a reviewer while Under Review', 'Only the new reviewer is emailed. Removing reviewers after Reviewed is refused.'],
+    ['TC-12', 'Reviewer edits during review, then marks Reviewed without comment', 'Refused: describe your changes in the comments.'],
+    ['TC-12b', 'Approver edits from the approval page, then approves', 'Edit opens the wizard and returns to the approval page. Approving without a comment is refused; with a comment it is Approved.'],
+    ['TC-12c', 'Try to edit an Approved requisition', 'No Edit button anywhere; opening the edit URL says it is approved and locked.'],
+    ['TC-13', 'Hold, then release', 'Returns to the status it was held in. No email; in-app notification only.'],
+    ['TC-14', 'Disable, then re-enable an Approved requisition', 'Comes back as Under Review, not Approved.'],
+    ['TC-15', 'Break SMTP (wrong credentials) and submit', 'email_history shows FAILED; reviewers still get the Workflow notification with project details.'],
+    ['TC-16', 'Log in as a user not mapped to the project', 'The project is missing from the dropdown and the requisition cannot be raised on it.'],
+    ['TC-17', 'Open a notification from the bell', 'Expands in place; "Open Related Record" opens the requisition; Archive and Delete work.'],
+  ];
+  const KEY = 'mr-flow-test-checks';
+  let ticked = new Set();
+  try { ticked = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) { ticked = new Set(); }
+
+  const list = document.getElementById('cases');
+  const doneEl = document.getElementById('done-count');
+  document.getElementById('total-count').textContent = CASES.length;
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify([...ticked])); } catch (e) { /* ticks last for this visit */ }
+  }
+  function render() {
+    list.innerHTML = '';
+    for (const [id, title, expect] of CASES) {
+      const li = document.createElement('li');
+      li.className = 'case' + (ticked.has(id) ? ' done' : '');
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.id = 'chk-' + id;
+      box.checked = ticked.has(id);
+      box.addEventListener('change', () => {
+        box.checked ? ticked.add(id) : ticked.delete(id);
+        li.classList.toggle('done', box.checked);
+        save();
+        doneEl.textContent = ticked.size;
+      });
+      const idEl = document.createElement('label');
+      idEl.className = 'id';
+      idEl.htmlFor = box.id;
+      idEl.textContent = id;
+      const body = document.createElement('label');
+      body.className = 'body';
+      body.htmlFor = box.id;
+      body.innerHTML = '<div class="title"></div><div class="expect"></div>';
+      body.querySelector('.title').textContent = title;
+      body.querySelector('.expect').textContent = expect;
+      li.append(box, idEl, body);
+      list.append(li);
+    }
+    doneEl.textContent = ticked.size;
+  }
+  document.getElementById('reset-checks').addEventListener('click', () => {
+    ticked.clear();
+    save();
+    render();
+  });
+  render();
+</script>

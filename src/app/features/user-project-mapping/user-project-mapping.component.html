@@ -1,0 +1,332 @@
+<div class="upm-page" [class.upm-page--fullscreen]="isFullscreen()">
+
+  <div class="upm-header">
+    <div>
+      <h1>User–Project Mapping</h1>
+      <p>Assign projects to internal users. Users see only the projects mapped to them (plus the ones they manage or created).</p>
+    </div>
+  </div>
+
+  <mat-toolbar class="upm-toolbar">
+    @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_CREATE)) {
+      <button mat-flat-button color="primary" (click)="openAssign()">
+        <mat-icon>add</mat-icon> Assign Project
+      </button>
+    }
+
+    <button mat-stroked-button (click)="store.refresh()" matTooltip="Refresh">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+
+    @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_EXPORT)) {
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportCsv()"><mat-icon>description</mat-icon> Export CSV (this page)</button>
+        <button mat-menu-item (click)="print()"><mat-icon>print</mat-icon> Print</button>
+      </mat-menu>
+    }
+
+    <span class="upm-toolbar__spacer"></span>
+
+    <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column settings" aria-label="Column settings">
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu #columnMenu="matMenu">
+      @for (col of columnDefs; track col.key) {
+        @if (!col.alwaysVisible) {
+          <button mat-menu-item (click)="$event.stopPropagation(); toggleColumn(col.key)">
+            <mat-checkbox [checked]="isColumnVisible(col.key)" (click)="$event.stopPropagation()" (change)="toggleColumn(col.key)">
+              {{ col.label }}
+            </mat-checkbox>
+          </button>
+        }
+      }
+      <mat-divider />
+      <button mat-menu-item (click)="resetColumns()"><mat-icon>restart_alt</mat-icon> Reset columns</button>
+    </mat-menu>
+
+    <button mat-icon-button (click)="toggleDensity()" [matTooltip]="compactDensity() ? 'Comfortable density' : 'Compact density'" aria-label="Toggle density">
+      <mat-icon>{{ compactDensity() ? 'density_medium' : 'density_small' }}</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="toggleFullscreen()" [matTooltip]="isFullscreen() ? 'Exit fullscreen (Esc)' : 'Fullscreen'" aria-label="Toggle fullscreen">
+      <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="upm-filters">
+    <mat-form-field appearance="outline" class="upm-filters__search" subscriptSizing="dynamic">
+      <mat-label>Search project, client or user…</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [value]="searchTerm()" (input)="onSearchInput($event)" (keyup.enter)="onSearchEnter()" />
+      @if (searchTerm()) {
+        <button matSuffix mat-icon-button type="button" (click)="clearSearch()" aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="upm-filters__select" subscriptSizing="dynamic">
+      <mat-label>Project</mat-label>
+      <mat-select [value]="store.filter().projectId" (selectionChange)="onProjectFilter($event.value)" (openedChange)="!$event && projectFilterSearch.set('')">
+        <mat-option>
+          <input class="select-search" type="text" placeholder="Search projects…" aria-label="Search projects"
+            [ngModel]="projectFilterSearch()" (ngModelChange)="projectFilterSearch.set($event)"
+            (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" />
+        </mat-option>
+        <mat-option [value]="null">All projects</mat-option>
+        @for (p of filterProjects(); track p.id) {
+          <mat-option [value]="p.id">{{ p.code }} — {{ p.projectName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="upm-filters__select" subscriptSizing="dynamic">
+      <mat-label>Client</mat-label>
+      <mat-select [value]="store.filter().clientId" (selectionChange)="onClientFilter($event.value)" (openedChange)="!$event && clientFilterSearch.set('')">
+        <mat-option>
+          <input class="select-search" type="text" placeholder="Search clients…" aria-label="Search clients"
+            [ngModel]="clientFilterSearch()" (ngModelChange)="clientFilterSearch.set($event)"
+            (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" />
+        </mat-option>
+        <mat-option [value]="null">All clients</mat-option>
+        @for (c of filterClients(); track c.id) {
+          <mat-option [value]="c.id">{{ c.code }} — {{ c.clientName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="upm-filters__select" subscriptSizing="dynamic">
+      <mat-label>Internal user</mat-label>
+      <mat-select [value]="store.filter().userId" (selectionChange)="onUserFilter($event.value)" (openedChange)="!$event && userFilterSearch.set('')">
+        <mat-option>
+          <input class="select-search" type="text" placeholder="Search users…" aria-label="Search users"
+            [ngModel]="userFilterSearch()" (ngModelChange)="userFilterSearch.set($event)"
+            (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" />
+        </mat-option>
+        <mat-option [value]="null">All users</mat-option>
+        @for (u of filterUsers(); track u.id) {
+          <mat-option [value]="u.id">{{ u.name }} · {{ u.email }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="upm-filters__status" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="store.filter().status" (selectionChange)="onStatusFilter($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="ACTIVE">Active</mat-option>
+        <mat-option value="INACTIVE">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-button (click)="resetFilters()" [disabled]="!store.hasActiveFilters()">
+      <mat-icon>filter_alt_off</mat-icon> Reset Filters
+    </button>
+
+    <span class="upm-filters__count">{{ store.totalCount() }} project{{ store.totalCount() === 1 ? '' : 's' }}</span>
+  </div>
+
+  <div class="upm-table-card" [class.upm-table-card--compact]="compactDensity()">
+    @if (store.loading() && !store.mappings().length) {
+      <div class="upm-skeleton" aria-label="Loading mappings">
+        @for (i of [1, 2, 3, 4, 5]; track i) { <div class="upm-skeleton__row"></div> }
+      </div>
+    } @else if (store.error()) {
+      <div class="upm-state upm-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ store.error() }}</p>
+        <button mat-stroked-button (click)="store.refresh()"><mat-icon>refresh</mat-icon> Retry</button>
+      </div>
+    } @else if (store.isEmpty()) {
+      <div class="upm-state">
+        <mat-icon>{{ store.hasActiveFilters() ? 'search_off' : 'folder_shared' }}</mat-icon>
+        @if (store.hasActiveFilters()) {
+          <p>No project mappings match these filters.</p>
+          <button mat-stroked-button (click)="resetFilters()"><mat-icon>filter_alt_off</mat-icon> Reset Filters</button>
+        } @else {
+          <p>No projects are assigned yet. Assign a project to give users access to it.</p>
+          @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_CREATE)) {
+            <button mat-flat-button color="primary" (click)="openAssign()"><mat-icon>add</mat-icon> Assign Project</button>
+          }
+        }
+      </div>
+    } @else {
+      @if (store.loading()) { <div class="upm-progress" aria-hidden="true"></div> }
+
+      <!-- Desktop / tablet: table -->
+      <div class="upm-table-scroll">
+        <table
+          mat-table
+          [dataSource]="store.mappings()"
+          matSort
+          [matSortActive]="store.sortBy()"
+          [matSortDirection]="store.sortDirection()"
+          (matSortChange)="onSortChange($event)"
+        >
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let m" class="upm-actions">
+              <button mat-icon-button (click)="openView(m, $event)" matTooltip="View" aria-label="View mapping">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_UPDATE)) {
+                <button mat-icon-button (click)="openEdit(m, $event)" matTooltip="Edit users" aria-label="Edit mapping">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              <button mat-icon-button [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()" matTooltip="More actions" aria-label="More actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="copyProjectCode(m, $event)"><mat-icon>content_copy</mat-icon> Copy project code</button>
+                @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_UPDATE)) {
+                  <button mat-menu-item (click)="toggleStatus(m, $event)">
+                    <mat-icon>{{ m.status === 'ACTIVE' ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                    {{ m.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                  </button>
+                }
+                @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_DELETE)) {
+                  <mat-divider />
+                  <button mat-menu-item class="upm-menu-item--danger" (click)="remove(m, $event)"><mat-icon>delete</mat-icon> Delete</button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="project">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="projectCode">Project Code / Name</th>
+            <td mat-cell *matCellDef="let m">
+              <div class="upm-code">{{ m.projectCode }}</div>
+              <div class="upm-name">{{ m.projectName }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="client">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="clientName">Client</th>
+            <td mat-cell *matCellDef="let m">
+              @if (m.clientCode) { <div class="upm-code upm-code--muted">{{ m.clientCode }}</div> }
+              {{ m.clientName || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="users">
+            <th mat-header-cell *matHeaderCellDef>Assigned Users</th>
+            <td mat-cell *matCellDef="let m">
+              <div class="upm-avatars">
+                @for (u of m.users.slice(0, avatarLimit); track u.mappingId) {
+                  <span
+                    class="upm-avatar"
+                    [class.upm-avatar--off]="u.status !== 'ACTIVE' || !u.userActive"
+                    [matTooltip]="u.name + ' · ' + u.email + (u.status !== 'ACTIVE' ? ' (inactive)' : '')"
+                  >{{ initialsOf(u.name) }}</span>
+                }
+                @if (m.users.length > avatarLimit) {
+                  <span class="upm-avatar upm-avatar--more" [matTooltip]="hiddenUserNames(m)">+{{ m.users.length - avatarLimit }}</span>
+                }
+                @if (m.users.length === 1) { <span class="upm-avatars__name">{{ m.users[0].name }}</span> }
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="userCount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="userCount">No. of Users</th>
+            <td mat-cell *matCellDef="let m">
+              {{ m.userCount }}
+              @if (m.activeUserCount !== m.userCount) { <span class="upm-muted">({{ m.activeUserCount }} active)</span> }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let m">
+              <span class="upm-status upm-status--{{ m.status === 'ACTIVE' ? 'active' : 'inactive' }}">
+                <span class="upm-status__dot"></span>{{ statusLabel(m.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdBy">
+            <th mat-header-cell *matHeaderCellDef>Created By</th>
+            <td mat-cell *matCellDef="let m">{{ m.createdBy || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="createdAt">Created On</th>
+            <td mat-cell *matCellDef="let m">{{ m.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedBy">
+            <th mat-header-cell *matHeaderCellDef>Updated By</th>
+            <td mat-cell *matCellDef="let m">{{ m.updatedBy || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="updatedAt">Updated On</th>
+            <td mat-cell *matCellDef="let m">{{ m.updatedAt | date: 'medium' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns()" class="upm-row" (click)="openView(row)"></tr>
+        </table>
+      </div>
+
+      <!-- Phones: cards -->
+      <div class="upm-cards">
+        @for (m of store.mappings(); track m.projectId) {
+          <article class="upm-card" (click)="openView(m)">
+            <div class="upm-card__head">
+              <div>
+                <div class="upm-code">{{ m.projectCode }}</div>
+                <div class="upm-name">{{ m.projectName }}</div>
+              </div>
+              <span class="upm-status upm-status--{{ m.status === 'ACTIVE' ? 'active' : 'inactive' }}">
+                <span class="upm-status__dot"></span>{{ statusLabel(m.status) }}
+              </span>
+            </div>
+            <div class="upm-card__client"><mat-icon>business</mat-icon> {{ m.clientName || '—' }}</div>
+            <div class="upm-avatars">
+              @for (u of m.users.slice(0, avatarLimit); track u.mappingId) {
+                <span class="upm-avatar" [class.upm-avatar--off]="u.status !== 'ACTIVE' || !u.userActive">{{ initialsOf(u.name) }}</span>
+              }
+              @if (m.users.length > avatarLimit) { <span class="upm-avatar upm-avatar--more">+{{ m.users.length - avatarLimit }}</span> }
+              <span class="upm-avatars__name">{{ m.userCount }} user{{ m.userCount === 1 ? '' : 's' }}</span>
+            </div>
+            <details (click)="$event.stopPropagation()">
+              <summary>More details</summary>
+              <dl>
+                <div><dt>Created</dt><dd>{{ m.createdAt | date: 'mediumDate' }} · {{ m.createdBy || '—' }}</dd></div>
+                <div><dt>Updated</dt><dd>{{ m.updatedAt | date: 'medium' }} · {{ m.updatedBy || '—' }}</dd></div>
+              </dl>
+            </details>
+            <div class="upm-card__actions" (click)="$event.stopPropagation()">
+              <button mat-button (click)="openView(m)"><mat-icon>visibility</mat-icon> View</button>
+              @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_UPDATE)) {
+                <button mat-button (click)="openEdit(m)"><mat-icon>edit</mat-icon> Edit</button>
+                <button mat-button (click)="toggleStatus(m)">
+                  <mat-icon>{{ m.status === 'ACTIVE' ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                  {{ m.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                </button>
+              }
+              @if (can(PERMISSIONS.USER_PROJECT_MAPPINGS_DELETE)) {
+                <button mat-button class="upm-menu-item--danger" (click)="remove(m)"><mat-icon>delete</mat-icon> Delete</button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      <mat-paginator
+        class="upm-paginator"
+        [length]="store.totalCount()"
+        [pageIndex]="store.page()"
+        [pageSize]="store.pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        showFirstLastButtons
+        (page)="onPageChange($event)"
+      ></mat-paginator>
+    }
+  </div>
+</div>
