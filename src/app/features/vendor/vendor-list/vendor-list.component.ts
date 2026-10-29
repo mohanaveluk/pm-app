@@ -69,7 +69,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'updatedAt', label: 'Updated Date', sortField: 'updatedAt' },
 ];
 
-const DEFAULT_HIDDEN_COLUMNS = ['tradeName', 'countryOfRegistration', 'mobileNumber', 'updatedAt'];
+const DEFAULT_HIDDEN_COLUMNS = ['tradeName', 'countryOfRegistration', 'mobileNumber', 'riskCategory', 'vendorClassification', 'updatedAt'];
 const COLUMN_PREFERENCE_KEY = 'pm-app.vendor-list.hidden-columns';
 
 /**

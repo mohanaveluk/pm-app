@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 import { UserListComponent } from './user-list.component';
 import { ApiService } from '../../../../services/api.service';
 import { AuthService, CommonService } from '../../../../services';
@@ -142,5 +143,70 @@ describe('UserListComponent — search and filters', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('No users match your search or filters');
     expect(text).toContain('Showing 0 of 4 users');
+  });
+});
+
+describe('UserListComponent — internal / external sections and delete', () => {
+  async function setupWithDelete(confirm: boolean, deleteResult: any = of({ message: 'ok' })) {
+    const api = {
+      getOrganizationUsers: vi.fn(() => of({ data: USERS })),
+      deleteUser: vi.fn(() => deleteResult),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideNoopAnimations(),
+        { provide: ApiService, useValue: api },
+        { provide: AuthService, useValue: { user: () => ({ id: '1', organizationId: 'org-1' }) } },
+        { provide: CommonService, useValue: {} },
+      ],
+    });
+    const fixture = TestBed.createComponent(UserListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    // The confirmation dialog answers straight away.
+    const dialog = fixture.debugElement.injector.get(MatDialog);
+    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(confirm) } as any);
+    return { fixture, cmp: fixture.componentInstance, api, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('lists internal users first and external users in their own section', async () => {
+    const { cmp, el } = await setupWithDelete(true);
+    const sections = cmp.sections();
+    expect(sections.map((s) => s.title)).toEqual(['Internal Users', 'External Users']);
+    expect(sections[0].users.map((u) => u.first_name)).toEqual(['Asha', 'Ravi', 'Nina']);
+    expect(sections[1].users.map((u) => u.first_name)).toEqual(['Vendor']);
+    const headings = [...el.querySelectorAll('.user-section__title')].map((h) => h.textContent?.trim());
+    expect(headings[0]).toContain('Internal Users');
+    expect(headings[1]).toContain('External Users');
+  });
+
+  it('shows one table per section in table view', async () => {
+    const { cmp, fixture, el } = await setupWithDelete(true);
+    cmp.viewMode.set('table');
+    fixture.detectChanges();
+    expect(el.querySelectorAll('table.users-table').length).toBe(2);
+  });
+
+  it('shows only the chosen section when filtering by account type', async () => {
+    const { cmp } = await setupWithDelete(true);
+    cmp.typeFilter.set('external');
+    expect(cmp.sections().map((s) => s.key)).toEqual(['external']);
+  });
+
+  it('deletes a user after confirmation and drops them from the list', async () => {
+    const { cmp, api } = await setupWithDelete(true);
+    await cmp.deleteUser(cmp.users().find((u) => u.id === '2')!);
+    expect(api.deleteUser).toHaveBeenCalledWith('u2');
+    expect(cmp.users().map((u) => u.id)).not.toContain('2');
+  });
+
+  it('does nothing when the confirmation is cancelled, and never offers to delete yourself', async () => {
+    const { cmp, api } = await setupWithDelete(false);
+    await cmp.deleteUser(cmp.users().find((u) => u.id === '2')!);
+    expect(api.deleteUser).not.toHaveBeenCalled();
+    expect(cmp.canDelete(cmp.users().find((u) => u.id === '1')!)).toBe(false);
   });
 });

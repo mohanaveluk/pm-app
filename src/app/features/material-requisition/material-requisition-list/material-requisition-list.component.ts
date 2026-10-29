@@ -55,7 +55,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'updatedAt', label: 'Updated', sortField: 'updatedAt' },
 ];
 
-const DEFAULT_HIDDEN_COLUMNS = new Set(['mrNumber', 'trackingId', 'ros', 'updatedAt']);
+const DEFAULT_HIDDEN_COLUMNS = new Set(['trackingId', 'ros', 'updatedAt']);
 // v2: new defaults (MR Number, Tracking ID and Required on Site hidden) and the
 // Reviewers / Approvers column — older saved preferences would hide neither.
 const COLUMN_PREF_KEY = 'pm_material_requisition_columns_v2';
