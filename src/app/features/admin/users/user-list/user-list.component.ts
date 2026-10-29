@@ -21,10 +21,22 @@ import { ApiService } from '../../../../services/api.service';
 import { UserDetailDialogComponent } from '../user-detail-dialog/user-detail-dialog.component';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
 import { CommonService, AuthService } from '../../../../services';
+import { HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 type ViewMode = 'grid' | 'table';
 type StatusFilter = 'all' | 'active' | 'disabled' | 'pending';
 type AccountTypeFilter = 'all' | 'internal' | 'external';
+
+/** Internal staff and external (vendor-side) accounts are listed apart. */
+interface UserSection {
+  key: Exclude<AccountTypeFilter, 'all'>;
+  title: string;
+  hint: string;
+  icon: string;
+  users: OrgUser[];
+}
 
 export interface OrgUser {
   id: string;
@@ -138,6 +150,31 @@ export class UserListComponent implements OnInit {
     });
   });
 
+  /** Internal users first, then external users — each its own section / table. */
+  readonly sections = computed<UserSection[]>(() => {
+    const list = this.filteredUsers();
+    const type = this.typeFilter();
+    const all: UserSection[] = [
+      {
+        key: 'internal',
+        title: 'Internal Users',
+        hint: "Your organisation's staff",
+        icon: 'badge',
+        users: list.filter((u) => u.is_internal !== 0),
+      },
+      {
+        key: 'external',
+        title: 'External Users',
+        hint: 'Vendor-side accounts — scoped to the Vendor Master records they create',
+        icon: 'storefront',
+        users: list.filter((u) => u.is_internal === 0),
+      },
+    ];
+    return all.filter((s) => type === 'all' || type === s.key);
+  });
+
+  readonly deletingId = signal<string | null>(null);
+
   onSearchInput(event: Event): void {
     this.searchTerm.set((event.target as HTMLInputElement).value);
   }
@@ -237,6 +274,47 @@ export class UserListComponent implements OnInit {
       this.cdr.markForCheck();
     } catch {
       this.snack.open(`Failed to ${action} user`, 'Close', { duration: 3000 });
+    }
+  }
+
+  /** Anyone but yourself can be deleted (the API also keeps the last Organization Admin). */
+  canDelete(u: OrgUser): boolean {
+    return u.id !== this.currentUserId();
+  }
+
+  async deleteUser(u: OrgUser, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    const name = `${u.first_name} ${u.last_name ?? ''}`.trim() || u.email;
+    const confirmed = await firstValueFrom(this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent, {
+        width: '440px',
+        maxWidth: '95vw',
+        data: {
+          title: 'Delete user?',
+          message: `${name} (${u.email}) will be removed from the user list and can no longer sign in. `
+            + 'Their records and history are kept.',
+          confirmText: 'Delete',
+          icon: 'person_remove',
+          color: 'warn',
+        },
+      },
+    ).afterClosed());
+    if (!confirmed) return;
+
+    this.deletingId.set(u.id);
+    try {
+      await firstValueFrom(this.api.deleteUser(u.uguid));
+      this.users.update((list) => list.filter((x) => x.id !== u.id));
+      this.snack.open(`${name} deleted`, 'OK', { duration: 3000 });
+    } catch (err) {
+      const e = err as HttpErrorResponse;
+      const message = [400, 403, 404, 409].includes(e?.status) && e.error?.message
+        ? (Array.isArray(e.error.message) ? e.error.message.join(' ') : e.error.message)
+        : 'Failed to delete user';
+      this.snack.open(message, 'Close', { duration: 5000, panelClass: ['error-snackbar'] });
+    } finally {
+      this.deletingId.set(null);
+      this.cdr.markForCheck();
     }
   }
 

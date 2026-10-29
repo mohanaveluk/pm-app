@@ -138,6 +138,11 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/v1/auth/${uguid}/status`, { isActive });
   }
 
+  /** Soft delete: the API sets is_active = 0 and is_deleted = 1 and ends the user's sessions. */
+  deleteUser(uguid: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/v1/auth/${uguid}`);
+  }
+
   /**
    * POST /auth/:uguid/reset-password — admin resets a user's forgotten password to the
    * default temporary one and the user is emailed. `emailSent` is false when the

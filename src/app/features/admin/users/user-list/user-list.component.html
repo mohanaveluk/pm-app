@@ -127,223 +127,256 @@
       </div>
     }
 
-    <!-- ── GRID VIEW ── -->
-    @if (viewMode() === 'grid') {
-      <div class="users-grid" [@staggerIn]="users().length">
-        @for (user of filteredUsers(); track user.id) {
-          <mat-card class="user-card" (click)="openDetail(user)">
-            <div class="card-top">
-              <div class="avatar-wrap">
-                <img [src]="avatarUrl(user)" [alt]="user.first_name" class="avatar"
-                     (error)="$any($event.target).src='/avatar-default.svg'" />
-                <span class="status-dot"
-                      [class.active]="user.is_active && user.is_email_verified"
-                      [class.pending]="!user.is_email_verified"
-                      [class.disabled]="user.is_email_verified && !user.is_active"></span>
-              </div>
-              <div class="user-info">
-                <h3 class="user-name">{{ user.first_name }} {{ user.last_name }}</h3>
-                <p class="user-role">{{ user.role?.name ?? '—' }}</p>
-                <p class="user-email">{{ user.email }}</p>
-              </div>
-            </div>
+    @for (section of sections(); track section.key) {
+      <section class="user-section" [attr.aria-labelledby]="'user-section-' + section.key">
+        <header class="user-section__head">
+          <mat-icon class="user-section__icon">{{ section.icon }}</mat-icon>
+          <div class="user-section__text">
+            <h2 class="user-section__title" [id]="'user-section-' + section.key">
+              {{ section.title }}
+              <span class="user-section__count">{{ section.users.length }}</span>
+            </h2>
+            <p class="user-section__hint">{{ section.hint }}</p>
+          </div>
+        </header>
 
-            <mat-divider></mat-divider>
+        @if (section.users.length === 0) {
+          <p class="user-section__empty">
+            {{ hasActiveFilters() ? 'No ' + section.title.toLowerCase() + ' match your search or filters.' : 'No ' + section.title.toLowerCase() + ' yet.' }}
+          </p>
+        } @else {
+        <!-- ── GRID VIEW ── -->
+        @if (viewMode() === 'grid') {
+          <div class="users-grid" [@staggerIn]="section.users.length">
+            @for (user of section.users; track user.id) {
+              <mat-card class="user-card" (click)="openDetail(user)">
+                <div class="card-top">
+                  <div class="avatar-wrap">
+                    <img [src]="avatarUrl(user)" [alt]="user.first_name" class="avatar"
+                         (error)="$any($event.target).src='/avatar-default.svg'" />
+                    <span class="status-dot"
+                          [class.active]="user.is_active && user.is_email_verified"
+                          [class.pending]="!user.is_email_verified"
+                          [class.disabled]="user.is_email_verified && !user.is_active"></span>
+                  </div>
+                  <div class="user-info">
+                    <h3 class="user-name">{{ user.first_name }} {{ user.last_name }}</h3>
+                    <p class="user-role">{{ user.role?.name ?? '—' }}</p>
+                    <p class="user-email">{{ user.email }}</p>
+                  </div>
+                </div>
 
-            <div class="card-meta">
-              @if (user.location) {
-                <span class="meta-item">
-                  <mat-icon class="meta-icon">location_on</mat-icon>{{ user.location }}
-                </span>
-              }
-              @if (user.report_to) {
-                <span class="meta-item">
-                  <mat-icon class="meta-icon">supervisor_account</mat-icon>{{ user.report_to }}
-                </span>
-              }
-              @if (user.position) {
-                <span class="meta-item">
-                  <mat-icon class="meta-icon">work</mat-icon>{{ user.position }}
-                </span>
-              }
-            </div>
+                <mat-divider></mat-divider>
 
-            @if (user.is_internal === 0) {
-              <div class="card-tags">
-                <mat-chip color="accent" highlighted
-                          matTooltip="Scoped to only the Vendor Master records this account creates">
-                  External User
-                </mat-chip>
-              </div>
-            }
-
-            <div class="card-footer">
-              <mat-chip [color]="statusColor(user)" highlighted>{{ statusLabel(user) }}</mat-chip>
-
-              <div class="action-icons" (click)="$event.stopPropagation()">
-                @if (!user.is_email_verified) {
-                  <button mat-icon-button color="accent" matTooltip="Resend verification code"
-                          (click)="resendCode(user, $event)">
-                    <mat-icon>mark_email_unread</mat-icon>
-                  </button>
-                }
-                @if (user.is_email_verified) {
-                  @if (user.is_active) {
-                    <button mat-icon-button color="warn" matTooltip="Disable user"
-                            (click)="toggleStatus(user, $event)">
-                      <mat-icon>person_off</mat-icon>
-                    </button>
-                  } @else {
-                    <button mat-icon-button color="primary" matTooltip="Enable user"
-                            (click)="toggleStatus(user, $event)">
-                      <mat-icon>how_to_reg</mat-icon>
-                    </button>
+                <div class="card-meta">
+                  @if (user.location) {
+                    <span class="meta-item">
+                      <mat-icon class="meta-icon">location_on</mat-icon>{{ user.location }}
+                    </span>
                   }
-                }
-                @if (canResetPassword(user)) {
-                  <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
-                          (click)="resetPassword(user, $event)">
-                    <mat-icon>lock_reset</mat-icon>
-                  </button>
-                }
-                <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button matTooltip="View details"
-                        (click)="openDetail(user); $event.stopPropagation()">
-                  <mat-icon>open_in_new</mat-icon>
-                </button>
-              </div>
-            </div>
-          </mat-card>
-        }
-      </div>
-    }
+                  @if (user.report_to) {
+                    <span class="meta-item">
+                      <mat-icon class="meta-icon">supervisor_account</mat-icon>{{ user.report_to }}
+                    </span>
+                  }
+                  @if (user.position) {
+                    <span class="meta-item">
+                      <mat-icon class="meta-icon">work</mat-icon>{{ user.position }}
+                    </span>
+                  }
+                </div>
 
-    <!-- ── TABLE VIEW ── -->
-    @if (viewMode() === 'table') {
-      <div class="table-wrap">
-        <table mat-table [dataSource]="filteredUsers()" class="users-table">
-
-          <!-- Avatar + Name column -->
-          <ng-container matColumnDef="avatar">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let user">
-              <div class="table-avatar-wrap">
-                <img [src]="avatarUrl(user)" [alt]="user.first_name" class="table-avatar"
-                     (error)="$any($event.target).src='/avatar-default.svg'" />
-                <span class="status-dot"
-                      [class.active]="user.is_active && user.is_email_verified"
-                      [class.pending]="!user.is_email_verified"
-                      [class.disabled]="user.is_email_verified && !user.is_active"></span>
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Name</th>
-            <td mat-cell *matCellDef="let user">
-              <div class="table-name-cell">
-                <span class="tbl-name">{{ user.first_name }} {{ user.last_name }}</span>
-                <span class="tbl-email">{{ user.email }}</span>
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef>Role</th>
-            <td mat-cell *matCellDef="let user">
-              <span class="tbl-role">{{ user.role?.name ?? '—' }}</span>
-              @if (user.position) {
-                <span class="tbl-position">{{ user.position }}</span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="location">
-            <th mat-header-cell *matHeaderCellDef>Location</th>
-            <td mat-cell *matCellDef="let user">
-              @if (user.location) {
-                <span class="tbl-meta">
-                  <mat-icon class="tbl-icon">location_on</mat-icon>{{ user.location }}
-                </span>
-              } @else { <span class="tbl-empty">—</span> }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="report_to">
-            <th mat-header-cell *matHeaderCellDef>Reports To</th>
-            <td mat-cell *matCellDef="let user">
-              @if (user.report_to) {
-                <span class="tbl-meta">
-                  <mat-icon class="tbl-icon">supervisor_account</mat-icon>{{ user.report_to }}
-                </span>
-              } @else { <span class="tbl-empty">—</span> }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let user">
-              <div class="tbl-status">
                 @if (user.is_internal === 0) {
-                  <mat-chip color="accent" highlighted class="status-chip-sm"
-                            matTooltip="Scoped to only the Vendor Master records this account creates">
-                    External User
-                  </mat-chip>
+                  <div class="card-tags">
+                    <mat-chip color="accent" highlighted
+                              matTooltip="Scoped to only the Vendor Master records this account creates">
+                      External User
+                    </mat-chip>
+                  </div>
                 }
-                <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
-                  {{ statusLabel(user) }}
-                </mat-chip>
-              </div>
-            </td>
-          </ng-container>
 
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let user">
-              <div class="tbl-actions">
-                @if (!user.is_email_verified) {
-                  <button mat-icon-button color="accent" matTooltip="Resend verification code"
-                          (click)="resendCode(user, $event)">
-                    <mat-icon>mark_email_unread</mat-icon>
-                  </button>
-                }
-                @if (user.is_email_verified) {
-                  @if (user.is_active) {
-                    <button mat-icon-button color="warn" matTooltip="Disable user"
-                            (click)="toggleStatus(user, $event)">
-                      <mat-icon>person_off</mat-icon>
+                <div class="card-footer">
+                  <mat-chip [color]="statusColor(user)" highlighted>{{ statusLabel(user) }}</mat-chip>
+
+                  <div class="action-icons" (click)="$event.stopPropagation()">
+                    @if (!user.is_email_verified) {
+                      <button mat-icon-button color="accent" matTooltip="Resend verification code"
+                              (click)="resendCode(user, $event)">
+                        <mat-icon>mark_email_unread</mat-icon>
+                      </button>
+                    }
+                    @if (user.is_email_verified) {
+                      @if (user.is_active) {
+                        <button mat-icon-button color="warn" matTooltip="Disable user"
+                                (click)="toggleStatus(user, $event)">
+                          <mat-icon>person_off</mat-icon>
+                        </button>
+                      } @else {
+                        <button mat-icon-button color="primary" matTooltip="Enable user"
+                                (click)="toggleStatus(user, $event)">
+                          <mat-icon>how_to_reg</mat-icon>
+                        </button>
+                      }
+                    }
+                    @if (canResetPassword(user)) {
+                      <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
+                              (click)="resetPassword(user, $event)">
+                        <mat-icon>lock_reset</mat-icon>
+                      </button>
+                    }
+                    <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
+                      <mat-icon>edit</mat-icon>
                     </button>
-                  } @else {
-                    <button mat-icon-button color="primary" matTooltip="Enable user"
-                            (click)="toggleStatus(user, $event)">
-                      <mat-icon>how_to_reg</mat-icon>
+                    @if (canDelete(user)) {
+                      <button mat-icon-button color="warn" matTooltip="Delete user" aria-label="Delete user"
+                              [disabled]="deletingId() === user.id" (click)="deleteUser(user, $event)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                    <button mat-icon-button matTooltip="View details"
+                            (click)="openDetail(user); $event.stopPropagation()">
+                      <mat-icon>open_in_new</mat-icon>
                     </button>
+                  </div>
+                </div>
+              </mat-card>
+            }
+          </div>
+        }
+
+        <!-- ── TABLE VIEW ── -->
+        @if (viewMode() === 'table') {
+          <div class="table-wrap">
+            <table mat-table [dataSource]="section.users" class="users-table" [attr.aria-label]="section.title">
+
+              <!-- Avatar + Name column -->
+              <ng-container matColumnDef="avatar">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let user">
+                  <div class="table-avatar-wrap">
+                    <img [src]="avatarUrl(user)" [alt]="user.first_name" class="table-avatar"
+                         (error)="$any($event.target).src='/avatar-default.svg'" />
+                    <span class="status-dot"
+                          [class.active]="user.is_active && user.is_email_verified"
+                          [class.pending]="!user.is_email_verified"
+                          [class.disabled]="user.is_email_verified && !user.is_active"></span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let user">
+                  <div class="table-name-cell">
+                    <span class="tbl-name">{{ user.first_name }} {{ user.last_name }}</span>
+                    <span class="tbl-email">{{ user.email }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="role">
+                <th mat-header-cell *matHeaderCellDef>Role</th>
+                <td mat-cell *matCellDef="let user">
+                  <span class="tbl-role">{{ user.role?.name ?? '—' }}</span>
+                  @if (user.position) {
+                    <span class="tbl-position">{{ user.position }}</span>
                   }
-                }
-                @if (canResetPassword(user)) {
-                  <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
-                          (click)="resetPassword(user, $event)">
-                    <mat-icon>lock_reset</mat-icon>
-                  </button>
-                }
-                <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button matTooltip="View details" (click)="openDetail(user)">
-                  <mat-icon>open_in_new</mat-icon>
-                </button>
-              </div>
-            </td>
-          </ng-container>
+                </td>
+              </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
-          <tr mat-row *matRowDef="let user; columns: tableColumns;"
-              class="table-row" (click)="openDetail(user)"></tr>
-        </table>
-      </div>
+              <ng-container matColumnDef="location">
+                <th mat-header-cell *matHeaderCellDef>Location</th>
+                <td mat-cell *matCellDef="let user">
+                  @if (user.location) {
+                    <span class="tbl-meta">
+                      <mat-icon class="tbl-icon">location_on</mat-icon>{{ user.location }}
+                    </span>
+                  } @else { <span class="tbl-empty">—</span> }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="report_to">
+                <th mat-header-cell *matHeaderCellDef>Reports To</th>
+                <td mat-cell *matCellDef="let user">
+                  @if (user.report_to) {
+                    <span class="tbl-meta">
+                      <mat-icon class="tbl-icon">supervisor_account</mat-icon>{{ user.report_to }}
+                    </span>
+                  } @else { <span class="tbl-empty">—</span> }
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let user">
+                  <div class="tbl-status">
+                    @if (user.is_internal === 0) {
+                      <mat-chip color="accent" highlighted class="status-chip-sm"
+                                matTooltip="Scoped to only the Vendor Master records this account creates">
+                        External User
+                      </mat-chip>
+                    }
+                    <mat-chip [color]="statusColor(user)" highlighted class="status-chip-sm">
+                      {{ statusLabel(user) }}
+                    </mat-chip>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let user">
+                  <div class="tbl-actions">
+                    @if (!user.is_email_verified) {
+                      <button mat-icon-button color="accent" matTooltip="Resend verification code"
+                              (click)="resendCode(user, $event)">
+                        <mat-icon>mark_email_unread</mat-icon>
+                      </button>
+                    }
+                    @if (user.is_email_verified) {
+                      @if (user.is_active) {
+                        <button mat-icon-button color="warn" matTooltip="Disable user"
+                                (click)="toggleStatus(user, $event)">
+                          <mat-icon>person_off</mat-icon>
+                        </button>
+                      } @else {
+                        <button mat-icon-button color="primary" matTooltip="Enable user"
+                                (click)="toggleStatus(user, $event)">
+                          <mat-icon>how_to_reg</mat-icon>
+                        </button>
+                      }
+                    }
+                    @if (canResetPassword(user)) {
+                      <button mat-icon-button matTooltip="Reset password" aria-label="Reset password"
+                              (click)="resetPassword(user, $event)">
+                        <mat-icon>lock_reset</mat-icon>
+                      </button>
+                    }
+                    <button mat-icon-button matTooltip="Edit user" (click)="editUser(user, $event)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    @if (canDelete(user)) {
+                      <button mat-icon-button color="warn" matTooltip="Delete user" aria-label="Delete user"
+                              [disabled]="deletingId() === user.id" (click)="deleteUser(user, $event)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                    <button mat-icon-button matTooltip="View details" (click)="openDetail(user)">
+                      <mat-icon>open_in_new</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
+              <tr mat-row *matRowDef="let user; columns: tableColumns;"
+                  class="table-row" (click)="openDetail(user)"></tr>
+            </table>
+          </div>
+        }
+
+        }
+      </section>
     }
-
   }
 </div>
