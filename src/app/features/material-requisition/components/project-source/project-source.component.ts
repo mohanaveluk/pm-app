@@ -10,7 +10,7 @@ import { RequisitionCandidate, RequisitionLineSource } from '../../models/materi
 import { CandidateListComponent } from '../candidate-list/candidate-list.component';
 
 /**
- * Project / WBS source: the materials already requisitioned on the chosen
+ * Project source: the materials already requisitioned on the chosen
  * project, each with the quantity requested so far as a reference.
  */
 @Component({

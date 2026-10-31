@@ -312,7 +312,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
     const control = this.form.controls[field];
     if (!control.touched || !control.errors) return '';
     if (control.errors['required'] || control.errors['pattern']) {
-      return field === 'projectId' ? 'Select a project.' : 'WBS / Cost name is required.';
+      return field === 'projectId' ? 'Select a project.' : 'WBS is required.';
     }
     if (control.errors['maxlength']) return `Maximum ${control.errors['maxlength'].requiredLength} characters`;
     return '';

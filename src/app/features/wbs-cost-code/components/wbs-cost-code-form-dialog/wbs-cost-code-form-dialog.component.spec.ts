@@ -316,11 +316,11 @@ describe('WbsCostCodeFormDialogComponent', () => {
     });
   });
 
-  it('labels the name field WBS / Cost Name', async () => {
+  it('labels the name field WBS', async () => {
     const { fixture } = await setup({ mode: 'create' });
     const text = fixture.nativeElement.textContent as string;
 
-    expect(text).toContain('WBS / Cost Name');
+    expect(text).toContain('WBS');
     expect(text).not.toContain('Details of Project');
   });
 
