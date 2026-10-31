@@ -109,7 +109,7 @@ export interface RequisitionDocument {
 export interface RequisitionWbs {
   id: string;
   code: string;
-  /** WBS / cost name. */
+  /** WBS */
   name: string;
   areaFacility: string | null;
   systemSubsystem: string | null;
@@ -366,7 +366,7 @@ export const REQUISITION_SOURCE_OPTIONS: readonly SourceOption[] = [
     unavailableReason: 'Purchase orders are not available yet',
   },
   {
-    value: RequisitionLineSource.PROJECT, label: 'Project / WBS', icon: 'folder_open',
+    value: RequisitionLineSource.PROJECT, label: 'OTHER PROJECTS', icon: 'folder_open',
     description: 'Materials already used on this project', available: true,
   },
 ];
@@ -382,7 +382,7 @@ export const SOURCE_LABELS: Record<RequisitionLineSource, string> = {
   [RequisitionLineSource.EARLIER_MR]: 'Earlier MR',
   [RequisitionLineSource.BOM]: 'BOM / MTO',
   [RequisitionLineSource.PURCHASE_ORDER]: 'Purchase Order',
-  [RequisitionLineSource.PROJECT]: 'Project / WBS',
+  [RequisitionLineSource.PROJECT]: 'WBS',
 };
 
 /**

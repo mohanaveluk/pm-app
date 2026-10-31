@@ -8,7 +8,7 @@ import { WbsCostCodeSortField } from './wbs-cost-code.model';
  * (omitting a key means "leave unchanged").
  */
 export interface CreateWbsCostCodeRequest {
-  /** The WBS / cost name. */
+  /** The WBS. */
   projectDetails: string;
   /** The project this entry belongs to (an open project). */
   projectId: string;

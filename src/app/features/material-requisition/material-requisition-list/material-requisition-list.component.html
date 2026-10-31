@@ -255,7 +255,7 @@
           </ng-container> -->
 
           <ng-container matColumnDef="reviewers">
-            <th mat-header-cell *matHeaderCellDef>Reviewers</th>
+            <th mat-header-cell *matHeaderCellDef>Reviewed By</th>
             <td mat-cell *matCellDef="let r" class="list-people">
               @for (p of r.reviewers; track p.userId) {
                 <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>
@@ -264,7 +264,7 @@
           </ng-container>
 
           <ng-container matColumnDef="approvers">
-            <th mat-header-cell *matHeaderCellDef>Approvers</th>
+            <th mat-header-cell *matHeaderCellDef>Approved By</th>
             <td mat-cell *matCellDef="let r" class="list-people">
               @for (p of r.approvers; track p.userId) {
                 <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>

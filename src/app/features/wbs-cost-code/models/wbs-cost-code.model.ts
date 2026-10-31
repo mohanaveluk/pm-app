@@ -20,7 +20,7 @@ export interface WbsCostCode {
   organizationId: string;
   /** Server-generated per-organization sequence (e.g. "0001") — never client-set. */
   code: string;
-  /** The WBS / cost name. */
+  /** The WBS. */
   projectDetails: string;
   /** The project this entry belongs to; its number, name and client are read from it. */
   projectId?: string | null;

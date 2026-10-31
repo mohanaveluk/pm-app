@@ -200,7 +200,7 @@ export class WbsCostCodeComponent {
       return;
     }
     const header = [
-      'Code', 'WBS / Cost Name', 'Project No.', 'Project', 'Client', 'Area / Facility',
+      'Code', 'WBS', 'Project No.', 'Project', 'Client', 'Area / Facility',
       'System / Sub-system', 'Discipline', 'Department', 'Work Package', 'Activities', 'Status', 'Created By', 'Created At', 'Updated By', 'Updated At',
     ];
     const lines = rows.map((w) => [
