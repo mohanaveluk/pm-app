@@ -4,8 +4,8 @@
     <section class="step-section">
       <h3 class="step-section__title"><mat-icon>assignment</mat-icon> Header Information</h3>
       <dl class="review-fields">
-        <div><dt>MR Number</dt><dd>{{ r.mrNumber }}</dd></div>
-        <div><dt>System Code</dt><dd>{{ r.code }}</dd></div>
+        <div><dt>MR Number</dt><dd>{{ r.mrNumber || r.code }}</dd></div>
+        <div class="review-fields__wide"><dt>Short Item Description</dt><dd>{{ r.shortDescription || '—' }}</dd></div>
         <div><dt>Project</dt><dd>{{ r.projectCode }} — {{ r.projectName }}</dd></div>
         <div><dt>Client</dt><dd>{{ clientText(r) }}</dd></div>
         <div><dt>WBS</dt>

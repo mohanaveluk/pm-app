@@ -23,8 +23,6 @@
       [options]="allOptions()"
       [selectedIds]="reviewerIds()"
       (selectedIdsChange)="reviewerIds.set($event)"
-      [blockedIds]="approverIds()"
-      blockedReason="Already an approver of this requisition"
       [locked]="reviewersLocked()"
       [lockedReason]="reviewersLocked() ? reviewersLockedReason() : null"
     />
@@ -37,8 +35,6 @@
       [options]="allOptions()"
       [selectedIds]="approverIds()"
       (selectedIdsChange)="approverIds.set($event)"
-      [blockedIds]="reviewerIds()"
-      blockedReason="Already a reviewer of this requisition"
       [locked]="approversLocked()"
       [lockedReason]="approversLocked() ? approversLockedReason() : null"
     />

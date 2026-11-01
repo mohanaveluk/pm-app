@@ -19,7 +19,7 @@
     </button>
 
     @if (can(PERMISSIONS.MATERIAL_REQUISITIONS_CREATE)) {
-      <button mat-stroked-button (click)="importBom()" matTooltip="Start a requisition from a BOM / MTO file">
+      <button mat-stroked-button (click)="openImport()" matTooltip="Start a new requisition from a previous MR or a purchase order">
         <mat-icon>upload_file</mat-icon> Import
       </button>
     }
@@ -205,6 +205,13 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="shortDescription">
+            <th mat-header-cell *matHeaderCellDef>Short Item Description</th>
+            <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="r.shortDescription || ''">
+              {{ r.shortDescription || '—' }}
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="project">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="project">Project</th>
             <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="projectText(r)">
@@ -258,7 +265,7 @@
             <th mat-header-cell *matHeaderCellDef>Reviewed By</th>
             <td mat-cell *matCellDef="let r" class="list-people">
               @for (p of r.reviewers; track p.userId) {
-                <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>
+                <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span><br />
               } @empty { <span class="mr-muted">—</span> }
             </td>
           </ng-container>
@@ -267,7 +274,7 @@
             <th mat-header-cell *matHeaderCellDef>Approved By</th>
             <td mat-cell *matCellDef="let r" class="list-people">
               @for (p of r.approvers; track p.userId) {
-                <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span>
+                <span [class]="decisionClass(p)" [matTooltip]="decisionTip(p)">{{ p.name }}</span><br />
               } @empty { <span class="mr-muted">—</span> }
             </td>
           </ng-container>
@@ -328,6 +335,7 @@
             <div class="pl-card__head">
               <div>
                 <div class="pl-code">{{ r.mrNumber }}</div>
+                @if (r.shortDescription) { <div class="pl-card__desc">{{ r.shortDescription }}</div> }
                 <div class="pl-card__desc">{{ projectText(r) }}</div>
               </div>
               <mat-chip [class]="statusClass(r.status)">

@@ -28,6 +28,7 @@ export interface CreateMaterialRequisitionRequest {
   projectId: string;
   wbsCostCodeId?: string | null;
   budgetHead?: string | null;
+  shortDescription?: string | null;
   /** YYYY-MM-DD */
   requiredOnSiteDate?: string | null;
   /** Leave out (or null) to use the generated code. */

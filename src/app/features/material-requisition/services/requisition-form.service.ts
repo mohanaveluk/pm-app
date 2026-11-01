@@ -87,6 +87,7 @@ export class RequisitionFormService {
 
   // ── Header ──────────────────────────────────────────────────────────
   readonly header: FormGroup = this.fb.group({
+    shortDescription: ['', [Validators.maxLength(200)]],
     projectId: ['', [Validators.required]],
     wbsCostCodeId: ['', [Validators.required]],
     budgetHead: ['', [Validators.maxLength(100)]],
@@ -472,10 +473,6 @@ export class RequisitionFormService {
     const approvers = (c['approverIds'].value as string[]) ?? [];
     if (!this.reviewersLocked() && !reviewers.length) issues.push('Assign at least one reviewer.');
     if (!this.approversLocked() && !approvers.length) issues.push('Assign at least one approver.');
-    const both = this.pick(reviewers.filter((id) => approvers.includes(id)));
-    if (both.length) {
-      issues.push(`${both.map((u) => u.name).join(', ')} cannot be both a reviewer and an approver.`);
-    }
 
     if (this.header.invalid && issues.length === 0) issues.push('Correct the highlighted header fields.');
     const missing = this.incompleteLines().length;
@@ -506,6 +503,7 @@ export class RequisitionFormService {
       projectId: v.projectId,
       wbsCostCodeId: v.wbsCostCodeId || null,
       budgetHead: n(v.budgetHead),
+      shortDescription: n(v.shortDescription),
       requiredOnSiteDate: toIsoDate(v.requiredOnSiteDate) || null,
       mrNumber: n(v.mrNumber),
       mtoReference: n(v.mtoReference),
@@ -540,6 +538,7 @@ export class RequisitionFormService {
       projectId: mr.projectId,
       wbsCostCodeId: mr.wbsCostCodeId ?? '',
       budgetHead: mr.budgetHead ?? '',
+      shortDescription: mr.shortDescription ?? '',
       requiredOnSiteDate: parseIsoDate(mr.requiredOnSiteDate),
       mrNumber: mr.mrNumber === mr.code ? '' : mr.mrNumber,
       mtoReference: mr.mtoReference ?? '',
@@ -631,10 +630,62 @@ export class RequisitionFormService {
       .map((p) => p.userId);
   }
 
+  /**
+   * Pre-fills a NEW requisition from an earlier one (Import): header, reviewers,
+   * approvers, documents and every line with its quantity. Nothing is saved;
+   * the user changes what they need and saves it as a new requisition with its
+   * own number. A required-on-site date already in the past is cleared.
+   */
+  importFrom(source: MaterialRequisition, eligible?: RequisitionUserOption[]): string[] {
+    this.load(source);
+
+    const ros = parseIsoDate(source.requiredOnSiteDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    this.header.patchValue({
+      mrNumber: '',
+      requiredOnSiteDate: ros && ros >= today ? ros : null,
+    });
+    // A new requisition: its reviewers and approvers are the requester's to change.
+    this.lockParticipants(false, false);
+
+    // People on the old requisition who have since been deleted or deactivated
+    // (or who are no longer internal) cannot be assigned again: they are left
+    // out, and their names returned so the user can be told.
+    const dropped: string[] = [];
+    if (eligible) {
+      this.userOptions.set(eligible);
+      const ok = new Set(eligible.map((u) => u.id));
+      for (const name of ['reviewerIds', 'approverIds'] as const) {
+        const ids = (this.header.get(name)!.value as string[]) ?? [];
+        const kept = ids.filter((id) => ok.has(id));
+        if (kept.length !== ids.length) {
+          for (const id of ids.filter((x) => !ok.has(x))) {
+            const who = (source.participants ?? []).find((p) => p.userId === id)?.userName ?? id;
+            if (!dropped.includes(who)) dropped.push(who);
+          }
+          this.header.get(name)!.setValue(kept);
+        }
+      }
+      this.assignedUsers.set([]);
+    }
+
+    // Each line remembers the requisition it was copied from.
+    const lines = new Map<string, RequisitionLine>();
+    for (const [id, line] of this.lineMap()) {
+      lines.set(id, { ...line, source: RequisitionLineSource.EARLIER_MR, sourceReference: source.mrNumber });
+    }
+    this.lineMap.set(lines);
+
+    this.header.markAsDirty();
+    this.linesChanged.set(true);
+    return dropped;
+  }
+
   /** Back to an empty wizard — used by "Create New MR". */
   reset(): void {
     this.header.reset({
-      projectId: '', wbsCostCodeId: '', budgetHead: '', requiredOnSiteDate: null, mrNumber: '',
+      shortDescription: '', projectId: '', wbsCostCodeId: '', budgetHead: '', requiredOnSiteDate: null, mrNumber: '',
       mtoReference: '', pidReference: '', isometricReference: '', areaUnit: '', remarks: '',
       reviewerIds: [], approverIds: [],
     });

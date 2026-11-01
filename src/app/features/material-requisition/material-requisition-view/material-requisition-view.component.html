@@ -26,6 +26,7 @@
             <span class="pw-code">{{ r.mrNumber }}</span>
             <span class="pw-header__desc">{{ r.projectCode }} — {{ r.projectName }}</span>
           </h1>
+          @if (r.shortDescription) { <p class="pw-header__subline">{{ r.shortDescription }}</p> }
         </div>
       </div>
 

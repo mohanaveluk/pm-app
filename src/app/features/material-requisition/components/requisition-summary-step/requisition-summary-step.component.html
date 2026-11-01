@@ -28,6 +28,7 @@
       <h3 class="step-section__title"><mat-icon>assignment</mat-icon> Header Information</h3>
       <dl class="review-fields">
         <div><dt>MR Number</dt><dd>{{ mrNumberText() }}</dd></div>
+        <div class="review-fields__wide"><dt>Short Item Description</dt><dd>{{ value().shortDescription || '—' }}</dd></div>
         <div><dt>Project</dt>
           <dd>
             @if (form.selectedProject(); as p) { {{ p.code }} — {{ p.projectName }} } @else { — }

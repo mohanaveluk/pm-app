@@ -13,6 +13,20 @@
   }
 }
 
+// The edit icon leads each row.
+.inbox-edit-col {
+  width: 52px;
+  padding-right: 0 !important;
+}
+
+.inbox-card-wrap {
+  border-bottom: 1px solid var(--border);
+
+  .inbox-card { border-bottom: 0; }
+}
+
+.inbox-card__edit { margin: 0 0 8px 8px; }
+
 mat-button-toggle-group mat-icon {
   font-size: 18px;
   width: 18px;

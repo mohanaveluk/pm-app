@@ -1,0 +1,96 @@
+<h2 mat-dialog-title class="imp__title"><mat-icon>input</mat-icon> Import into a new requisition</h2>
+
+<mat-dialog-content class="imp">
+  <p class="imp__lede">Choose where to copy from. Everything is copied into a new requisition that you can change before saving.</p>
+
+  <div class="imp__sources" role="radiogroup" aria-label="Import from">
+    <button type="button" class="imp__source" role="radio"
+      [class.imp__source--on]="source() === 'mr'" [attr.aria-checked]="source() === 'mr'" (click)="chooseSource('mr')">
+      <mat-icon>history</mat-icon>
+      <span>
+        <strong>Previous Material Requisition</strong>
+        <small>Copy the header, reviewers, approvers, documents and lines of an earlier MR</small>
+      </span>
+    </button>
+    <button type="button" class="imp__source" role="radio"
+      [class.imp__source--on]="source() === 'po'" [attr.aria-checked]="source() === 'po'" (click)="chooseSource('po')">
+      <mat-icon>receipt_long</mat-icon>
+      <span>
+        <strong>Purchase Order</strong>
+        <small>Copy the materials and quantities of a purchase order</small>
+      </span>
+    </button>
+  </div>
+
+  @if (source() === 'mr') {
+    <mat-form-field appearance="outline" class="imp__search" subscriptSizing="dynamic">
+      <mat-label>Search requisitions</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input #searchBox matInput placeholder="MR number, description, project, client or tracking id"
+        (input)="onSearch($event)" autocomplete="off" cdkFocusInitial />
+      @if (search()) {
+        <button matSuffix mat-icon-button type="button" aria-label="Clear search" (click)="clearSearch(searchBox)">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <div class="imp__list" role="listbox" aria-label="Requisitions">
+      @if (loading() && !rows().length) {
+        <div class="imp__state"><mat-spinner diameter="28" /> Loading requisitions…</div>
+      } @else if (error()) {
+        <div class="imp__state imp__state--error">
+          <mat-icon>error_outline</mat-icon> {{ error() }}
+          <button mat-button type="button" (click)="retry()">Retry</button>
+        </div>
+      } @else {
+        @for (r of rows(); track r.id) {
+          <button type="button" class="imp__row" role="option"
+            [class.imp__row--on]="selected()?.id === r.id" [attr.aria-selected]="selected()?.id === r.id"
+            (click)="pick(r)" (dblclick)="pick(r); confirm()">
+            <span class="imp__radio" aria-hidden="true"></span>
+            <span class="imp__row-main">
+              <span class="imp__row-top">
+                <span class="pw-code">{{ r.mrNumber }}</span>
+                <span class="imp__status">{{ statusLabel(r.status) }}</span>
+                <span class="imp__muted">{{ r.itemCount }} item{{ r.itemCount === 1 ? '' : 's' }}</span>
+              </span>
+              @if (r.shortDescription) { <span class="imp__desc">{{ r.shortDescription }}</span> }
+              <span class="imp__muted">
+                {{ r.projectCode }} — {{ r.projectName }}@if (r.clientName) { · {{ r.clientName }} } · {{ r.createdAt | date: 'mediumDate' }}
+              </span>
+            </span>
+          </button>
+        } @empty {
+          <div class="imp__state">
+            <mat-icon>search_off</mat-icon>
+            {{ search() ? 'No requisitions match "' + search() + '".' : 'No requisitions yet.' }}
+          </div>
+        }
+      }
+    </div>
+
+    @if (total() > pageSize) {
+      <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="pageSize" [hidePageSize]="true"
+        (page)="onPage($event)" aria-label="Requisition pages" />
+    }
+  } @else if (source() === 'po') {
+    <div class="imp__state imp__state--info">
+      <mat-icon>info</mat-icon>
+      <span>Purchase orders aren't available yet. Once the Purchase Order module is live, its orders will be listed and
+        searchable here.</span>
+    </div>
+  } @else {
+    <div class="imp__state"><mat-icon>touch_app</mat-icon> Choose a source above.</div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <span class="imp__selected">
+    @if (selected(); as s) { Selected: <strong>{{ s.mrNumber }}</strong> }
+  </span>
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="!selected() || source() !== 'mr'" (click)="confirm()">
+    <mat-icon>input</mat-icon> Import
+  </button>
+</mat-dialog-actions>

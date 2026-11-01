@@ -134,6 +134,8 @@ export interface MaterialRequisitionListItem {
   wbsCostCodeId: string | null;
   wbsName: string | null;
   budgetHead: string | null;
+  /** Short item description — what is being requisitioned. */
+  shortDescription: string | null;
   /** YYYY-MM-DD */
   requiredOnSiteDate: string | null;
   itemCount: number;
@@ -163,6 +165,7 @@ export interface MaterialRequisitionListItem {
 export interface RequisitionParticipantSummary {
   userId: string;
   name: string;
+  email: string;
   decision: RequisitionDecision | null;
 }
 
