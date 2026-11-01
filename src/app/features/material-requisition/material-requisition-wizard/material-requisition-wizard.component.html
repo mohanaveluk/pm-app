@@ -108,6 +108,14 @@
         <app-requisition-materials-step [requisitionId]="saved()?.id ?? null" [initialSource]="initialSource()" />
       </mat-step>
 
+      <mat-step label="Compliance">
+        <app-requisition-checklist-step kind="compliance" />
+      </mat-step>
+
+      <mat-step label="Deviation">
+        <app-requisition-checklist-step kind="deviation" />
+      </mat-step>
+
       <mat-step label="Review & Submit">
         <app-requisition-summary-step [code]="saved()?.code ?? null" />
       </mat-step>

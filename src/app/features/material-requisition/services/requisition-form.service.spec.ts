@@ -373,6 +373,20 @@ describe('RequisitionFormService', () => {
       expect(s.toRequest(false).items?.[0]?.requestedQty).toBe(20);
     });
 
+    it('carries the compliance and deviation items over, in Sr# order', () => {
+      const s = setup();
+      s.importFrom(source({
+        compliances: [
+          { id: 'c2', sequence: 2, requirement: 'B', vendorResponse: 'b', compliant: false, remarks: 'why' },
+          { id: 'c1', sequence: 1, requirement: 'A', vendorResponse: 'a', compliant: true, remarks: null },
+        ],
+        deviations: [{ id: 'd1', sequence: 1, clauseNo: '4.2', rfqRequirement: 'R', vendorDeviation: true, justification: null }],
+      }));
+      const req = s.toRequest(false);
+      expect(req.compliances?.map((c) => c.requirement)).toEqual(['A', 'B']);
+      expect(req.deviations).toEqual([{ clauseNo: '4.2', rfqRequirement: 'R', vendorDeviation: true, justification: null }]);
+    });
+
     it('leaves out reviewers / approvers who can no longer be assigned, and names them', () => {
       const s = setup();
       const withDeleted = source({

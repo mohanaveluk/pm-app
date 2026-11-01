@@ -1,3 +1,4 @@
+import { RequisitionCompliance, RequisitionDeviation } from './requisition-checklist.model';
 import {
   MaterialRequisitionSortField, MaterialRequisitionStatus, RequisitionDecision, RequisitionDocumentType,
   RequisitionLineSource,
@@ -29,6 +30,10 @@ export interface CreateMaterialRequisitionRequest {
   wbsCostCodeId?: string | null;
   budgetHead?: string | null;
   shortDescription?: string | null;
+  /** The complete compliance list, in Sr# order. */
+  compliances?: RequisitionCompliance[];
+  /** The complete deviation list, in Sr# order. */
+  deviations?: RequisitionDeviation[];
   /** YYYY-MM-DD */
   requiredOnSiteDate?: string | null;
   /** Leave out (or null) to use the generated code. */

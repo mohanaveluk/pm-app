@@ -1,3 +1,4 @@
+import { RequisitionChecklistTableComponent } from '../requisition-checklist-table/requisition-checklist-table.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,12 +15,14 @@ import { DOCUMENT_TYPE_LABELS, SOURCE_LABELS } from '../../models/material-requi
 @Component({
   selector: 'app-requisition-summary-step',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, MatIconModule, MatTableModule],
+  imports: [CommonModule, DatePipe, MatIconModule, MatTableModule, RequisitionChecklistTableComponent],
   templateUrl: './requisition-summary-step.component.html',
   styleUrl: '../requisition-step.shared.scss',
 })
 export class RequisitionSummaryStepComponent {
   protected readonly form = inject(RequisitionFormService);
+  protected readonly complianceValues = computed(() => this.form.compliances().map((r) => r.values));
+  protected readonly deviationValues = computed(() => this.form.deviations().map((r) => r.values));
   private readonly auth = inject(AuthService);
 
   /** The system code, when the requisition has already been saved once. */
