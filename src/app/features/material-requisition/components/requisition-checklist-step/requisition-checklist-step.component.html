@@ -1,0 +1,88 @@
+@let cfg = config();
+<section class="step-section">
+  <div class="chk-head">
+    <h3 class="step-section__title"><mat-icon>{{ cfg.icon }}</mat-icon> {{ cfg.title }}</h3>
+    <span class="chk-count">{{ rows().length }} item{{ rows().length === 1 ? '' : 's' }}</span>
+  </div>
+  <p class="info-note"><mat-icon>info</mat-icon> {{ cfg.hint }}</p>
+
+  @if (attempted() && invalidCount()) {
+    <div class="step-error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ invalidCount() }} {{ cfg.itemLabel.toLowerCase() }}{{ invalidCount() === 1 ? ' is' : 's are' }} incomplete — fill the fields outlined in red.</span>
+    </div>
+  }
+
+  <div class="chk-scroll">
+    <table class="chk-table" [attr.aria-label]="cfg.title + ' items'">
+      <thead>
+        <tr>
+          <th class="chk-sr">Sr#</th>
+          @for (col of cfg.columns; track col.key) {
+            <th [class.chk-check-col]="col.type === 'check'" [style.width]="col.type === 'text' ? (col.flex ?? 1) * 10 + '%' : null">
+              {{ col.label }}
+              @if (col.required) { <span class="chk-req" aria-hidden="true">*</span> }
+            </th>
+          }
+          <th class="chk-actions"><span class="cdk-visually-hidden">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key; let i = $index) {
+          @let errs = shownErrors()[row.key];
+          <tr [attr.data-row]="row.key">
+            <td class="chk-sr">{{ i + 1 }}</td>
+            @for (col of cfg.columns; track col.key) {
+              @if (col.type === 'check') {
+                <td class="chk-check-col">
+                  <mat-checkbox
+                    [checked]="row.values[col.key] === true"
+                    (change)="onCheck(row, col, $event.checked)"
+                    [attr.aria-label]="col.label + ' ' + (i + 1)"
+                  />
+                </td>
+              } @else {
+                <td>
+                  <input
+                    type="text"
+                    class="chk-input"
+                    [class.chk-input--error]="!!errs[col.key]"
+                    [value]="textValue(row, col)"
+                    [attr.maxlength]="col.maxLength ?? null"
+                    [placeholder]="col.placeholder ?? ''"
+                    [attr.aria-label]="col.label + ' ' + (i + 1)"
+                    [attr.aria-required]="isRequired(row, col)"
+                    [attr.aria-invalid]="!!errs[col.key]"
+                    [attr.aria-describedby]="errs[col.key] ? errorId(row, col) : null"
+                    (input)="onText(row, col, $event)"
+                    (blur)="markTouched(row.key)"
+                  />
+                  @if (errs[col.key]) {
+                    <div class="chk-error" [id]="errorId(row, col)">{{ errs[col.key] }}</div>
+                  }
+                </td>
+              }
+            }
+            <td class="chk-actions">
+              <button mat-icon-button type="button" (click)="remove(row)" matTooltip="Remove"
+                [attr.aria-label]="'Remove ' + cfg.itemLabel.toLowerCase() + ' ' + (i + 1)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td class="chk-empty" [attr.colspan]="cfg.columns.length + 2">{{ cfg.emptyMessage }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chk-bar">
+    <span [matTooltip]="addHint()">
+      <button mat-stroked-button color="primary" type="button" (click)="add()" [disabled]="!canAdd()">
+        <mat-icon>add</mat-icon> {{ cfg.addLabel }}
+      </button>
+    </span>
+    @if (!canAdd()) { <span class="chk-muted">{{ addHint() }}</span> }
+  </div>
+</section>

@@ -1,3 +1,4 @@
+import { RequisitionComplianceResponse, RequisitionDeviationResponse } from './requisition-checklist.model';
 /**
  * Material Requisition domain model. Mirrors MaterialRequisitionResponseDto
  * (pm-api/src/modules/material-requisition/dto/material-requisition-response.dto.ts).
@@ -238,6 +239,8 @@ export interface RequisitionUserOption {
 }
 
 export interface MaterialRequisition extends MaterialRequisitionListItem {
+  compliances: RequisitionComplianceResponse[];
+  deviations: RequisitionDeviationResponse[];
   dguid: string;
   organizationId: string;
   wbs: RequisitionWbs | null;

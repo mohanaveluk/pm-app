@@ -167,6 +167,12 @@ export class MaterialRequisitionListStore {
           mimeType: d.mimeType,
           fileSizeBytes: d.fileSizeBytes,
         })),
+        compliances: (source.compliances ?? []).map(({ requirement, vendorResponse, compliant, remarks }) => ({
+          requirement, vendorResponse, compliant, remarks,
+        })),
+        deviations: (source.deviations ?? []).map(({ clauseNo, rfqRequirement, vendorDeviation, justification }) => ({
+          clauseNo, rfqRequirement, vendorDeviation, justification,
+        })),
         submit: false,
       };
       const created = (await lastValueFrom(this.service.createRequisition(request))).data;

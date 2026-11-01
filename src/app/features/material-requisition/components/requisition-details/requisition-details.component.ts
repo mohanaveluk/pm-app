@@ -1,3 +1,4 @@
+import { RequisitionChecklistTableComponent } from '../requisition-checklist-table/requisition-checklist-table.component';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +17,10 @@ import {
 @Component({
   selector: 'app-requisition-details',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, MatButtonModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [
+    CommonModule, DatePipe, MatButtonModule, MatIconModule, MatTableModule, MatTooltipModule,
+    RequisitionChecklistTableComponent,
+  ],
   templateUrl: './requisition-details.component.html',
   styleUrl: '../requisition-step.shared.scss',
 })

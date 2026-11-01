@@ -21,6 +21,7 @@ import {
 import { HasUnsavedRequisitionChanges } from '../guards/unsaved-requisition.guard';
 import { RequisitionHeaderStepComponent } from '../components/requisition-header-step/requisition-header-step.component';
 import { RequisitionMaterialsStepComponent } from '../components/requisition-materials-step/requisition-materials-step.component';
+import { RequisitionChecklistStepComponent } from '../components/requisition-checklist-step/requisition-checklist-step.component';
 import { RequisitionSummaryStepComponent } from '../components/requisition-summary-step/requisition-summary-step.component';
 
 /**
@@ -37,7 +38,7 @@ import { RequisitionSummaryStepComponent } from '../components/requisition-summa
   imports: [
     CommonModule, MatStepperModule, MatButtonModule, MatIconModule, MatChipsModule,
     MatTooltipModule, MatProgressSpinnerModule, RequisitionHeaderStepComponent,
-    RequisitionMaterialsStepComponent, RequisitionSummaryStepComponent,
+    RequisitionMaterialsStepComponent, RequisitionSummaryStepComponent, RequisitionChecklistStepComponent,
   ],
   templateUrl: './material-requisition-wizard.component.html',
   styleUrls: ['../components/requisition-step.shared.scss', './material-requisition-wizard.component.scss'],
@@ -205,6 +206,15 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
         return `Enter a quantity for all the selected materials — ${missing} ${missing === 1 ? 'is' : 'are'} missing one.`;
       }
       if (this.form.lineCount() === 0) return 'Select at least one material and enter its quantity.';
+    }
+    // Compliance (2) and Deviation (3): every row must be complete before moving on.
+    const kind = fromIndex === 2 ? 'compliance' : fromIndex === 3 ? 'deviation' : null;
+    if (kind) {
+      const issues = this.form.checklistIssues(kind);
+      if (issues.length) {
+        this.form.markChecklistAttempted(kind);
+        return issues[0];
+      }
     }
     return '';
   }

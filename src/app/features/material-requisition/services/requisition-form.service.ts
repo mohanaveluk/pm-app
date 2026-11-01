@@ -20,11 +20,17 @@ import {
   RequisitionUserOption,
 } from '../models/material-requisition.model';
 import { CreateMaterialRequisitionRequest } from '../models/material-requisition-request.model';
+import {
+  CHECKLIST_CONFIGS, COMPLIANCE_CONFIG, ChecklistKind, ChecklistRow, DEVIATION_CONFIG, checklistIssues,
+  checklistRowErrors, checklistRowFrom, emptyChecklistRow, toComplianceRequest, toDeviationRequest,
+} from '../models/requisition-checklist.model';
 
-/** The three wizard steps, in order. */
+/** The wizard steps, in order. */
 export const REQUISITION_STEPS = [
   { key: 'header', label: 'Header', title: 'Header & Documents' },
   { key: 'materials', label: 'Material Source & Selection', title: 'Select Materials' },
+  { key: 'compliance', label: 'Compliance', title: 'Compliance' },
+  { key: 'deviation', label: 'Deviation', title: 'Deviation' },
   { key: 'review', label: 'Review & Submit', title: 'Review & Submit' },
 ] as const;
 
@@ -444,13 +450,62 @@ export class RequisitionFormService {
 
   /** Anything entered that has not been saved yet. */
   hasUnsavedChanges(): boolean {
-    return this.header.dirty || this.linesChanged();
+    return this.header.dirty || this.linesChanged() || this.checklistChanged();
   }
 
   /** Call after a successful save. */
   markSaved(): void {
     this.header.markAsPristine();
     this.linesChanged.set(false);
+    this.checklistChanged.set(false);
+  }
+
+  // ── Compliance / Deviation ──────────────────────────────────────────
+
+  readonly compliances = signal<ChecklistRow[]>([]);
+  readonly deviations = signal<ChecklistRow[]>([]);
+  /** Set when the user tried to leave a step with invalid rows: every error then shows. */
+  readonly checklistAttempted = signal<Record<ChecklistKind, boolean>>({ compliance: false, deviation: false });
+  private readonly checklistChanged = signal(false);
+
+  checklistRows(kind: ChecklistKind) {
+    return kind === 'compliance' ? this.compliances : this.deviations;
+  }
+
+  /** Problems with the rows of one list (empty when all are valid). */
+  checklistIssues(kind: ChecklistKind): string[] {
+    return checklistIssues(CHECKLIST_CONFIGS[kind], this.checklistRows(kind)());
+  }
+
+  /** A new row can be added when there is none yet or the last one is valid. */
+  canAddChecklistRow(kind: ChecklistKind): boolean {
+    const rows = this.checklistRows(kind)();
+    const last = rows[rows.length - 1];
+    return !last || Object.keys(checklistRowErrors(CHECKLIST_CONFIGS[kind], last)).length === 0;
+  }
+
+  /** Adds an empty row at the bottom; returns it, or null when the last row is not valid yet. */
+  addChecklistRow(kind: ChecklistKind): ChecklistRow | null {
+    if (!this.canAddChecklistRow(kind)) return null;
+    const row = emptyChecklistRow(CHECKLIST_CONFIGS[kind]);
+    this.checklistRows(kind).update((rows) => [...rows, row]);
+    this.checklistChanged.set(true);
+    return row;
+  }
+
+  setChecklistValue(kind: ChecklistKind, rowKey: string, column: string, value: string | boolean): void {
+    this.checklistRows(kind).update((rows) => rows.map((r) =>
+      r.key === rowKey ? { ...r, values: { ...r.values, [column]: value } } : r));
+    this.checklistChanged.set(true);
+  }
+
+  removeChecklistRow(kind: ChecklistKind, rowKey: string): void {
+    this.checklistRows(kind).update((rows) => rows.filter((r) => r.key !== rowKey));
+    this.checklistChanged.set(true);
+  }
+
+  markChecklistAttempted(kind: ChecklistKind): void {
+    this.checklistAttempted.update((a) => ({ ...a, [kind]: true }));
   }
 
   /**
@@ -481,6 +536,7 @@ export class RequisitionFormService {
     } else if (this.lineCount() === 0) {
       issues.push('Enter a quantity for at least one material.');
     }
+    issues.push(...this.checklistIssues('compliance'), ...this.checklistIssues('deviation'));
     return issues;
   }
 
@@ -504,6 +560,8 @@ export class RequisitionFormService {
       wbsCostCodeId: v.wbsCostCodeId || null,
       budgetHead: n(v.budgetHead),
       shortDescription: n(v.shortDescription),
+      compliances: toComplianceRequest(this.compliances()),
+      deviations: toDeviationRequest(this.deviations()),
       requiredOnSiteDate: toIsoDate(v.requiredOnSiteDate) || null,
       mrNumber: n(v.mrNumber),
       mtoReference: n(v.mtoReference),
@@ -600,6 +658,15 @@ export class RequisitionFormService {
       fileSizeBytes: d.fileSizeBytes,
     })));
 
+    this.compliances.set((mr.compliances ?? [])
+      .slice().sort((a, b) => a.sequence - b.sequence)
+      .map((c) => checklistRowFrom(COMPLIANCE_CONFIG, c)));
+    this.deviations.set((mr.deviations ?? [])
+      .slice().sort((a, b) => a.sequence - b.sequence)
+      .map((d) => checklistRowFrom(DEVIATION_CONFIG, d)));
+    this.checklistAttempted.set({ compliance: false, deviation: false });
+    this.checklistChanged.set(false);
+
     this.header.markAsPristine();
     this.header.markAsUntouched();
     this.linesChanged.set(false);
@@ -684,6 +751,10 @@ export class RequisitionFormService {
 
   /** Back to an empty wizard — used by "Create New MR". */
   reset(): void {
+    this.compliances.set([]);
+    this.deviations.set([]);
+    this.checklistAttempted.set({ compliance: false, deviation: false });
+    this.checklistChanged.set(false);
     this.header.reset({
       shortDescription: '', projectId: '', wbsCostCodeId: '', budgetHead: '', requiredOnSiteDate: null, mrNumber: '',
       mtoReference: '', pidReference: '', isometricReference: '', areaUnit: '', remarks: '',
