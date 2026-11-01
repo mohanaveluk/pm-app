@@ -1,6 +1,6 @@
 import {
   BomColumns, BomPreview, MaterialRequisition, MaterialRequisitionListItem, RequisitionCandidate,
-  RequisitionUserOption, WorkflowEvent,
+  RequisitionUserOption, WorkflowEvent, SourceProject,
 } from './material-requisition.model';
 
 /**
@@ -26,6 +26,7 @@ export type MaterialRequisitionResponse = ApiEnvelope<MaterialRequisition>;
 export type PagedMaterialRequisitionResponse = ApiEnvelope<Paged<MaterialRequisitionListItem>>;
 export type CandidateListResponse = ApiEnvelope<Paged<RequisitionCandidate>>;
 export type CandidatesResponse = ApiEnvelope<RequisitionCandidate[]>;
+export type SourceProjectsResponse = ApiEnvelope<SourceProject[]>;
 export type BomColumnsResponse = ApiEnvelope<BomColumns>;
 export type BomPreviewResponse = ApiEnvelope<BomPreview>;
 export type DeleteResponse = ApiEnvelope<null>;
