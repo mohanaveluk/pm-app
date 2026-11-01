@@ -107,6 +107,9 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     return (mr.history ?? []).filter((e) => e.action === 'RETURNED' && e.round === mr.reviewRound && e.comments);
   });
 
+  /** The requisition this new one was imported from (Import on the list). */
+  protected readonly importedFrom = signal<string | null>(null);
+
   private bypassGuard = false;
 
   ngOnInit(): void {
@@ -119,6 +122,10 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
     if (this.isEdit()) {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) void this.loadDraft(id);
+    } else {
+      const params = this.route.snapshot.queryParamMap;
+      const sourceId = params.get('id');
+      if (params.get('importFrom') === 'mr' && sourceId) void this.loadImport(sourceId);
     }
   }
 
@@ -146,6 +153,34 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
         (err as HttpErrorResponse)?.status === 404
           ? 'This requisition could not be found. It may have been deleted.'
           : 'Unable to load the requisition. Please try again.',
+      );
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  /** Import: a new requisition pre-filled from an earlier one. */
+  private async loadImport(sourceId: string): Promise<void> {
+    this.loading.set(true);
+    this.loadError.set('');
+    try {
+      const [res, people] = await Promise.all([
+        lastValueFrom(this.service.getRequisitionById(sourceId)),
+        lastValueFrom(this.service.getParticipantOptions()),
+      ]);
+      const dropped = this.form.importFrom(res.data, people.data ?? []);
+      this.importedFrom.set(res.data.mrNumber);
+      this.snack.open(
+        dropped.length
+          ? `Imported from ${res.data.mrNumber}. ${dropped.join(', ')} ${dropped.length === 1 ? 'is' : 'are'} no longer an active user and ${dropped.length === 1 ? 'was' : 'were'} left out of the reviewers / approvers.`
+          : `Imported from ${res.data.mrNumber}. Change anything you need, then save it as a new requisition.`,
+        'OK', { duration: dropped.length ? 8000 : 5000 },
+      );
+    } catch (err) {
+      this.loadError.set(
+        (err as HttpErrorResponse)?.status === 404
+          ? 'The requisition to import from could not be found. It may have been deleted.'
+          : 'Unable to load the requisition to import from. Please try again.',
       );
     } finally {
       this.loading.set(false);

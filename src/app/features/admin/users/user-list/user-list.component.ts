@@ -205,6 +205,7 @@ export class UserListComponent implements OnInit {
   ngOnInit(): void {
     const me = this.auth.user();
     this.organizationId.set(me?.organizationId ?? '');
+    // The session's "id" is the user's uguid.
     this.currentUserId.set(me?.id ?? '');
     this.loadUsers();
   }
@@ -279,7 +280,7 @@ export class UserListComponent implements OnInit {
 
   /** Anyone but yourself can be deleted (the API also keeps the last Organization Admin). */
   canDelete(u: OrgUser): boolean {
-    return u.id !== this.currentUserId();
+    return u.uguid !== this.currentUserId();
   }
 
   async deleteUser(u: OrgUser, event?: Event): Promise<void> {
@@ -320,7 +321,7 @@ export class UserListComponent implements OnInit {
 
   /** Only active, verified accounts have a password to reset — and never your own. */
   canResetPassword(u: OrgUser): boolean {
-    return !!u.is_active && u.is_email_verified && u.id !== this.currentUserId();
+    return !!u.is_active && u.is_email_verified && u.uguid !== this.currentUserId();
   }
 
   resetPassword(u: OrgUser, event?: Event): void {

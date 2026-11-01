@@ -357,3 +357,11 @@
     display: none !important;
   }
 }
+
+// Short item description under the title.
+.pw-header__subline {
+  margin: 4px 0 0;
+  color: #33475b;
+  font-size: 0.92rem;
+  max-width: 70ch;
+}

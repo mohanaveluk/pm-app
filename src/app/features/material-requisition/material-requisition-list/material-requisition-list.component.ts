@@ -18,6 +18,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  ImportRequisitionDialogComponent, ImportRequisitionResult,
+} from '../components/import-requisition-dialog/import-requisition-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { PermissionService } from '../../../core/rbac/permission.service';
@@ -44,6 +47,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', alwaysVisible: true },
   { key: 'mrNumber', label: 'MR Number', sortField: 'mrNumber' },
   { key: 'trackingId', label: 'Tracking ID' },
+  { key: 'shortDescription', label: 'Short Item Description' },
   { key: 'project', label: 'Project', sortField: 'project' },
   { key: 'client', label: 'Client' },
   { key: 'wbs', label: 'WBS' },
@@ -275,11 +279,11 @@ export class MaterialRequisitionListComponent {
       return;
     }
     const header = [
-      'MR Number', 'Code', 'Project No.', 'Project', 'Client Code', 'Client', 'WBS',
+      'MR Number', 'Code', 'Short Item Description', 'Project No.', 'Project', 'Client Code', 'Client', 'WBS',
       'Budget Head', 'Status', 'Required on Site', 'Items', 'Created By', 'Created At', 'Updated At',
     ];
     const lines = rows.map((r) => [
-      r.mrNumber, r.code, r.projectCode ?? '', r.projectName ?? '', r.clientCode ?? '', r.clientName ?? '',
+      r.mrNumber, r.code, r.shortDescription ?? '', r.projectCode ?? '', r.projectName ?? '', r.clientCode ?? '', r.clientName ?? '',
       r.wbsName ?? '', r.budgetHead ?? '', requisitionStatusLabel(r.status), r.requiredOnSiteDate ?? '',
       r.itemCount, r.createdBy ?? '', r.createdAt, r.updatedAt ?? '',
     ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
@@ -305,9 +309,22 @@ export class MaterialRequisitionListComponent {
     void this.router.navigate(['/material-requisitions/create']);
   }
 
-  /** Import = start a requisition from a BOM / MTO file. */
-  importBom(): void {
-    void this.router.navigate(['/material-requisitions/create'], { queryParams: { source: 'bom' } });
+  /**
+   * Import: pick a previous requisition (or, once available, a purchase order);
+   * the wizard opens as a new requisition pre-filled from it.
+   */
+  openImport(): void {
+    this.dialog.open<ImportRequisitionDialogComponent, void, ImportRequisitionResult>(ImportRequisitionDialogComponent, {
+      width: '720px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      viewContainerRef: this.viewContainerRef,
+    }).afterClosed().subscribe((result) => {
+      if (!result) return;
+      void this.router.navigate(['/material-requisitions/create'], {
+        queryParams: { importFrom: result.source, id: result.id },
+      });
+    });
   }
 
   view(item: MaterialRequisitionListItem, event?: Event): void {

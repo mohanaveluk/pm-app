@@ -189,12 +189,12 @@ describe('RequisitionFormService', () => {
       expect(s.submitIssues()).toEqual([]);
     });
 
-    it('refuses the same person as reviewer and approver', () => {
+    it('lets the same person be both reviewer and approver', () => {
       const s = setup();
       s.userOptions.set([{ id: 'u-1', name: 'Asha Nair', email: 'a@x.com', position: null, role: null }]);
       s.header.patchValue({ reviewerIds: ['u-1'], approverIds: ['u-1'] });
 
-      expect(s.submitIssues()).toContain('Asha Nair cannot be both a reviewer and an approver.');
+      expect(s.submitIssues().some((i) => i.includes('cannot be both'))).toBe(false);
     });
 
     it('rejects a required-on-site date in the past', () => {
@@ -245,6 +245,15 @@ describe('RequisitionFormService', () => {
       expect(req.mrNumber).toBeNull();
       expect(req.submit).toBe(false);
       expect(Object.keys(req)).not.toContain('code');
+    });
+
+    it('sends the short item description, and none when left blank', () => {
+      const s = setup();
+      s.header.patchValue({ projectId: 'p1', shortDescription: ' CS pipes for Unit 100 ' });
+      expect(s.toRequest(false).shortDescription).toBe('CS pipes for Unit 100');
+
+      s.header.patchValue({ shortDescription: '   ' });
+      expect(s.toRequest(false).shortDescription).toBeNull();
     });
 
     it('sends the reviewers and approvers in the order chosen', () => {
@@ -304,6 +313,83 @@ describe('RequisitionFormService', () => {
       s.load(loaded('APPROVED', null));
       expect(s.reviewersLocked()).toBe(true);
       expect(s.approversLocked()).toBe(true);
+    });
+  });
+
+  describe('importFrom', () => {
+    const source = (extra: Record<string, unknown> = {}) => ({
+      id: 'mr-7', code: '0007', mrNumber: 'MR-0007', status: 'APPROVED', projectId: 'p1',
+      projectCode: '0042', projectName: 'Unit 4', clientCode: null, clientName: null,
+      wbsCostCodeId: 'w1', budgetHead: 'CAPEX', shortDescription: 'CS pipes', requiredOnSiteDate: '2000-01-01',
+      mtoReference: 'MTO-1', pidReference: null, isometricReference: null, areaUnit: null, remarks: 'As before',
+      permissions: { canEditReviewers: false, canEditApprovers: false },
+      items: [
+        { materialId: 'm1', materialCode: 'PIP-001', materialDescription: 'Pipe', uom: 'M', requestedQty: 12,
+          stockOnHand: 0, source: 'MATERIAL_MASTER', sourceReference: null, lineNumber: 1 },
+      ],
+      documents: [{ id: 'd1', documentType: 'SPECIFICATION', documentName: 'Spec', documentUrl: 'https://x/spec.pdf',
+        fileName: 'spec.pdf', mimeType: 'application/pdf', fileSizeBytes: 10 }],
+      participants: [
+        { id: 'p1', role: 'REVIEWER', userId: 'u-1', userName: 'Asha', userEmail: 'a@x.com', sequence: 1 },
+        { id: 'p2', role: 'APPROVER', userId: 'u-1', userName: 'Asha', userEmail: 'a@x.com', sequence: 1 },
+      ],
+      ...extra,
+    }) as never;
+
+    it('copies everything into a new, editable requisition', () => {
+      const s = setup();
+      s.importFrom(source());
+      const req = s.toRequest(false);
+
+      expect(req).toMatchObject({
+        projectId: 'p1', wbsCostCodeId: 'w1', budgetHead: 'CAPEX', shortDescription: 'CS pipes',
+        mtoReference: 'MTO-1', remarks: 'As before', mrNumber: null,
+        // The same person stays in both lists.
+        reviewerIds: ['u-1'], approverIds: ['u-1'],
+      });
+      expect(req.items).toEqual([
+        { materialId: 'm1', requestedQty: 12, source: RequisitionLineSource.EARLIER_MR, sourceReference: 'MR-0007' },
+      ]);
+      expect(req.documents).toEqual([expect.objectContaining({ documentUrl: 'https://x/spec.pdf' })]);
+      expect(s.reviewersLocked()).toBe(false);
+      expect(s.approversLocked()).toBe(false);
+      expect(s.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('clears a required-on-site date already in the past, and keeps a future one', () => {
+      const s = setup();
+      s.importFrom(source());
+      expect(s.header.get('requiredOnSiteDate')!.value).toBeNull();
+
+      s.importFrom(source({ requiredOnSiteDate: '2099-06-30' }));
+      expect(s.toRequest(false).requiredOnSiteDate).toBe('2099-06-30');
+    });
+
+    it('lets the user change a quantity or drop a line before saving', () => {
+      const s = setup();
+      s.importFrom(source());
+      s.setQuantity(PIPE, 20, RequisitionLineSource.EARLIER_MR, 'MR-0007');
+      s.commitQuantity('m1');
+      expect(s.toRequest(false).items?.[0]?.requestedQty).toBe(20);
+    });
+
+    it('leaves out reviewers / approvers who can no longer be assigned, and names them', () => {
+      const s = setup();
+      const withDeleted = source({
+        participants: [
+          { id: 'p1', role: 'REVIEWER', userId: 'u-1', userName: 'Asha', userEmail: 'a@x.com', sequence: 1 },
+          { id: 'p2', role: 'REVIEWER', userId: 'u-gone', userName: 'klp plo', userEmail: 'k@x.com', sequence: 2 },
+          { id: 'p3', role: 'APPROVER', userId: 'u-gone', userName: 'klp plo', userEmail: 'k@x.com', sequence: 1 },
+        ],
+      });
+      const active = [{ id: 'u-1', name: 'Asha', email: 'a@x.com', position: null, role: null }];
+
+      const dropped = s.importFrom(withDeleted, active);
+
+      expect(dropped).toEqual(['klp plo']);
+      expect(s.toRequest(false)).toMatchObject({ reviewerIds: ['u-1'], approverIds: [] });
+      expect(s.allUserOptions().map((u) => u.id)).toEqual(['u-1']);
+      expect(s.submitIssues()).toContain('Assign at least one approver.');
     });
   });
 });

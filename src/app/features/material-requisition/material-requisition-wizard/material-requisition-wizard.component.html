@@ -61,7 +61,9 @@
           } @else {
             <h1 class="pw-header__title">
               <span class="pw-code pw-code--new">NEW REQUISITION</span>
-              <span class="pw-header__desc">The MR number is generated when you save it</span>
+              <span class="pw-header__desc">
+                @if (importedFrom(); as from) { Imported from {{ from }} — }The MR number is generated when you save it
+              </span>
             </h1>
           }
         </div>

@@ -15,8 +15,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MaterialRequisitionService } from '../../services/material-requisition.service';
+import { AuthService } from '../../../../services';
 import {
-  MaterialRequisitionListItem, RequisitionParticipantRole, requisitionStatusLabel,
+  MaterialRequisitionListItem, MaterialRequisitionStatus, RequisitionParticipantRole, requisitionStatusLabel,
 } from '../../models/material-requisition.model';
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -43,6 +44,7 @@ export class RequisitionInboxComponent implements OnInit {
   private readonly service = inject(MaterialRequisitionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
 
   readonly role = input.required<RequisitionParticipantRole>();
 
@@ -61,7 +63,7 @@ export class RequisitionInboxComponent implements OnInit {
   protected readonly pendingOnly = signal(true);
   protected readonly searchTerm = signal('');
 
-  protected readonly columns = ['mrNumber', 'project', 'client', 'ros', 'items', 'submitted', 'status'];
+  protected readonly columns = ['edit', 'mrNumber', 'project', 'client', 'ros', 'items', 'submitted', 'status'];
   protected readonly skeletonRows = Array.from({ length: 5 });
 
   private readonly reload$ = new Subject<void>();
@@ -130,6 +132,32 @@ export class RequisitionInboxComponent implements OnInit {
 
   protected open(row: MaterialRequisitionListItem): void {
     void this.router.navigate(['/material-requisitions', this.reviewing() ? 'reviews' : 'approvals', row.id]);
+  }
+
+  /**
+   * A reviewer can edit while it is under review and their review is still due;
+   * an approver while it is reviewed and their approval is still due. Once they
+   * have decided (or a purchase order has locked it) the edit icon goes away.
+   * The API checks the same before saving.
+   */
+  protected canEdit(r: MaterialRequisitionListItem): boolean {
+    if (r.lockedAt) return false;
+    // Matched by email: the signed-in user's "id" in the session is their uguid,
+    // not the user id that reviewers and approvers are stored under.
+    const me = this.auth.user()?.email?.toLowerCase();
+    if (!me) return false;
+    const waitingFor = this.reviewing() ? MaterialRequisitionStatus.UNDER_REVIEW : MaterialRequisitionStatus.REVIEWED;
+    if (r.status !== waitingFor) return false;
+    const mine = (this.reviewing() ? r.reviewers : r.approvers).find((p) => p.email?.toLowerCase() === me);
+    return !!mine && !mine.decision;
+  }
+
+  /** Opens the wizard; saving there comes back to this person's review / approval screen. */
+  protected edit(row: MaterialRequisitionListItem, event?: Event): void {
+    event?.stopPropagation();
+    void this.router.navigate(['/material-requisitions', row.id, 'edit'], {
+      queryParams: { returnTo: this.reviewing() ? 'review' : 'approval' },
+    });
   }
 
   protected statusLabel(status: string): string {

@@ -25,7 +25,7 @@ export class RequisitionUserPickerComponent {
   readonly options = input<RequisitionUserOption[]>([]);
   /** The chosen user ids, in order. */
   readonly selectedIds = model<string[]>([]);
-  /** People already chosen for the other role — one person cannot be both. */
+  /** People who cannot be picked here (none by default — a reviewer may also approve). */
   readonly blockedIds = input<string[]>([]);
   readonly blockedReason = input('Already chosen for the other role');
   readonly locked = input(false);

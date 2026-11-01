@@ -157,7 +157,7 @@ describe('UserListComponent — internal / external sections and delete', () => 
         provideRouter([]),
         provideNoopAnimations(),
         { provide: ApiService, useValue: api },
-        { provide: AuthService, useValue: { user: () => ({ id: '1', organizationId: 'org-1' }) } },
+        { provide: AuthService, useValue: { user: () => ({ id: 'u1', organizationId: 'org-1' }) } }, // the session id is the uguid
         { provide: CommonService, useValue: {} },
       ],
     });

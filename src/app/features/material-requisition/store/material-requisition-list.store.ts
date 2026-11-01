@@ -144,6 +144,7 @@ export class MaterialRequisitionListStore {
         projectId: source.projectId,
         wbsCostCodeId: source.wbsCostCodeId,
         budgetHead: source.budgetHead,
+        shortDescription: source.shortDescription,
         requiredOnSiteDate: source.requiredOnSiteDate,
         // The copy gets its own number from the system.
         mrNumber: null,
