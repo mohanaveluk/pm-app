@@ -71,7 +71,15 @@
             </td>
           </tr>
         } @empty {
-          <tr><td class="chk-empty" [attr.colspan]="cfg.columns.length + 2">{{ cfg.emptyMessage }}</td></tr>
+          <tr>
+            <td class="chk-empty" [attr.colspan]="cfg.columns.length + 2">
+              <mat-icon class="chk-empty__icon">{{ cfg.icon }}</mat-icon>
+              <span class="chk-empty__text">{{ cfg.emptyMessage }}</span>
+              <button mat-flat-button color="primary" type="button" (click)="add()">
+                <mat-icon>add</mat-icon> {{ cfg.addLabel }}
+              </button>
+            </td>
+          </tr>
         }
       </tbody>
     </table>

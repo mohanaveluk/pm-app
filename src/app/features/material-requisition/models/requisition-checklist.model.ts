@@ -72,7 +72,7 @@ export const COMPLIANCE_CONFIG: ChecklistConfig = {
   hint: 'List each requirement and the vendor\'s response. Tick Compliant when the response meets it; when it does not, say why in Remarks.',
   addLabel: 'Add compliance item',
   itemLabel: 'Compliance item',
-  emptyMessage: 'No compliance items yet. Add the first one.',
+  emptyMessage: 'No compliance items have been added.',
   columns: [
     { key: 'requirement', label: 'Requirement', type: 'text', required: true, placeholder: 'e.g. Material to ASTM A106 Gr. B', maxLength: 2000, flex: 3 },
     { key: 'vendorResponse', label: 'Vendor Response', type: 'text', required: true, placeholder: 'What the vendor confirmed', maxLength: 2000, flex: 3 },
@@ -88,7 +88,7 @@ export const DEVIATION_CONFIG: ChecklistConfig = {
   hint: 'List each RFQ clause the vendor\'s offer is checked against. Tick Vendor Deviation when the vendor deviates; otherwise give the justification.',
   addLabel: 'Add deviation item',
   itemLabel: 'Deviation item',
-  emptyMessage: 'No deviation items yet. Add the first one.',
+  emptyMessage: 'No deviation items have been added.',
   columns: [
     { key: 'clauseNo', label: 'Clause No.', type: 'text', required: true, placeholder: 'e.g. 4.2.1', maxLength: 50, flex: 1 },
     { key: 'rfqRequirement', label: 'RFQ Requirement', type: 'text', required: true, placeholder: 'What the RFQ asks for', maxLength: 2000, flex: 3 },
