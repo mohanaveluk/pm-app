@@ -102,10 +102,23 @@ td.chk-check-col { padding-top: 6px; }
 }
 
 .chk-empty {
-  padding: 22px !important;
+  padding: 28px 16px !important;
   text-align: center;
-  color: #8a9bb0;
-  font-style: italic;
+  color: #5a7a9e;
+
+  &__icon {
+    display: block;
+    margin: 0 auto 6px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #a8bdd4;
+  }
+
+  &__text {
+    display: block;
+    margin-bottom: 12px;
+  }
 }
 
 .chk-bar {
