@@ -162,6 +162,18 @@ export interface MaterialRequisitionListItem {
 }
 
 /** A reviewer or approver as the list shows them. */
+/** A project to copy materials from (Other Projects source). */
+export interface SourceProject {
+  id: string;
+  code: string;
+  projectName: string;
+  clientName: string | null;
+  status: string;
+  /** Distinct materials requisitioned on it. */
+  materialCount: number;
+  requisitionCount: number;
+}
+
 export interface RequisitionParticipantSummary {
   userId: string;
   name: string;
@@ -370,7 +382,7 @@ export const REQUISITION_SOURCE_OPTIONS: readonly SourceOption[] = [
   },
   {
     value: RequisitionLineSource.PROJECT, label: 'OTHER PROJECTS', icon: 'folder_open',
-    description: 'Materials already used on this project', available: true,
+    description: 'Materials requisitioned on another project', available: true,
   },
 ];
 
@@ -385,7 +397,7 @@ export const SOURCE_LABELS: Record<RequisitionLineSource, string> = {
   [RequisitionLineSource.EARLIER_MR]: 'Earlier MR',
   [RequisitionLineSource.BOM]: 'BOM / MTO',
   [RequisitionLineSource.PURCHASE_ORDER]: 'Purchase Order',
-  [RequisitionLineSource.PROJECT]: 'WBS',
+  [RequisitionLineSource.PROJECT]: 'Other Project',
 };
 
 /**

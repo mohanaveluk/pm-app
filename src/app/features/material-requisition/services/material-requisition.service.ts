@@ -10,7 +10,7 @@ import {
   UpdateRequisitionParticipantsRequest,
 } from '../models/material-requisition-request.model';
 import {
-  ApiEnvelope, BomColumnsResponse, BomPreviewResponse, CandidateListResponse, CandidatesResponse,
+  ApiEnvelope, BomColumnsResponse, BomPreviewResponse, CandidateListResponse, CandidatesResponse, SourceProjectsResponse,
   DeleteResponse, DocumentUploadResponse, MaterialRequisitionResponse,
   PagedMaterialRequisitionResponse, RequisitionUserOptionsResponse, WorkflowTimelineResponse,
 } from '../models/material-requisition-response.model';
@@ -130,7 +130,15 @@ export class MaterialRequisitionService {
     return this.http.get<CandidateListResponse>(`${this.baseUrl}/materials`, { params: httpParams });
   }
 
-  /** GET /material-requisitions/project-items — Project source. */
+  /** GET /material-requisitions/source-projects — Other Projects source: projects to copy from. */
+  getSourceProjects(excludeProjectId?: string | null, search?: string): Observable<SourceProjectsResponse> {
+    let httpParams = new HttpParams();
+    if (excludeProjectId) httpParams = httpParams.set('excludeProjectId', excludeProjectId);
+    if (search?.trim()) httpParams = httpParams.set('search', search.trim());
+    return this.http.get<SourceProjectsResponse>(`${this.baseUrl}/source-projects`, { params: httpParams });
+  }
+
+  /** GET /material-requisitions/project-items — materials requisitioned on a project. */
   getProjectItems(projectId: string, wbsCostCodeId?: string | null): Observable<CandidatesResponse> {
     let httpParams = new HttpParams().set('projectId', projectId);
     if (wbsCostCodeId) httpParams = httpParams.set('wbsCostCodeId', wbsCostCodeId);
