@@ -221,8 +221,8 @@ button mat-spinner {
 table.pl-grid-table {
   th.mat-mdc-header-cell,
   td.mat-mdc-cell {
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    border-right: 2px solid var(--border);
 
     &:last-child { border-right: 0; }
   }

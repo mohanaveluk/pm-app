@@ -189,6 +189,7 @@
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
           [trackBy]="trackById"
+          class="pl-grid-table"
         >
           <ng-container matColumnDef="mrNumber">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="mrNumber">MR Number</th>

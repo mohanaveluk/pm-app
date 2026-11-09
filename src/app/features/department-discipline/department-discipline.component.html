@@ -141,6 +141,7 @@
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
           [trackBy]="trackByDepartmentId"
+          class="pl-grid-table"
         >
           <ng-container matColumnDef="department">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="departmentName">Department</th>
