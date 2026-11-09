@@ -160,6 +160,7 @@
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
           [trackBy]="trackByActivityId"
+          class="pl-grid-table"
         >
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Activity Name</th>

@@ -127,6 +127,7 @@
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
           [trackBy]="trackByGroupId"
+          class="pl-grid-table"
         >
           <ng-container matColumnDef="expand">
             <th mat-header-cell *matHeaderCellDef></th>

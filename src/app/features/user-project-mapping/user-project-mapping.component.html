@@ -165,6 +165,7 @@
           [matSortActive]="store.sortBy()"
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
+          class="pl-grid-table"
         >
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
