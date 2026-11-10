@@ -26,6 +26,7 @@ export interface DisciplineQueryParams {
   sortDirection: 'asc' | 'desc';
   search?: string;
   organizationId?: string;
+  departmentId?: string;
   isActive?: boolean;
   createdFrom?: string;
   createdTo?: string;

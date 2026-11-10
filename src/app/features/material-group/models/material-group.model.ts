@@ -54,6 +54,22 @@ export interface MaterialGroupOption {
  * API would reject them, so those columns render without a sort header.
  */
 export type MaterialGroupSortField = 'code' | 'name' | 'displayOrder' | 'createdAt';
+
+/** The table paged, or every group under a heading row per material category. */
+export type MaterialGroupViewMode = 'list' | 'categoryTable';
+
+/** A heading row of the material-category-wise table. */
+export interface MaterialGroupCategoryRow {
+  groupHeader: true;
+  /** null for groups filed under no category. */
+  materialCategoryId: string | null;
+  categoryCode: string | null;
+  categoryName: string;
+  count: number;
+  activeCount: number;
+}
+
+export type MaterialGroupTableRow = MaterialGroup | MaterialGroupCategoryRow;
 export type SortDirection = 'asc' | 'desc';
 
 export interface MaterialGroupFilter {

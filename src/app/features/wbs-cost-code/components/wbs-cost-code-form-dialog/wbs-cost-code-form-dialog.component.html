@@ -29,7 +29,7 @@
             </mat-form-field>
           }
 
-          <mat-form-field appearance="outline" class="dlg-full-width">
+          <mat-form-field appearance="outline">
             <mat-label>WBS</mat-label>
             <input
               matInput
@@ -40,6 +40,18 @@
             />
             <mat-hint align="end">{{ form.controls.projectDetails.value.length }}/255</mat-hint>
             @if (err('projectDetails')) { <mat-error>{{ err('projectDetails') }}</mat-error> }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Short Description</mat-label>
+            <input
+              matInput
+              formControlName="shortDescription"
+              maxlength="255"
+              placeholder="e.g. Foundations and civil works"
+            />
+            <mat-hint align="end">{{ form.controls.shortDescription.value.length }}/255</mat-hint>
+            @if (err('shortDescription')) { <mat-error>{{ err('shortDescription') }}</mat-error> }
           </mat-form-field>
 
           <!-- Project: searchable (there can be hundreds), stored by id. -->
@@ -164,7 +176,7 @@
       <mat-divider />
 
       <section class="dlg-section">
-        <h3 class="dlg-section__title">Schedule</h3>
+        <h3 class="dlg-section__title">Activity</h3>
 
         <mat-form-field appearance="outline" class="dlg-full-width">
           <mat-label>Activities (Schedule Level)</mat-label>

@@ -167,11 +167,9 @@ export class MaterialRequisitionListStore {
           mimeType: d.mimeType,
           fileSizeBytes: d.fileSizeBytes,
         })),
-        compliances: (source.compliances ?? []).map(({ requirement, vendorResponse, compliant, remarks }) => ({
-          requirement, vendorResponse, compliant, remarks,
-        })),
-        deviations: (source.deviations ?? []).map(({ clauseNo, rfqRequirement, vendorDeviation, justification }) => ({
-          clauseNo, rfqRequirement, vendorDeviation, justification,
+        // The requirements only: the vendor answers them (and enters any deviations) in the new RFQ.
+        compliances: (source.compliances ?? []).map(({ requirement }) => ({
+          requirement, vendorResponse: null, compliant: false, remarks: null,
         })),
         submit: false,
       };

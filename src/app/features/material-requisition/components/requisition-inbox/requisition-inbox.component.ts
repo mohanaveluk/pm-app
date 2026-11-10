@@ -63,7 +63,7 @@ export class RequisitionInboxComponent implements OnInit {
   protected readonly pendingOnly = signal(true);
   protected readonly searchTerm = signal('');
 
-  protected readonly columns = ['edit', 'mrNumber', 'project', 'client', 'ros', 'items', 'submitted', 'status'];
+  protected readonly columns = ['edit', 'mrNumber', 'shortDescription', 'project', 'ros', 'items', 'submitted', 'status'];
   protected readonly skeletonRows = Array.from({ length: 5 });
 
   private readonly reload$ = new Subject<void>();

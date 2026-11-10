@@ -22,6 +22,8 @@ export interface WbsCostCode {
   code: string;
   /** The WBS. */
   projectDetails: string;
+  /** A few words on what the WBS covers. */
+  shortDescription?: string | null;
   /** The project this entry belongs to; its number, name and client are read from it. */
   projectId?: string | null;
   projectCode?: string | null;

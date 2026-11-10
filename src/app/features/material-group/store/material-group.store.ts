@@ -8,8 +8,8 @@ import { MaterialGroupService } from '../services/material-group.service';
 import { MaterialCategoryService } from '../../material-category/services/material-category.service';
 import { MaterialCategoryOption } from '../../material-category/models/material-category.model';
 import {
-  DEFAULT_MATERIAL_GROUP_FILTER, MaterialGroup, MaterialGroupFilter,
-  MaterialGroupSortField, SortDirection,
+  DEFAULT_MATERIAL_GROUP_FILTER, MaterialGroup, MaterialGroupCategoryRow, MaterialGroupFilter,
+  MaterialGroupSortField, MaterialGroupTableRow, MaterialGroupViewMode, SortDirection,
 } from '../models/material-group.model';
 import {
   CreateMaterialGroupRequest, MaterialGroupQueryParams, UpdateMaterialGroupRequest,
@@ -26,6 +26,18 @@ const SEARCH_DEBOUNCE_MS = 350;
  * filter, a cached dropdown of selectable parents, and error messages that
  * account for the parent-must-be-active rules the API enforces.
  */
+const VIEW_MODE_KEY = 'pm_material_group_view_mode';
+/** The category-wise table loads every matching group in one request. */
+const GROUPED_LIMIT = 1000;
+
+function readViewMode(): MaterialGroupViewMode {
+  try {
+    return localStorage.getItem(VIEW_MODE_KEY) === 'categoryTable' ? 'categoryTable' : 'list';
+  } catch {
+    return 'list';
+  }
+}
+
 @Injectable()
 export class MaterialGroupStore {
   private readonly service = inject(MaterialGroupService);
@@ -53,6 +65,63 @@ export class MaterialGroupStore {
   readonly sortBy = signal<MaterialGroupSortField>('displayOrder');
   readonly sortDirection = signal<SortDirection>('asc');
   readonly filter = signal<MaterialGroupFilter>({ ...DEFAULT_MATERIAL_GROUP_FILTER });
+
+  /** Regular table (paged) or material-category-wise (every matching group at once). */
+  readonly viewMode = signal<MaterialGroupViewMode>(readViewMode());
+
+  /**
+   * The material-category-wise table: a heading row per category (in name
+   * order), then its groups by display order and name. Categories without any
+   * group are left out; groups with no category come last.
+   */
+  readonly categoryTableRows = computed<MaterialGroupTableRow[]>(() => {
+    const groups = new Map<string, { head: MaterialGroupCategoryRow; items: MaterialGroup[] }>();
+    for (const g of this.materialGroups()) {
+      const key = g.materialCategoryId || '__none__';
+      let entry = groups.get(key);
+      if (!entry) {
+        const option = this.categoryOptions().find((c) => c.id === g.materialCategoryId);
+        entry = {
+          head: {
+            groupHeader: true,
+            materialCategoryId: g.materialCategoryId || null,
+            categoryCode: g.materialCategoryCode || option?.code || null,
+            categoryName: g.materialCategoryId
+              ? (g.materialCategoryName || option?.name || 'Unknown material category')
+              : 'No Material Category',
+            count: 0,
+            activeCount: 0,
+          },
+          items: [],
+        };
+        groups.set(key, entry);
+      }
+      entry.items.push(g);
+      entry.head.count++;
+      if (g.isActive) entry.head.activeCount++;
+    }
+    return [...groups.values()]
+      .sort((a, b) => {
+        if (!a.head.materialCategoryId !== !b.head.materialCategoryId) return a.head.materialCategoryId ? -1 : 1;
+        return a.head.categoryName.localeCompare(b.head.categoryName);
+      })
+      .flatMap(({ head, items }) => [
+        head,
+        ...items.sort((x, y) => (x.displayOrder - y.displayOrder) || x.name.localeCompare(y.name)),
+      ]);
+  });
+
+  /** Number of category headings in the category-wise table. */
+  readonly categoryCount = computed(() =>
+    this.categoryTableRows().filter((r) => (r as MaterialGroupCategoryRow).groupHeader === true).length);
+
+  setViewMode(mode: MaterialGroupViewMode): void {
+    if (mode === this.viewMode()) return;
+    this.viewMode.set(mode);
+    try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* the choice lasts for this visit */ }
+    this.page.set(0);
+    this.reload$.next();
+  }
 
   readonly isEmpty = computed(
     () => !this.loading() && !this.error() && this.materialGroups().length === 0,
@@ -229,11 +298,13 @@ export class MaterialGroupStore {
     this.error.set(null);
 
     const f = this.filter();
+    // The category-wise table groups every matching group, so it asks for all of them.
+    const grouped = this.viewMode() === 'categoryTable';
     const params: MaterialGroupQueryParams = {
-      page: this.page() + 1,
-      limit: this.pageSize(),
-      sortBy: this.sortBy(),
-      sortOrder: this.sortDirection() === 'asc' ? 'ASC' : 'DESC',
+      page: grouped ? 1 : this.page() + 1,
+      limit: grouped ? GROUPED_LIMIT : this.pageSize(),
+      sortBy: grouped ? 'name' : this.sortBy(),
+      sortOrder: grouped ? 'ASC' : this.sortDirection() === 'asc' ? 'ASC' : 'DESC',
       search: f.search || undefined,
       materialCategoryId: f.materialCategoryId ?? undefined,
       isActive: f.status === 'all' ? undefined : f.status === 'active',

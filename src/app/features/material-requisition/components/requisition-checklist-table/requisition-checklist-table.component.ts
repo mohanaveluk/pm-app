@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { CHECKLIST_CONFIGS, ChecklistKind } from '../../models/requisition-checklist.model';
+import { CHECKLIST_CONFIGS, ChecklistKind, vendorHasAnswered } from '../../models/requisition-checklist.model';
 
 /**
  * Read-only Compliance or Deviation table — on Review & Submit and on the
@@ -23,6 +23,7 @@ import { CHECKLIST_CONFIGS, ChecklistKind } from '../../models/requisition-check
     .yes { color: var(--success); } .no { color: #b26a00; }
     .yes mat-icon, .no mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .muted { color: #8a9bb0; font-style: italic; margin: 0; }
+    .pending { color: #8a9bb0; font-style: italic; font-size: 0.8rem; }
   `],
   template: `
     @let cfg = config();
@@ -46,7 +47,8 @@ import { CHECKLIST_CONFIGS, ChecklistKind } from '../../models/requisition-check
                   @for (col of cfg.columns; track col.key) {
                     @if (col.type === 'check') {
                       <td class="yn">
-                        @if (row[col.key]) { <span class="yes"><mat-icon>check_circle</mat-icon> Yes</span> }
+                        @if (cfg.kind === 'compliance' && !answered(row)) { <span class="pending">Awaiting vendor</span> }
+                        @else if (row[col.key]) { <span class="yes"><mat-icon>check_circle</mat-icon> Yes</span> }
                         @else { <span class="no"><mat-icon>cancel</mat-icon> No</span> }
                       </td>
                     } @else {
@@ -71,5 +73,9 @@ export class RequisitionChecklistTableComponent {
   readonly items = input<ReadonlyArray<object> | null | undefined>([]);
 
   protected readonly config = computed(() => CHECKLIST_CONFIGS[this.kind()]);
+  protected answered(row: Record<string, unknown>): boolean {
+    return vendorHasAnswered(row);
+  }
+
   protected readonly rows = computed(() => (this.items() ?? []) as ReadonlyArray<Record<string, unknown>>);
 }

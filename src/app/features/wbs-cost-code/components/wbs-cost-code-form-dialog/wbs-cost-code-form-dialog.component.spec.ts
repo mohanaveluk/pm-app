@@ -78,11 +78,14 @@ describe('WbsCostCodeFormDialogComponent', () => {
   it('creates with trimmed text, null for blank optional fields and no code', async () => {
     const { cmp, store, dialogRef } = await setup({ mode: 'create' });
 
-    cmp.form.patchValue({ projectId: 'p1', projectDetails: '  Unit 100  ', areaFacility: '  ', workPackage: ' WP-1 ' });
+    cmp.form.patchValue({
+      projectId: 'p1', projectDetails: '  Unit 100  ', shortDescription: '  Civil works ', areaFacility: '  ', workPackage: ' WP-1 ',
+    });
     await cmp.save(false);
 
     expect(store.createWbsCostCode).toHaveBeenCalledWith({
       projectDetails: 'Unit 100',
+      shortDescription: 'Civil works',
       projectId: 'p1',
       areaFacility: null,
       systemSubsystem: null,

@@ -10,6 +10,7 @@ import { WbsCostCodeSortField } from './wbs-cost-code.model';
 export interface CreateWbsCostCodeRequest {
   /** The WBS. */
   projectDetails: string;
+  shortDescription?: string | null;
   /** The project this entry belongs to (an open project). */
   projectId: string;
   areaFacility?: string | null;

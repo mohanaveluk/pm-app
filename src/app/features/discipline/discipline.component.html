@@ -35,6 +35,24 @@
 
     <span class="disc-toolbar__spacer"></span>
 
+    <mat-button-toggle-group
+      class="disc-view-toggle"
+      [value]="store.viewMode()"
+      (change)="store.setViewMode($event.value)"
+      aria-label="View"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="list" matTooltip="List view" aria-label="List view">
+        <mat-icon>view_list</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle value="departmentTable" matTooltip="Department-wise table" aria-label="Department-wise table">
+        <mat-icon>table_chart</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle value="department" matTooltip="Department-wise cards" aria-label="Department-wise cards">
+        <mat-icon>account_tree</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
     <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
       <mat-icon>view_column</mat-icon>
     </button>
@@ -69,6 +87,22 @@
           <mat-icon>close</mat-icon>
         </button>
       }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="disc-filters__department">
+      <mat-label>Department</mat-label>
+      <mat-select [value]="store.filter().departmentId" (selectionChange)="onDepartmentFilterChange($event.value)"
+        (openedChange)="!$event && departmentSearch.set('')">
+        <mat-option>
+          <input class="select-search" type="text" placeholder="Search departments…" aria-label="Search departments"
+            [value]="departmentSearch()" (input)="departmentSearch.set($any($event.target).value)"
+            (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" />
+        </mat-option>
+        <mat-option [value]="null">All departments</mat-option>
+        @for (d of visibleDepartments(); track d.id) {
+          <mat-option [value]="d.id">{{ d.name }}</mat-option>
+        }
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="disc-filters__status">
@@ -111,12 +145,59 @@
           </button>
         }
       </div>
+    } @else if (store.viewMode() === 'department') {
+      <!-- Department-wise: each department with the disciplines filed under it. -->
+      <div class="disc-groups">
+        @for (g of store.departmentGroups(); track g.departmentId ?? 'none') {
+          <section class="disc-group" [class.disc-group--empty]="!g.disciplines.length">
+            <header class="disc-group__head">
+              <mat-icon class="disc-group__icon">{{ g.departmentId ? 'apartment' : 'help_outline' }}</mat-icon>
+              <div class="disc-group__title">
+                @if (g.departmentCode) { <span class="disc-group__code">{{ g.departmentCode }}</span> }
+                <h3>{{ g.departmentName }}</h3>
+              </div>
+              <span class="disc-group__count">
+                {{ g.disciplines.length }} discipline{{ g.disciplines.length === 1 ? '' : 's' }}
+                @if (g.disciplines.length && g.activeCount !== g.disciplines.length) { · {{ g.activeCount }} active }
+              </span>
+            </header>
+
+            @if (g.disciplines.length) {
+              <ul class="disc-group__list">
+                @for (d of g.disciplines; track d.id) {
+                  <li class="disc-group__item" [class.disc-group__item--inactive]="!d.isActive">
+                    <button type="button" class="disc-group__main" (click)="openViewDialog(d, $event)"
+                      [attr.aria-label]="'View ' + d.name">
+                      <span class="disc-group__dcode">{{ d.code }}</span>
+                      <span class="disc-group__name">{{ d.name }}</span>
+                      @if (!d.isActive) { <span class="status-chip status-chip--inactive disc-group__chip">Inactive</span> }
+                    </button>
+                    @if (can(PERMISSIONS.DISCIPLINES_UPDATE)) {
+                      <button mat-icon-button type="button" (click)="openEditDialog(d, $event)" matTooltip="Edit"
+                        [attr.aria-label]="'Edit ' + d.name">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="disc-group__none">No disciplines in this department yet.</p>
+            }
+          </section>
+        }
+      </div>
+      <p class="disc-groups__total">
+        {{ store.totalCount() }} discipline{{ store.totalCount() === 1 ? '' : 's' }} across
+        {{ store.departmentGroups().length }} department{{ store.departmentGroups().length === 1 ? '' : 's' }}
+      </p>
     } @else {
       <div class="disc-table-scroll">
         <table
           mat-table
-          [dataSource]="store.disciplines()"
+          [dataSource]="tableRows()"
           matSort
+          [matSortDisabled]="store.viewMode() !== 'list'"
           [matSortActive]="store.sortBy()"
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
@@ -219,11 +300,31 @@
             </td>
           </ng-container>
 
+          <!-- Department heading row (department-wise table) -->
+          <ng-container matColumnDef="groupHeader">
+            <td mat-cell *matCellDef="let g" class="disc-group-row__cell" [attr.colspan]="displayedColumns().length">
+              <mat-icon class="disc-group-row__icon">{{ g.departmentId ? 'apartment' : 'help_outline' }}</mat-icon>
+              @if (g.departmentCode) { <span class="disc-group-row__code">{{ g.departmentCode }}</span> }
+              <span class="disc-group-row__name">{{ g.departmentName }}</span>
+              <span class="disc-group-row__count">
+                {{ g.count }} discipline{{ g.count === 1 ? '' : 's' }}
+                @if (g.activeCount !== g.count) { · {{ g.activeCount }} active }
+              </span>
+            </td>
+          </ng-container>
+
           <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['groupHeader']; when: isGroupRow" class="disc-group-row"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="disc-row"></tr>
         </table>
       </div>
 
+      @if (store.viewMode() === 'departmentTable') {
+        <p class="disc-groups__total">
+          {{ store.totalCount() }} discipline{{ store.totalCount() === 1 ? '' : 's' }} across
+          {{ tableRows().length - store.totalCount() }} department{{ tableRows().length - store.totalCount() === 1 ? '' : 's' }}
+        </p>
+      } @else {
       <mat-paginator
         class="disc-paginator"
         [length]="store.totalCount()"
@@ -233,6 +334,7 @@
         showFirstLastButtons
         (page)="onPageChange($event)"
       ></mat-paginator>
+      }
     }
   </div>
 </div>

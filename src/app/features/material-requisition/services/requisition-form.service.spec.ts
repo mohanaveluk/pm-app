@@ -373,7 +373,7 @@ describe('RequisitionFormService', () => {
       expect(s.toRequest(false).items?.[0]?.requestedQty).toBe(20);
     });
 
-    it('carries the compliance and deviation items over, in Sr# order', () => {
+    it('carries the compliance requirements over in Sr# order, without the old vendor answers or deviations', () => {
       const s = setup();
       s.importFrom(source({
         compliances: [
@@ -383,8 +383,12 @@ describe('RequisitionFormService', () => {
         deviations: [{ id: 'd1', sequence: 1, clauseNo: '4.2', rfqRequirement: 'R', vendorDeviation: true, justification: null }],
       }));
       const req = s.toRequest(false);
-      expect(req.compliances?.map((c) => c.requirement)).toEqual(['A', 'B']);
-      expect(req.deviations).toEqual([{ clauseNo: '4.2', rfqRequirement: 'R', vendorDeviation: true, justification: null }]);
+      expect(req.compliances).toEqual([
+        { requirement: 'A', vendorResponse: null, compliant: false, remarks: null },
+        { requirement: 'B', vendorResponse: null, compliant: false, remarks: null },
+      ]);
+      expect(req.deviations).toBeUndefined();
+      expect(s.deviations()).toEqual([]);
     });
 
     it('leaves out reviewers / approvers who can no longer be assigned, and names them', () => {

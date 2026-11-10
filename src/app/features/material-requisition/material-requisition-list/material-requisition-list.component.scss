@@ -89,26 +89,6 @@ table[mat-table] {
   }
 }
 
-// Requisition list only: a full grid — a vertical line between columns as well
-// as the horizontal line between rows (the review / approval inboxes share this
-// stylesheet and keep row lines only).
-table.pl-grid-table {
-  th.mat-mdc-header-cell,
-  td.mat-mdc-cell {
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-
-    &:last-child { border-right: 0; }
-  }
-
-  th.mat-mdc-header-cell {
-    background: #f7f9fc;
-    font-weight: 600;
-  }
-
-  tr:last-child td.mat-mdc-cell { border-bottom: 0; }
-}
-
 .pl-row {
   transition: background var(--ease);
   &:hover { background: rgba(25, 118, 210, 0.05); }

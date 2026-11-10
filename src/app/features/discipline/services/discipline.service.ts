@@ -19,6 +19,7 @@ export class DisciplineService {
 
     if (params.search) httpParams = httpParams.set('search', params.search);
     if (params.organizationId) httpParams = httpParams.set('organizationId', params.organizationId);
+    if (params.departmentId) httpParams = httpParams.set('departmentId', params.departmentId);
     if (params.isActive !== undefined) httpParams = httpParams.set('isActive', params.isActive);
     if (params.createdFrom) httpParams = httpParams.set('createdFrom', params.createdFrom);
     if (params.createdTo) httpParams = httpParams.set('createdTo', params.createdTo);

@@ -15,13 +15,16 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { PermissionService } from '../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../core/rbac/permissions.const';
 import { MaterialGroupStore } from './store/material-group.store';
-import { MaterialGroup, MaterialGroupSortField } from './models/material-group.model';
+import {
+  MaterialGroup, MaterialGroupCategoryRow, MaterialGroupSortField, MaterialGroupTableRow,
+} from './models/material-group.model';
 import {
   MaterialGroupFormDialogComponent, MaterialGroupFormDialogData, MaterialGroupFormDialogResult,
 } from './components/material-group-form-dialog/material-group-form-dialog.component';
@@ -60,6 +63,9 @@ const COLUMN_DEFS: ColumnDef[] = [
 
 const DEFAULT_HIDDEN_COLUMNS = new Set(['description', 'createdBy', 'updatedAt']);
 
+const isCategoryRow = (row: MaterialGroupTableRow): row is MaterialGroupCategoryRow =>
+  (row as MaterialGroupCategoryRow).groupHeader === true;
+
 @Component({
   selector: 'app-material-group',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,7 +73,7 @@ const DEFAULT_HIDDEN_COLUMNS = new Set(['description', 'createdBy', 'updatedAt']
   imports: [
     CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule,
-    MatChipsModule, MatProgressSpinnerModule, MatCheckboxModule, MatDividerModule,
+    MatChipsModule, MatProgressSpinnerModule, MatCheckboxModule, MatDividerModule, MatButtonToggleModule,
   ],
   templateUrl: './material-group.component.html',
   styleUrl: './material-group.component.scss',
@@ -98,9 +104,16 @@ export class MaterialGroupComponent {
     return this.permissionService.hasPermission(permission);
   }
 
-  trackByGroupId(_index: number, group: MaterialGroup): string {
-    return group.id;
+  trackByGroupId(_index: number, row: MaterialGroupTableRow): string {
+    return isCategoryRow(row) ? `category:${row.materialCategoryId ?? 'none'}` : row.id;
   }
+
+  /** The table's rows: one page in the regular view, every group under its category heading otherwise. */
+  protected readonly tableRows = computed<MaterialGroupTableRow[]>(() =>
+    this.store.viewMode() === 'categoryTable' ? this.store.categoryTableRows() : this.store.materialGroups());
+
+  /** Picks the category heading row template (mat-table `when`). */
+  protected readonly isCategoryRow = (_index: number, row: MaterialGroupTableRow): boolean => isCategoryRow(row);
 
   // ── Search / filter / sort / paging ────────────────────────────────
 

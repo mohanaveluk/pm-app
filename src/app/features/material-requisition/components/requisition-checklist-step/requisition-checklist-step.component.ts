@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RequisitionFormService } from '../../services/requisition-form.service';
 import {
-  CHECKLIST_CONFIGS, ChecklistColumn, ChecklistKind, ChecklistRow, checklistRowErrors,
+  CHECKLIST_CONFIGS, ChecklistColumn, ChecklistKind, ChecklistRow, checklistRowErrors, vendorHasAnswered,
 } from '../../models/requisition-checklist.model';
 
 /**
@@ -56,7 +56,12 @@ export class RequisitionChecklistStepComponent {
   });
 
   protected readonly addHint = computed(() =>
-    this.canAdd() ? '' : 'Complete the last row before adding another');
+    this.canAdd() || this.config().vendorOnly ? '' : 'Complete the last row before adding another');
+
+  /** Whether the vendor has answered this row yet (compliance). */
+  protected vendorAnswered(row: ChecklistRow): boolean {
+    return this.config().vendorOnly || vendorHasAnswered(row.values);
+  }
 
   protected textValue(row: ChecklistRow, col: ChecklistColumn): string {
     return String(row.values[col.key] ?? '');
