@@ -1,0 +1,53 @@
+<section class="step-section">
+  <!-- Reviewers, then approvers (internal users only) -->
+  <p class="info-note">
+    <mat-icon>info</mat-icon>
+    Any one reviewer's review is enough — then the approvers are asked, and any one approver's approval is
+    enough. Internal users only; the same person can be both a reviewer and an approver. Reviewers can be
+    changed until it is reviewed, approvers until it is approved.
+  </p>
+  @if (form.userOptionsError()) {
+    <div class="step-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ form.userOptionsError() }}</span>
+      <button mat-button type="button" (click)="form.loadUserOptions()">Retry</button>
+    </div>
+  }
+
+  <h3 class="step-section__title participants-heading">
+    <mat-icon>rate_review</mat-icon> Reviewers
+  </h3>
+  <div class="participants-block">
+    <app-requisition-user-picker
+      label="Reviewers"
+      placeholder="Select one or more reviewers"
+      stepPrefix="R"
+      tone="reviewer"
+      [options]="form.allUserOptions()"
+      [selectedIds]="reviewerIds()"
+      (selectedIdsChange)="form.setParticipants('reviewerIds', $event)"
+      [locked]="form.reviewersLocked()"
+      [lockedReason]="form.reviewersLocked() ? 'Locked — it has been reviewed, or only the requester can change it' : null"
+      [loading]="form.userOptionsLoading()"
+    />
+  </div>
+
+  <h3 class="step-section__title participants-heading">
+    <mat-icon>verified_user</mat-icon> Approvers
+  </h3>
+  <div class="participants-block">
+    <app-requisition-user-picker
+      label="Approvers"
+      placeholder="Select one or more approvers"
+      stepPrefix="A"
+      tone="approver"
+      [options]="form.allUserOptions()"
+      [selectedIds]="approverIds()"
+      (selectedIdsChange)="form.setParticipants('approverIds', $event)"
+      [locked]="form.approversLocked()"
+      [lockedReason]="form.approversLocked() ? 'Locked — it has been approved, or only the requester can change it' : null"
+      [loading]="form.userOptionsLoading()"
+    />
+  </div>
+
+</section>

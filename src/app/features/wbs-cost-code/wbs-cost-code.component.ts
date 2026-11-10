@@ -45,7 +45,7 @@ const COLUMN_DEFS: ColumnDef[] = [
   { key: 'code', label: 'Code', sortField: 'code' },
   { key: 'projectDetails', label: 'WBS Name', alwaysVisible: true, sortField: 'projectDetails' },
   { key: 'project', label: 'Project', sortField: 'project' },
-  { key: 'client', label: 'Client' },
+  { key: 'shortDescription', label: 'Short Description' },
   { key: 'areaFacility', label: 'Area / Facility', sortField: 'areaFacility' },
   { key: 'systemSubsystem', label: 'System / Sub-system', sortField: 'systemSubsystem' },
   { key: 'discipline', label: 'Discipline', sortField: 'discipline' },
@@ -200,15 +200,15 @@ export class WbsCostCodeComponent {
       return;
     }
     const header = [
-      'Code', 'WBS', 'Project No.', 'Project', 'Client', 'Area / Facility',
+      'Code', 'WBS', 'Short Description', 'Project No.', 'Project', 'Area / Facility',
       'System / Sub-system', 'Discipline', 'Department', 'Work Package', 'Activities', 'Status', 'Created By', 'Created At', 'Updated By', 'Updated At',
     ];
     const lines = rows.map((w) => [
       w.code,
       w.projectDetails,
+      w.shortDescription ?? '',
       w.projectCode ?? '',
       w.projectName ?? '',
-      w.clientName ?? '',
       w.areaFacility ?? '',
       w.systemSubsystem ?? '',
       w.disciplineName ?? '',

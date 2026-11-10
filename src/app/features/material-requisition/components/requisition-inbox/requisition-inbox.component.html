@@ -98,9 +98,11 @@
             <th mat-header-cell *matHeaderCellDef>Project</th>
             <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="projectText(r)">{{ projectText(r) }}</td>
           </ng-container>
-          <ng-container matColumnDef="client">
-            <th mat-header-cell *matHeaderCellDef>Client</th>
-            <td mat-cell *matCellDef="let r" class="pl-cell--truncate">{{ r.clientName || '—' }}</td>
+          <ng-container matColumnDef="shortDescription">
+            <th mat-header-cell *matHeaderCellDef>Short Item Description</th>
+            <td mat-cell *matCellDef="let r" class="pl-cell--truncate" [matTooltip]="r.shortDescription || ''">
+              {{ r.shortDescription || '—' }}
+            </td>
           </ng-container>
           <ng-container matColumnDef="ros">
             <th mat-header-cell *matHeaderCellDef>Required on Site</th>
@@ -139,6 +141,7 @@
             <div class="pl-card__head">
               <div>
                 <div class="pl-code">{{ r.mrNumber }}</div>
+                @if (r.shortDescription) { <div class="pl-card__desc">{{ r.shortDescription }}</div> }
                 <div class="pl-card__desc">{{ projectText(r) }}</div>
               </div>
               <mat-chip [class]="statusClass(r.status)">{{ statusLabel(r.status) }}</mat-chip>

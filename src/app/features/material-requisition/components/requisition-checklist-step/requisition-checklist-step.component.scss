@@ -130,3 +130,51 @@ td.chk-check-col { padding-top: 6px; }
 }
 
 .chk-muted { color: #8a9bb0; font-size: 0.82rem; }
+
+// ── The vendor's columns (filled in the RFQ, read-only here) ─────────
+.chk-vendor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #fff3e0;
+  color: #b26a00;
+  font-size: 0.76rem;
+  font-weight: 600;
+
+  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+}
+
+.chk-vendor-col { background: #fafbfd; }
+th.chk-vendor-col { background: #f1f4f9; }
+
+.chk-vendor-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: -2px;
+  color: #b26a00;
+}
+
+td.chk-readonly {
+  padding-top: 14px;
+  color: #33475b;
+  white-space: pre-line;
+}
+
+.chk-awaiting { color: #8a9bb0; font-style: italic; font-size: 0.82rem; }
+
+.chk-yes, .chk-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.82rem;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.chk-yes { color: var(--success); }
+.chk-no { color: #b26a00; }

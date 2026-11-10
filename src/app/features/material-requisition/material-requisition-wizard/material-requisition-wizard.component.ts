@@ -22,6 +22,8 @@ import { HasUnsavedRequisitionChanges } from '../guards/unsaved-requisition.guar
 import { RequisitionHeaderStepComponent } from '../components/requisition-header-step/requisition-header-step.component';
 import { RequisitionMaterialsStepComponent } from '../components/requisition-materials-step/requisition-materials-step.component';
 import { RequisitionChecklistStepComponent } from '../components/requisition-checklist-step/requisition-checklist-step.component';
+import { RequisitionDocumentsStepComponent } from '../components/requisition-documents-step/requisition-documents-step.component';
+import { RequisitionParticipantsStepComponent } from '../components/requisition-participants-step/requisition-participants-step.component';
 import { RequisitionSummaryStepComponent } from '../components/requisition-summary-step/requisition-summary-step.component';
 
 /**
@@ -39,6 +41,7 @@ import { RequisitionSummaryStepComponent } from '../components/requisition-summa
     CommonModule, MatStepperModule, MatButtonModule, MatIconModule, MatChipsModule,
     MatTooltipModule, MatProgressSpinnerModule, RequisitionHeaderStepComponent,
     RequisitionMaterialsStepComponent, RequisitionSummaryStepComponent, RequisitionChecklistStepComponent,
+    RequisitionDocumentsStepComponent, RequisitionParticipantsStepComponent,
   ],
   templateUrl: './material-requisition-wizard.component.html',
   styleUrls: ['../components/requisition-step.shared.scss', './material-requisition-wizard.component.scss'],
@@ -207,12 +210,12 @@ export class MaterialRequisitionWizardComponent implements OnInit, HasUnsavedReq
       }
       if (this.form.lineCount() === 0) return 'Select at least one material and enter its quantity.';
     }
-    // Compliance (2) and Deviation (3): every row must be complete before moving on.
-    const kind = fromIndex === 2 ? 'compliance' : fromIndex === 3 ? 'deviation' : null;
-    if (kind) {
-      const issues = this.form.checklistIssues(kind);
+    // Compliance (2): every row needs its requirement before moving on.
+    // Deviation (3) is the vendor's and read-only here.
+    if (fromIndex === 2) {
+      const issues = this.form.checklistIssues('compliance');
       if (issues.length) {
-        this.form.markChecklistAttempted(kind);
+        this.form.markChecklistAttempted('compliance');
         return issues[0];
       }
     }

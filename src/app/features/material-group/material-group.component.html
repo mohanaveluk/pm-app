@@ -36,6 +36,21 @@
 
     <span class="mg-toolbar__spacer"></span>
 
+    <mat-button-toggle-group
+      class="mg-view-toggle"
+      [value]="store.viewMode()"
+      (change)="store.setViewMode($event.value)"
+      aria-label="View"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="list" matTooltip="Table view" aria-label="Table view">
+        <mat-icon>view_list</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle value="categoryTable" matTooltip="Material Category-wise table" aria-label="Material Category-wise table">
+        <mat-icon>table_chart</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
     <button mat-icon-button [matMenuTriggerFor]="columnMenu" matTooltip="Column Settings">
       <mat-icon>view_column</mat-icon>
     </button>
@@ -171,8 +186,9 @@
       <div class="mg-table-scroll">
         <table
           mat-table
-          [dataSource]="store.materialGroups()"
+          [dataSource]="tableRows()"
           matSort
+          [matSortDisabled]="store.viewMode() !== 'list'"
           [matSortActive]="store.sortBy()"
           [matSortDirection]="store.sortDirection()"
           (matSortChange)="onSortChange($event)"
@@ -305,7 +321,20 @@
             </td>
           </ng-container>
 
+          <!-- Material category heading row (category-wise table) -->
+          <ng-container matColumnDef="categoryHeader">
+            <td mat-cell *matCellDef="let c" class="mg-category-row__cell" [attr.colspan]="displayedColumns().length">
+              <mat-icon class="mg-category-row__icon">{{ c.materialCategoryId ? 'category' : 'help_outline' }}</mat-icon>
+              @if (c.categoryCode) { <span class="mg-category-row__code">{{ c.categoryCode }}</span> }
+              <span class="mg-category-row__name">{{ c.categoryName }}</span>
+              <span class="mg-category-row__count">
+                {{ c.count }} group{{ c.count === 1 ? '' : 's' }} · {{ c.activeCount }} active
+              </span>
+            </td>
+          </ng-container>
+
           <tr mat-header-row *matHeaderRowDef="displayedColumns(); sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['categoryHeader']; when: isCategoryRow" class="mg-category-row"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns();" class="mg-row"></tr>
         </table>
       </div>
@@ -369,15 +398,22 @@
         }
       </div>
 
-      <mat-paginator
-        class="mg-paginator"
-        [length]="store.totalCount()"
-        [pageIndex]="store.page()"
-        [pageSize]="store.pageSize()"
-        [pageSizeOptions]="[10, 20, 50, 100]"
-        showFirstLastButtons
-        (page)="onPageChange($event)"
-      ></mat-paginator>
+      @if (store.viewMode() === 'categoryTable') {
+        <p class="mg-groups__total">
+          {{ store.totalCount() }} group{{ store.totalCount() === 1 ? '' : 's' }} across
+          {{ store.categoryCount() }} material categor{{ store.categoryCount() === 1 ? 'y' : 'ies' }}
+        </p>
+      } @else {
+        <mat-paginator
+          class="mg-paginator"
+          [length]="store.totalCount()"
+          [pageIndex]="store.page()"
+          [pageSize]="store.pageSize()"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          showFirstLastButtons
+          (page)="onPageChange($event)"
+        ></mat-paginator>
+      }
     }
   </div>
 </div>

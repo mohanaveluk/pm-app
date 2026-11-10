@@ -15,13 +15,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import { PermissionService } from '../../core/rbac/permission.service';
 import { PERMISSIONS } from '../../core/rbac/permissions.const';
 import { DisciplineStore } from './store/discipline.store';
-import { Discipline, DisciplineSortField } from './models/discipline.model';
+import { Discipline, DisciplineSortField, DisciplineGroupRow, DisciplineTableRow } from './models/discipline.model';
 import { DisciplineFormDialogComponent, DisciplineFormDialogData, DisciplineFormDialogResult } from './components/discipline-form-dialog/discipline-form-dialog.component';
 import { DisciplineViewDialogComponent, DisciplineViewDialogData } from './components/discipline-view-dialog/discipline-view-dialog.component';
 import { DisciplineDeleteDialogComponent, DisciplineDeleteDialogData } from './components/discipline-delete-dialog/discipline-delete-dialog.component';
@@ -48,6 +49,9 @@ const COLUMN_DEFS: ColumnDef[] = [
 
 const DEFAULT_HIDDEN_COLUMNS = new Set(['description', 'Organization']);
 
+const isGroupRow = (row: DisciplineTableRow): row is DisciplineGroupRow =>
+  (row as DisciplineGroupRow).groupHeader === true;
+
 @Component({
   selector: 'app-discipline',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,7 +59,7 @@ const DEFAULT_HIDDEN_COLUMNS = new Set(['description', 'Organization']);
   imports: [
     CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatMenuModule, MatTooltipModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatSortModule, MatPaginatorModule,
-    MatChipsModule, MatProgressSpinnerModule, MatCheckboxModule, MatDividerModule,
+    MatChipsModule, MatProgressSpinnerModule, MatCheckboxModule, MatDividerModule, MatButtonToggleModule,
   ],
   templateUrl: './discipline.component.html',
   styleUrl: './discipline.component.scss',
@@ -83,9 +87,16 @@ export class DisciplineComponent {
     return this.permissionService.hasPermission(permission);
   }
 
-  trackByDisciplineId(_index: number, discipline: Discipline): string {
-    return discipline.id;
+  trackByDisciplineId(_index: number, row: DisciplineTableRow): string {
+    return isGroupRow(row) ? `group:${row.departmentId ?? 'none'}` : row.id;
   }
+
+  /** The table's rows: one page in the list view, every discipline under its department heading otherwise. */
+  protected readonly tableRows = computed<DisciplineTableRow[]>(() =>
+    this.store.viewMode() === 'departmentTable' ? this.store.departmentTableRows() : this.store.disciplines());
+
+  /** Picks the department heading row template (mat-table `when`). */
+  protected readonly isGroupRow = (_index: number, row: DisciplineTableRow): boolean => isGroupRow(row);
 
   onSearchInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
@@ -106,10 +117,26 @@ export class DisciplineComponent {
     this.store.setFilter({ status });
   }
 
+  /** The search box is the dropdown's first option; picking it changes nothing. */
+  onDepartmentFilterChange(departmentId: string | null | undefined): void {
+    if (departmentId === undefined) return;
+    this.store.setFilter({ departmentId });
+  }
+
   resetFilters(): void {
     this.searchTerm.set('');
+    this.departmentSearch.set('');
     this.store.resetFilters();
   }
+
+  /** Search inside the Department filter; the chosen department always stays listed. */
+  protected readonly departmentSearch = signal('');
+  protected readonly visibleDepartments = computed(() => {
+    const term = this.departmentSearch().trim().toLowerCase();
+    const chosen = this.store.filter().departmentId;
+    return this.store.departments().filter((d) =>
+      !term || d.id === chosen || d.name.toLowerCase().includes(term) || (d.code ?? '').toLowerCase().includes(term));
+  });
 
   onSortChange(sort: Sort): void {
     if (!sort.direction) {

@@ -216,23 +216,53 @@ button mat-spinner {
   }
 }
 
-// as the horizontal line between rows (the review / approval inboxes share this
-// stylesheet and keep row lines only).
+// ── Data tables: a full 1px black grid on every mat-table ──────────────
+// Border around the table and around every header / body cell. Separate
+// borders (not collapsed) so the rounded corners show the border too: each
+// cell draws only its right and bottom edge, the table draws the outer frame,
+// and the corner cells take the table's radius so their background stays
+// inside the curve. Applies to every mat-table; .pl-grid-table is kept as an
+// alias for templates that already use it.
+$table-grid-color: #000;
+$table-grid-radius: var(--r-md, 8px);
+
+table.mat-mdc-table,
 table.pl-grid-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid $table-grid-color;
+  border-radius: $table-grid-radius;
+  // Material's own row line would draw a second line under each row.
+  --mat-table-row-item-outline-color: transparent;
+
   th.mat-mdc-header-cell,
-  td.mat-mdc-cell {
-    border-bottom: 2px solid var(--border);
-    border-right: 2px solid var(--border);
+  td.mat-mdc-cell,
+  td.mat-mdc-footer-cell {
+    border-right: 1px solid $table-grid-color;
+    border-bottom: 1px solid $table-grid-color;
 
     &:last-child { border-right: 0; }
   }
 
+  // Headers are centred whatever the column holds (text, numbers, yes/no).
   th.mat-mdc-header-cell {
     background: #f7f9fc;
     font-weight: 600;
+    text-align: center;
+
+    // Sortable headers are a flex row (label + arrow): centre that too.
+    .mat-sort-header-container { justify-content: center; }
+    .mat-sort-header-content { text-align: center; }
   }
 
-  tr:last-child td.mat-mdc-cell { border-bottom: 0; }
+  // The table's outer border closes the last row.
+  tbody tr:last-child td.mat-mdc-cell { border-bottom: 0; }
+
+  // Corner cells follow the rounded frame.
+  thead tr:first-child th:first-child { border-top-left-radius: $table-grid-radius; }
+  thead tr:first-child th:last-child { border-top-right-radius: $table-grid-radius; }
+  tbody tr:last-child td:first-child { border-bottom-left-radius: $table-grid-radius; }
+  tbody tr:last-child td:last-child { border-bottom-right-radius: $table-grid-radius; }
 }
 
 @keyframes upm-drawer-in {

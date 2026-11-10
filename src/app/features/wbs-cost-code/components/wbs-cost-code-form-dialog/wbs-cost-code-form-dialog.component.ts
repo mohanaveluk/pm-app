@@ -28,6 +28,7 @@ export type WbsCostCodeFormDialogResult =
 /** Values `prefill()` accepts — used by "Duplicate". */
 export interface WbsCostCodePrefill {
   projectDetails: string;
+  shortDescription: string;
   projectId: string;
   areaFacility: string;
   systemSubsystem: string;
@@ -124,6 +125,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
     projectId: ['', [Validators.required]],
     // `\S` rejects a value that is only whitespace, which `required` lets through.
     projectDetails: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
+    shortDescription: ['', [Validators.maxLength(255)]],
     areaFacility: ['', [Validators.maxLength(255)]],
     systemSubsystem: ['', [Validators.maxLength(255)]],
     // '' means "no discipline" — mapped to null on save.
@@ -174,6 +176,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
         code: record.code,
         projectId: record.projectId ?? '',
         projectDetails: record.projectDetails,
+        shortDescription: record.shortDescription ?? '',
         areaFacility: record.areaFacility ?? '',
         systemSubsystem: record.systemSubsystem ?? '',
         disciplineId: record.disciplineId ?? '',
@@ -199,6 +202,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
     // null (not undefined) for blanks: on update that is what clears a value.
     const payload = {
       projectDetails: v.projectDetails.trim(),
+      shortDescription: v.shortDescription.trim() || null,
       projectId: v.projectId,
       areaFacility: v.areaFacility.trim() || null,
       systemSubsystem: v.systemSubsystem.trim() || null,
@@ -243,6 +247,7 @@ export class WbsCostCodeFormDialogComponent implements OnInit {
       code: '',
       projectId: '',
       projectDetails: '',
+      shortDescription: '',
       areaFacility: '',
       systemSubsystem: '',
       disciplineId: '',

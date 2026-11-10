@@ -32,11 +32,41 @@ export interface Discipline {
 }
 
 export type DisciplineSortField = 'code' | 'name' | 'displayOrder' | 'createdAt' | 'updatedAt';
+
+/**
+ * list            — the table, paged
+ * departmentTable — the same table, rows grouped under a heading row per department
+ * department      — a card per department
+ */
+export type DisciplineViewMode = 'list' | 'departmentTable' | 'department';
+
+/** A heading row of the department-wise table. */
+export interface DisciplineGroupRow {
+  groupHeader: true;
+  departmentId: string | null;
+  departmentName: string;
+  departmentCode: string | null;
+  count: number;
+  activeCount: number;
+}
+
+export type DisciplineTableRow = Discipline | DisciplineGroupRow;
+
+/** One department and its disciplines, for the department-wise view. */
+export interface DisciplineDepartmentGroup {
+  /** null for disciplines filed under no department. */
+  departmentId: string | null;
+  departmentName: string;
+  departmentCode: string | null;
+  disciplines: Discipline[];
+  activeCount: number;
+}
 export type SortDirection = 'asc' | 'desc';
 
 export interface DisciplineFilter {
   search: string;
   organizationId: string | null;
+  departmentId: string | null;
   status: 'all' | 'active' | 'inactive';
   createdFrom: Date | null;
   createdTo: Date | null;
@@ -47,6 +77,7 @@ export interface DisciplineFilter {
 export const DEFAULT_DISCIPLINE_FILTER: DisciplineFilter = {
   search: '',
   organizationId: null,
+  departmentId: null,
   status: 'all',
   createdFrom: null,
   createdTo: null,

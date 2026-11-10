@@ -22,15 +22,17 @@ import {
 import { CreateMaterialRequisitionRequest } from '../models/material-requisition-request.model';
 import {
   CHECKLIST_CONFIGS, COMPLIANCE_CONFIG, ChecklistKind, ChecklistRow, DEVIATION_CONFIG, checklistIssues,
-  checklistRowErrors, checklistRowFrom, emptyChecklistRow, toComplianceRequest, toDeviationRequest,
+  checklistRowErrors, checklistRowFrom, emptyChecklistRow, toComplianceRequest,
 } from '../models/requisition-checklist.model';
 
 /** The wizard steps, in order. */
 export const REQUISITION_STEPS = [
-  { key: 'header', label: 'Header', title: 'Header & Documents' },
-  { key: 'materials', label: 'Material Source & Selection', title: 'Select Materials' },
+  { key: 'header', label: 'Header', title: 'Header' },
+  { key: 'materials', label: 'Material Selection', title: 'Material Selection' },
   { key: 'compliance', label: 'Compliance', title: 'Compliance' },
   { key: 'deviation', label: 'Deviation', title: 'Deviation' },
+  { key: 'documents', label: 'Supporting Documents', title: 'Supporting Documents' },
+  { key: 'participants', label: 'Reviewers & Approvers', title: 'Reviewers & Approvers' },
   { key: 'review', label: 'Review & Submit', title: 'Review & Submit' },
 ] as const;
 
@@ -479,6 +481,7 @@ export class RequisitionFormService {
 
   /** A new row can be added when there is none yet or the last one is valid. */
   canAddChecklistRow(kind: ChecklistKind): boolean {
+    if (CHECKLIST_CONFIGS[kind].vendorOnly) return false;
     const rows = this.checklistRows(kind)();
     const last = rows[rows.length - 1];
     return !last || Object.keys(checklistRowErrors(CHECKLIST_CONFIGS[kind], last)).length === 0;
@@ -536,7 +539,7 @@ export class RequisitionFormService {
     } else if (this.lineCount() === 0) {
       issues.push('Enter a quantity for at least one material.');
     }
-    issues.push(...this.checklistIssues('compliance'), ...this.checklistIssues('deviation'));
+    issues.push(...this.checklistIssues('compliance'));
     return issues;
   }
 
@@ -561,7 +564,6 @@ export class RequisitionFormService {
       budgetHead: n(v.budgetHead),
       shortDescription: n(v.shortDescription),
       compliances: toComplianceRequest(this.compliances()),
-      deviations: toDeviationRequest(this.deviations()),
       requiredOnSiteDate: toIsoDate(v.requiredOnSiteDate) || null,
       mrNumber: n(v.mrNumber),
       mtoReference: n(v.mtoReference),
@@ -736,6 +738,13 @@ export class RequisitionFormService {
       }
       this.assignedUsers.set([]);
     }
+
+    // The vendor's side (compliance answers, deviations) belongs to the old
+    // requisition's RFQ — the new one starts with the requirements only.
+    this.compliances.update((rows) => rows.map((r) => ({
+      ...r, values: { ...r.values, vendorResponse: '', compliant: false, remarks: '' },
+    })));
+    this.deviations.set([]);
 
     // Each line remembers the requisition it was copied from.
     const lines = new Map<string, RequisitionLine>();

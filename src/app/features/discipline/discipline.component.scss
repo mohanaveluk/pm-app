@@ -60,6 +60,25 @@
   &__status {
     width: 180px;
   }
+
+  &__department {
+    width: 240px;
+  }
+}
+
+// Search box inside the Department filter (rendered in the overlay, keeps this component's styles).
+.select-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: 0.86rem;
+  background: var(--card);
+  color: inherit;
+
+  &:focus { outline: none; border-color: var(--primary); }
 }
 
 .disc-table-card {
@@ -163,4 +182,176 @@ table[mat-table] {
     max-height: none;
     overflow: visible;
   }
+}
+
+// ── View toggle and the department-wise view ─────────────────────────
+.disc-view-toggle {
+  margin-right: 4px;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.disc-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  padding: 14px;
+}
+
+.disc-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  overflow: hidden;
+
+  &--empty { opacity: 0.75; }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--border);
+  }
+
+  &__icon { color: var(--primary); }
+
+  &__title {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__code {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--primary);
+  }
+
+  &__count {
+    flex-shrink: 0;
+    padding: 2px 9px;
+    border-radius: 12px;
+    background: #e3f0fd;
+    color: var(--primary);
+    font-size: 0.74rem;
+    font-weight: 600;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    padding: 0 4px 0 0;
+
+    &:hover { background: rgba(25, 118, 210, 0.05); }
+    &--inactive .disc-group__name { color: #8a9bb0; }
+  }
+
+  &__main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+  }
+
+  &__dcode {
+    flex-shrink: 0;
+    min-width: 44px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #5a7a9e;
+  }
+
+  &__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__chip { margin-left: auto; font-size: 0.7rem; padding: 1px 8px; border-radius: 10px; }
+
+  &__none {
+    margin: 0;
+    padding: 14px 12px;
+    color: #8a9bb0;
+    font-style: italic;
+    font-size: 0.86rem;
+  }
+}
+
+.disc-groups__total {
+  margin: 0;
+  padding: 0 14px 14px;
+  color: #5a7a9e;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .disc-groups { grid-template-columns: 1fr; padding: 10px; }
+}
+
+// ── Department heading rows (department-wise table) ──────────────────
+.disc-group-row {
+  td.disc-group-row__cell {
+    padding: 8px 14px;
+    background: #e8f1fc;
+    font-weight: 600;
+    text-align: left;
+  }
+}
+
+.disc-group-row__icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: var(--primary);
+}
+
+.disc-group-row__code {
+  margin-right: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.disc-group-row__name { color: #1b2433; }
+
+.disc-group-row__count {
+  margin-left: 10px;
+  padding: 1px 9px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 600;
 }

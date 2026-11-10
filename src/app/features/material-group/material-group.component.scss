@@ -355,3 +355,56 @@ table[mat-table] {
   color: #8098b8;
   margin-top: 2px;
 }
+
+// ── View toggle and the material-category-wise table ─────────────────
+.mg-view-toggle {
+  margin-right: 4px;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.mg-category-row {
+  td.mg-category-row__cell {
+    padding: 8px 14px;
+    background: #e8f1fc;
+    font-weight: 600;
+    text-align: left;
+  }
+}
+
+.mg-category-row__icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: var(--primary);
+}
+
+.mg-category-row__code {
+  margin-right: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.mg-category-row__name { color: #1b2433; }
+
+.mg-category-row__count {
+  margin-left: 10px;
+  padding: 1px 9px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.mg-groups__total {
+  margin: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  color: #5a7a9e;
+  font-size: 0.85rem;
+}

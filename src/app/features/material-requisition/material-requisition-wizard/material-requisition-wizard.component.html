@@ -100,11 +100,11 @@
       [linear]="false"
       (selectionChange)="onStepChange($event.selectedIndex)"
     >
-      <mat-step label="Header & Documents">
+      <mat-step label="Header">
         <app-requisition-header-step />
       </mat-step>
 
-      <mat-step label="Material Source & Selection">
+      <mat-step label="Material Selection">
         <app-requisition-materials-step [requisitionId]="saved()?.id ?? null" [initialSource]="initialSource()" />
       </mat-step>
 
@@ -114,6 +114,14 @@
 
       <mat-step label="Deviation">
         <app-requisition-checklist-step kind="deviation" />
+      </mat-step>
+
+      <mat-step label="Supporting Documents">
+        <app-requisition-documents-step />
+      </mat-step>
+
+      <mat-step label="Reviewers & Approvers">
+        <app-requisition-participants-step />
       </mat-step>
 
       <mat-step label="Review & Submit">
