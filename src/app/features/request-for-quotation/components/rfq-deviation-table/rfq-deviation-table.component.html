@@ -1,0 +1,89 @@
+@let edit = editable();
+@if (attempted() && invalidCount()) {
+  <div class="rg-alert" role="alert">
+    <mat-icon>error_outline</mat-icon>
+    {{ invalidCount() }} deviation item{{ invalidCount() === 1 ? ' is' : 's are' }} incomplete — fill the fields outlined in red.
+  </div>
+}
+<div class="rg-scroll">
+  <table class="pl-grid-table rg-table" aria-label="Deviation items">
+    <thead>
+      <tr>
+        <th class="rg-sr">Sr#</th>
+        <th style="width: 14%">Clause No. @if (edit) { <span class="rg-req">*</span> }</th>
+        <th style="width: 36%">RFQ Requirement @if (edit) { <span class="rg-req">*</span> }</th>
+        <th class="rg-check">Vendor Deviation (Yes/No)</th>
+        <th style="width: 30%">Justification</th>
+        @if (edit) { <th class="rg-actions"><span class="cdk-visually-hidden">Delete</span></th> }
+      </tr>
+    </thead>
+    <tbody>
+      @for (d of rows(); track $index; let i = $index) {
+        @let err = errors()[i];
+        <tr [attr.data-row]="i">
+          <td class="rg-sr">{{ i + 1 }}</td>
+          @if (edit) {
+            <td>
+              <input type="text" class="rg-input" [class.rg-input--error]="!!err.clauseNo" maxlength="50"
+                [value]="d.clauseNo" (input)="set(i, { clauseNo: text($event) })" (blur)="touch(i)"
+                [attr.aria-label]="'Clause No. ' + (i + 1)" aria-required="true" [attr.aria-invalid]="!!err.clauseNo" />
+              @if (err.clauseNo) { <div class="rg-error">{{ err.clauseNo }}</div> }
+            </td>
+            <td>
+              <input type="text" class="rg-input" [class.rg-input--error]="!!err.rfqRequirement" maxlength="2000"
+                [value]="d.rfqRequirement" (input)="set(i, { rfqRequirement: text($event) })" (blur)="touch(i)"
+                [attr.aria-label]="'RFQ Requirement ' + (i + 1)" aria-required="true" [attr.aria-invalid]="!!err.rfqRequirement" />
+              @if (err.rfqRequirement) { <div class="rg-error">{{ err.rfqRequirement }}</div> }
+            </td>
+            <td class="rg-check">
+              <mat-checkbox [checked]="d.vendorDeviation" (change)="set(i, { vendorDeviation: $event.checked }); touch(i)"
+                [attr.aria-label]="'Vendor Deviation ' + (i + 1)" />
+            </td>
+            <td>
+              <input type="text" class="rg-input" [class.rg-input--error]="!!err.justification" maxlength="2000"
+                [value]="d.justification ?? ''" (input)="set(i, { justification: text($event) })" (blur)="touch(i)"
+                [attr.aria-label]="'Justification ' + (i + 1)" [attr.aria-invalid]="!!err.justification" />
+              @if (err.justification) { <div class="rg-error">{{ err.justification }}</div> }
+            </td>
+            <td class="rg-actions">
+              <button mat-icon-button type="button" matTooltip="Delete" (click)="remove(i)"
+                [attr.aria-label]="'Delete deviation item ' + (i + 1)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          } @else {
+            <td>{{ d.clauseNo }}</td>
+            <td class="rg-pre">{{ d.rfqRequirement }}</td>
+            <td class="rg-check">
+              @if (d.vendorDeviation) { <span class="rg-yes"><mat-icon>check_circle</mat-icon> Yes</span> }
+              @else { <span class="rg-no"><mat-icon>cancel</mat-icon> No</span> }
+            </td>
+            <td class="rg-pre">{{ d.justification || '—' }}</td>
+          }
+        </tr>
+      } @empty {
+        <tr>
+          <td class="rg-empty" [attr.colspan]="edit ? 6 : 5">
+            <mat-icon>rule</mat-icon>
+            <span>No deviations{{ edit ? '' : ' — the vendor enters them' }}.</span>
+            @if (edit) {
+              <button mat-flat-button color="primary" type="button" (click)="add()">
+                <mat-icon>add</mat-icon> Add deviation item
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+@if (edit && rows().length) {
+  <div class="rg-bar">
+    <span [matTooltip]="canAdd() ? '' : 'Complete the last row before adding another'">
+      <button mat-stroked-button color="primary" type="button" (click)="add()" [disabled]="!canAdd()">
+        <mat-icon>add</mat-icon> Add deviation item
+      </button>
+    </span>
+    @if (!canAdd()) { <span class="rg-muted">Complete the last row before adding another</span> }
+  </div>
+}

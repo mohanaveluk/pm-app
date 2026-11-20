@@ -1,0 +1,122 @@
+<div class="ak-page">
+  @if (loading()) {
+    <div class="ak-state"><mat-spinner diameter="40" /><p>Loading the RFQ…</p></div>
+  } @else if (loadError()) {
+    <div class="ak-state ak-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()"><mat-icon>arrow_back</mat-icon> My RFQs</button>
+    </div>
+  } @else if (form(); as f) {
+    @let edit = editable();
+    @let err = shown();
+
+    <header class="ak-header">
+      <button mat-icon-button matTooltip="My RFQs" aria-label="Back to my RFQs" (click)="backToList()"><mat-icon>arrow_back</mat-icon></button>
+      <div class="ak-header__main">
+        <div class="ak-eyebrow">RFQ Acknowledgement Form</div>
+        <h1 class="ak-title">
+          <span class="ak-code">RFQ {{ f.rfqNumber }}</span>
+          @if (f.revisionNo) { <span class="ak-rev">Rev {{ f.revisionNo }}</span> }
+          <span class="ak-subject">{{ f.subject }}</span>
+        </h1>
+      </div>
+      <mat-chip [class]="statusClass(f.status)" [matTooltip]="statusHint(f.status)">{{ statusText(f.status) }}</mat-chip>
+    </header>
+
+    <!-- The RFQ -->
+    <section class="ak-card">
+      <dl class="ak-facts">
+        <div><dt>Project</dt><dd>{{ f.projectName || '—' }}</dd></div>
+        <div><dt>Client</dt><dd>{{ f.clientName || '—' }}</dd></div>
+        <div><dt>Issued</dt><dd>{{ f.issuedAt ? (f.issuedAt | date: 'medium') : (f.issueDate ? (f.issueDate | date: 'mediumDate') : '—') }}</dd></div>
+        <div><dt>Bid Closing Date</dt><dd><strong>{{ f.bidClosingDate ? (f.bidClosingDate | date: 'mediumDate') : '—' }}</strong></dd></div>
+        <div><dt>Sealed Bid</dt><dd>{{ f.sealedBid ? 'Yes' : 'No' }}</dd></div>
+        <div><dt>Buyer</dt><dd>{{ f.buyerName || '—' }}@if (f.buyerEmail) { <br /><span class="ak-muted">{{ f.buyerEmail }}</span> }@if (f.buyerPhone) { · <span class="ak-muted">{{ f.buyerPhone }}</span> }</dd></div>
+      </dl>
+    </section>
+
+    @if (done(); as a) {
+      <div class="ak-banner" [class.ak-banner--declined]="!a.willSubmitQuotation">
+        <mat-icon>{{ a.willSubmitQuotation ? 'task_alt' : 'block' }}</mat-icon>
+        <span>
+          {{ a.willSubmitQuotation ? 'You acknowledged this RFQ' : 'You declined this RFQ' }}
+          on {{ a.acknowledgedAt | date: 'medium' }}{{ a.willSubmitQuotation ? ' — prepare and submit your response.' : '.' }}
+        </span>
+        @if (a.willSubmitQuotation) {
+          <button mat-flat-button color="primary" (click)="respond()"><mat-icon>edit_note</mat-icon> Respond to RFQ</button>
+        }
+      </div>
+    } @else if (!edit) {
+      <div class="ak-banner ak-banner--declined">
+        <mat-icon>info</mat-icon>
+        <span>This RFQ is {{ statusText(f.status).toLowerCase() }} and can no longer be acknowledged.</span>
+      </div>
+    }
+
+    <!-- The form -->
+    <section class="ak-card">
+      <h2 class="ak-section">1. Acknowledgement document</h2>
+      <app-rfq-documents [(documents)]="documents" section="ACKNOWLEDGEMENT" title="Documents" [editable]="edit"
+        emptyText="Upload the signed acknowledgement document." />
+      @if (err['documents']) { <div class="ak-error"><mat-icon>error_outline</mat-icon> {{ err['documents'] }}</div> }
+
+      <h2 class="ak-section">2. Vendor must confirm participation</h2>
+      <mat-radio-group class="ak-radios" [class.ak-radios--error]="!!err['participate']" [value]="participate()"
+        [disabled]="!edit" (change)="setParticipate($event.value)" aria-label="Confirm participation">
+        <mat-radio-button [value]="true">Yes, we will participate</mat-radio-button>
+        <mat-radio-button [value]="false">No, we will not participate</mat-radio-button>
+      </mat-radio-group>
+      @if (err['participate']) { <div class="ak-error">{{ err['participate'] }}</div> }
+
+      <div class="ak-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Vendor Name</mat-label>
+          <input matInput maxlength="200" required [readonly]="!edit" [value]="vendorName()" (input)="vendorName.set(valueOf($event))" />
+          @if (err['vendorName']) { <mat-hint class="ak-hint-error">{{ err['vendorName'] }}</mat-hint> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Contact Person</mat-label>
+          <input matInput maxlength="150" required [readonly]="!edit" [value]="contactPerson()" (input)="contactPerson.set(valueOf($event))" />
+          @if (err['contactPerson']) { <mat-hint class="ak-hint-error">{{ err['contactPerson'] }}</mat-hint> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" maxlength="150" required [readonly]="!edit" [value]="email()" (input)="email.set(valueOf($event))" />
+          <mat-icon matSuffix>mail</mat-icon>
+          @if (err['email']) { <mat-hint class="ak-hint-error">{{ err['email'] }}</mat-hint> }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput maxlength="50" [readonly]="!edit" [value]="phone()" (input)="phone.set(valueOf($event))" />
+          <mat-icon matSuffix>call</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <h2 class="ak-section">3. Will you submit a quotation?</h2>
+      <mat-radio-group class="ak-radios" [class.ak-radios--error]="!!err['willSubmitQuotation']" [value]="willSubmitQuotation()"
+        [disabled]="!edit || participate() === false" (change)="willSubmitQuotation.set($event.value)" aria-label="Will you submit a quotation">
+        <mat-radio-button [value]="true">Yes</mat-radio-button>
+        <mat-radio-button [value]="false">No</mat-radio-button>
+      </mat-radio-group>
+      @if (err['willSubmitQuotation']) { <div class="ak-error">{{ err['willSubmitQuotation'] }}</div> }
+
+      <h2 class="ak-section">4. Name &amp; Date</h2>
+      <div class="ak-sign">
+        <div><span class="ak-label">Name</span><strong>{{ vendorName() || '—' }}</strong></div>
+        <div><span class="ak-label">Date</span><strong>{{ (done()?.acknowledgedAt ?? now()) | date: 'medium' }}</strong></div>
+      </div>
+    </section>
+
+    <footer class="ak-footer">
+      <button mat-button type="button" (click)="backToList()" [disabled]="saving()">{{ edit ? 'Cancel' : 'Close' }}</button>
+      <span class="ak-spacer"></span>
+      @if (edit) {
+        <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>send</mat-icon> }
+          Submit Acknowledgement
+        </button>
+      }
+    </footer>
+  }
+</div>

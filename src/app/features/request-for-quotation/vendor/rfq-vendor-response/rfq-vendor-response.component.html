@@ -1,0 +1,535 @@
+<div class="rw-page">
+  @if (loading()) {
+    <div class="rw-state"><mat-spinner diameter="40" /><p>Loading the RFQ…</p></div>
+  } @else if (loadError()) {
+    <div class="rw-state rw-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button (click)="backToList()"><mat-icon>arrow_back</mat-icon> My RFQs</button>
+    </div>
+  } @else if (rfq(); as r) {
+    @let edit = editable();
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header class="rw-header">
+      <div class="rw-header__main">
+        <button mat-icon-button matTooltip="My RFQs" aria-label="Back to my RFQs" (click)="backToList()"><mat-icon>arrow_back</mat-icon></button>
+        <div>
+          <div class="rw-eyebrow">Request for Quotation — your response</div>
+          <h1 class="rw-title">
+            <span class="rw-code">{{ r.rfqNumber }}</span>
+            @if (r.revisionNo) { <span class="rw-rev">Rev {{ r.revisionNo }}</span> }
+            <span class="rw-desc">{{ r.subject }}</span>
+          </h1>
+          <div class="rw-meta">
+            {{ r.projectName }}@if (r.clientName) { · {{ r.clientName }} }
+            @if (r.bidClosingDate) { · Bid closes {{ r.bidClosingDate | date: 'mediumDate' }} }
+            @if (r.quotedAt) { · Submitted {{ r.quotedAt | date: 'medium' }} }
+          </div>
+        </div>
+      </div>
+      <div class="rw-header__side">
+        <mat-chip [class]="statusClass(r.status)" [matTooltip]="statusHint(r.status)">{{ statusText(r.status) }}</mat-chip>
+        @if (canDownload(r.status)) {
+          <button mat-stroked-button (click)="downloadPdf(r)" [disabled]="downloading() === r.id" matTooltip="Download the RFQ and your response as a PDF">
+            @if (downloading() === r.id) { <mat-spinner diameter="16" /> } @else { <mat-icon>picture_as_pdf</mat-icon> }
+            Download PDF
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (r.status === 'ISSUED') {
+      <div class="rw-note">
+        <mat-icon>task_alt</mat-icon>
+        <span class="vr-grow">Acknowledge this RFQ first — then you can prepare and submit your response.</span>
+        <button mat-flat-button color="primary" (click)="acknowledge()">Acknowledge RFQ</button>
+      </div>
+    } @else if (!edit) {
+      <div class="rw-note"><mat-icon>lock</mat-icon> This RFQ is {{ statusText(r.status).toLowerCase() }} — your response is shown read-only.</div>
+    } @else {
+      <div class="rw-note"><mat-icon>edit_note</mat-icon> You can edit the tabs marked with a pencil. Everything else is the buyer's RFQ package (read-only).</div>
+    }
+
+    <!-- Read-only blocks -->
+    <ng-template #readText let-fields="fields">
+      <div class="vr-fields">
+        @for (f of fields; track f.key) {
+          <div class="vr-field">
+            <div class="vr-label">{{ f.label }}</div>
+            <div class="vr-value">{{ text(f.key) || '—' }}</div>
+          </div>
+        }
+      </div>
+    </ng-template>
+
+    <ng-template #docList let-docs="docs" let-title="title">
+      <div class="vr-docs">
+        <div class="vr-label">{{ title }}</div>
+        @for (d of docs; track $index) {
+          <a class="vr-doc" [href]="d.documentUrl" target="_blank" rel="noopener" download>
+            <mat-icon>description</mat-icon>
+            <span>{{ d.documentName }}</span>
+            @if (d.sourceMrNumber) { <span class="rw-muted">· {{ d.sourceMrNumber }}</span> }
+            <mat-icon class="vr-doc__dl">download</mat-icon>
+          </a>
+        } @empty {
+          <span class="rw-muted">No documents.</span>
+        }
+      </div>
+    </ng-template>
+
+    <!-- ── Tabs ───────────────────────────────────────────────────── -->
+    <mat-tab-group class="rw-tabs" [selectedIndex]="tabIndex()" (selectedIndexChange)="tabIndex.set($event)"
+      animationDuration="0ms" mat-stretch-tabs="false">
+
+      <!-- 1. RFQ Letter -->
+      <mat-tab label="RFQ Letter">
+        <section class="rw-section">
+          <dl class="rw-facts">
+            <div><dt>RFQ No.</dt><dd>{{ r.rfqNumber }} · Rev {{ r.revisionNo }}</dd></div>
+            <div><dt>Issue Date</dt><dd>{{ r.issuedAt ? (r.issuedAt | date: 'medium') : '—' }}</dd></div>
+            <div><dt>Bid Closing Date</dt><dd><strong>{{ r.bidClosingDate ? (r.bidClosingDate | date: 'mediumDate') : '—' }}</strong></dd></div>
+            <div><dt>Project</dt><dd>{{ r.projectName || '—' }}</dd></div>
+            <div><dt>Client</dt><dd>{{ r.clientName || '—' }}</dd></div>
+            <div><dt>Sealed Bid</dt><dd>{{ r.sealedBid ? 'Yes' : 'No' }}</dd></div>
+            <div><dt>Non-Disclosure Agreement</dt><dd>{{ ndaLabel() }}</dd></div>
+            <div><dt>Contact Person</dt><dd>{{ r.contactName || '—' }}@if (r.contactEmail) { <br /><span class="rw-muted">{{ r.contactEmail }}</span> }@if (r.contactPhone) { · <span class="rw-muted">{{ r.contactPhone }}</span> }</dd></div>
+          </dl>
+          <div class="rw-to">
+            <strong>To: {{ r.vendorName }}</strong>
+            @if (r.vendorAddress) { <div>{{ r.vendorAddress }}</div> }
+          </div>
+          <div class="vr-field">
+            <div class="vr-label">Subject</div>
+            <div class="vr-value"><strong>{{ r.subject || '—' }}</strong></div>
+          </div>
+          <div class="vr-field">
+            <div class="vr-label">Content</div>
+            <div class="vr-value">{{ r.content || '—' }}</div>
+          </div>
+          <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('TERMS_AND_CONDITIONS'), title: 'Terms and Conditions' }" />
+          @if (r.ndaScope) {
+            <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('NON_DISCLOSURE_AGREEMENT'), title: 'Non-Disclosure Agreement' }" />
+          }
+        </section>
+      </mat-tab>
+
+      <!-- 2. Instructions to Bidders -->
+      <mat-tab label="Instructions to Bidders">
+        <section class="rw-section">
+          <div class="vr-field"><div class="vr-value">{{ r.instructionsToBidders || '—' }}</div></div>
+          <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('INSTRUCTIONS_TO_BIDDERS'), title: 'Instruction Documents' }" />
+        </section>
+      </mat-tab>
+
+      <!-- 3. Scope -->
+      <mat-tab label="Scope of Supply / Work">
+        <section class="rw-section">
+          <ng-container [ngTemplateOutlet]="readText" [ngTemplateOutletContext]="{ fields: scopeFields }" />
+          <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('SCOPE_ASSOCIATED'), title: 'Associated Documents' }" />
+        </section>
+      </mat-tab>
+
+      <!-- 4. Technical -->
+      <mat-tab label="Technical Specifications">
+        <section class="rw-section">
+          <ng-container [ngTemplateOutlet]="readText" [ngTemplateOutletContext]="{ fields: technicalFields }" />
+          <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('TECHNICAL_SPECIFICATION'), title: 'Technical Specification Documents' }" />
+        </section>
+      </mat-tab>
+
+      <!-- 5. Drawings -->
+      <mat-tab label="Drawings & Datasheets">
+        <section class="rw-section">
+          <ng-container [ngTemplateOutlet]="docList" [ngTemplateOutletContext]="{ docs: docsOf('DRAWING_DATASHEET'), title: 'Drawings & Datasheets' }" />
+        </section>
+      </mat-tab>
+
+      <!-- 6. Commercial -->
+      <mat-tab label="Commercial Terms">
+        <section class="rw-section">
+          <ng-container [ngTemplateOutlet]="readText" [ngTemplateOutletContext]="{ fields: commercialFields }" />
+        </section>
+      </mat-tab>
+
+      <!-- 7. Price Schedule (vendor) -->
+      <mat-tab>
+        <ng-template mat-tab-label>@if (edit) { <mat-icon class="vr-tab-edit">edit</mat-icon> } Price Schedule</ng-template>
+        <section class="rw-section">
+          <div class="rw-bar">
+            <mat-form-field appearance="outline" class="rw-currency" subscriptSizing="dynamic">
+              <mat-label>Quoted currency</mat-label>
+              <input matInput maxlength="3" [readonly]="!edit" [value]="quotedCurrency()" placeholder="e.g. AED"
+                [class.vr-input-error]="attempted() && submitAttempted() && !quotedCurrency().trim()"
+                (input)="quotedCurrency.set(valueOf($event).toUpperCase())" />
+            </mat-form-field>
+            @if (edit) {
+              <mat-form-field appearance="outline" class="rw-currency" subscriptSizing="dynamic">
+                <mat-label>Exchange rate for all lines</mat-label>
+                <input matInput type="number" min="0" step="any" (change)="applyRateToAll(valueOf($event))"
+                  matTooltip="Quoted currency → USD; applied to every line" />
+              </mat-form-field>
+            }
+            <span class="rw-spacer"></span>
+            <span class="rw-pill rw-pill--info">{{ progress().priced }} of {{ progress().items }} priced</span>
+          </div>
+
+          <div class="rg-scroll">
+            <table class="pl-grid-table rg-table rw-schedule" aria-label="Price schedule">
+              <thead>
+                <tr>
+                  <th class="rg-sr">Item No.</th>
+                  <th>Item Code</th>
+                  <th style="min-width: 220px">Description</th>
+                  <th>UOM</th>
+                  <th>RFQ Qty</th>
+                  <th class="rw-vcol">Unit Price ({{ currencyLabel() }})</th>
+                  <th class="rw-vcol">Total Price ({{ currencyLabel() }})</th>
+                  <th class="rw-vcol">Exchange Rate</th>
+                  <th class="rw-vcol">Total Price (USD)</th>
+                  <th class="rw-vcol">Delivery (Duration)</th>
+                  <th class="rw-vcol" style="min-width: 160px">Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of priceRows(); track row.id; let i = $index) {
+                  <tr>
+                    <td class="rg-sr">{{ i + 1 }}</td>
+                    <td class="rw-mono">{{ row.itemCode }}</td>
+                    <td>{{ row.description }}</td>
+                    <td>{{ row.uom || '—' }}</td>
+                    <td class="rg-num"><strong>{{ row.rfqQuantity | number: '1.0-3' }}</strong></td>
+                    @if (edit) {
+                      <td class="rw-vcol rw-price">
+                        <input type="number" class="rg-input rg-input--num" min="0" step="any" [value]="row.unitPrice ?? ''"
+                          [class.rg-input--error]="attempted() && submitAttempted() && row.unitPrice == null"
+                          (input)="setPrice(row.id, { unitPrice: numberOf($event) })" [attr.aria-label]="'Unit price ' + (i + 1)" />
+                      </td>
+                      <td class="rw-vcol rg-num">{{ row.total != null ? (row.total | number: '1.2-4') : '—' }}</td>
+                      <td class="rw-vcol rw-price">
+                        <input type="number" class="rg-input rg-input--num" min="0" step="any" [value]="row.exchangeRate ?? ''"
+                          (input)="setPrice(row.id, { exchangeRate: numberOf($event) })" [attr.aria-label]="'Exchange rate ' + (i + 1)" />
+                      </td>
+                      <td class="rw-vcol rg-num">{{ row.usd != null ? (row.usd | number: '1.2-4') : '—' }}</td>
+                      <td class="rw-vcol">
+                        <input type="text" class="rg-input" maxlength="100" [value]="row.deliveryDuration ?? ''" placeholder="e.g. 6 weeks"
+                          (input)="setPrice(row.id, { deliveryDuration: valueOf($event) })" [attr.aria-label]="'Delivery ' + (i + 1)" />
+                      </td>
+                      <td class="rw-vcol">
+                        <input type="text" class="rg-input" maxlength="2000" [value]="row.remarks ?? ''"
+                          (input)="setPrice(row.id, { remarks: valueOf($event) })" [attr.aria-label]="'Remarks ' + (i + 1)" />
+                      </td>
+                    } @else {
+                      <td class="rw-vcol rg-num">{{ row.unitPrice != null ? (row.unitPrice | number: '1.2-4') : '—' }}</td>
+                      <td class="rw-vcol rg-num">{{ row.total != null ? (row.total | number: '1.2-4') : '—' }}</td>
+                      <td class="rw-vcol rg-num">{{ row.exchangeRate != null ? (row.exchangeRate | number: '1.0-6') : '—' }}</td>
+                      <td class="rw-vcol rg-num">{{ row.usd != null ? (row.usd | number: '1.2-4') : '—' }}</td>
+                      <td class="rw-vcol">{{ row.deliveryDuration || '—' }}</td>
+                      <td class="rw-vcol rg-pre">{{ row.remarks || '—' }}</td>
+                    }
+                  </tr>
+                } @empty {
+                  <tr><td class="rg-empty" colspan="11"><span>No items.</span></td></tr>
+                }
+              </tbody>
+              @if (priceRows().length) {
+                <tfoot>
+                  <tr class="rw-total">
+                    <td colspan="6" class="rg-num">Items total</td>
+                    <td class="rw-vcol rg-num"><strong>{{ totals().items | number: '1.2-4' }}</strong></td>
+                    <td class="rw-vcol"></td>
+                    <td class="rw-vcol rg-num"><strong>{{ totals().usd | number: '1.2-4' }}</strong></td>
+                    <td class="rw-vcol" colspan="2"></td>
+                  </tr>
+                </tfoot>
+              }
+            </table>
+          </div>
+
+          <h4 class="rw-subtitle">Other Charges</h4>
+          <div class="rg-scroll">
+            <table class="pl-grid-table rg-table rw-charges" aria-label="Other charges">
+              <thead>
+                <tr>
+                  <th class="rg-sr">#</th>
+                  <th>Title</th>
+                  <th style="width: 200px">Amount ({{ currencyLabel() }})</th>
+                  @if (edit) { <th class="rg-actions"><span class="cdk-visually-hidden">Delete</span></th> }
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of otherCharges(); track $index; let i = $index) {
+                  <tr>
+                    <td class="rg-sr">{{ i + 1 }}</td>
+                    @if (edit) {
+                      <td>
+                        <input type="text" class="rg-input" list="vr-charge-types" maxlength="200" [value]="c.title"
+                          [class.rg-input--error]="attempted() && !c.title.trim()" placeholder="e.g. Freight charges"
+                          (input)="setCharge(i, { title: valueOf($event) })" [attr.aria-label]="'Charge title ' + (i + 1)" />
+                      </td>
+                      <td>
+                        <input type="number" class="rg-input rg-input--num" min="0" step="any" [value]="c.amount ?? ''"
+                          [class.rg-input--error]="attempted() && c.amount == null"
+                          (input)="setCharge(i, { amount: numberOf($event) })" [attr.aria-label]="'Charge amount ' + (i + 1)" />
+                      </td>
+                      <td class="rg-actions">
+                        <button mat-icon-button type="button" matTooltip="Delete" (click)="removeCharge(i)" [attr.aria-label]="'Delete charge ' + (i + 1)">
+                          <mat-icon>delete_outline</mat-icon>
+                        </button>
+                      </td>
+                    } @else {
+                      <td>{{ c.title }}</td>
+                      <td class="rg-num">{{ c.amount | number: '1.2-4' }}</td>
+                    }
+                  </tr>
+                } @empty {
+                  <tr><td class="rg-empty" [attr.colspan]="edit ? 4 : 3"><span>No other charges.</span></td></tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="rw-total"><td colspan="2" class="rg-num">Other charges total</td><td class="rg-num"><strong>{{ totals().charges | number: '1.2-4' }}</strong></td>@if (edit) { <td></td> }</tr>
+                <tr class="rw-total"><td colspan="2" class="rg-num">Quotation total ({{ currencyLabel() }})</td><td class="rg-num"><strong>{{ totals().grand | number: '1.2-4' }}</strong></td>@if (edit) { <td></td> }</tr>
+              </tfoot>
+            </table>
+          </div>
+          <datalist id="vr-charge-types">
+            @for (s of chargeSuggestions; track s) { <option [value]="s"></option> }
+          </datalist>
+          @if (edit) {
+            <div class="rg-bar">
+              <button mat-stroked-button color="primary" type="button" (click)="addCharge()"><mat-icon>add</mat-icon> Add charge</button>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <!-- 8. Vendor Qualification (vendor) -->
+      <mat-tab>
+        <ng-template mat-tab-label>@if (edit) { <mat-icon class="vr-tab-edit">edit</mat-icon> } Vendor Qualification</ng-template>
+        <section class="rw-section">
+          <h4 class="rw-subtitle"><mat-icon>verified_user</mat-icon> Your Vendor Master documents</h4>
+          <p class="rw-muted rw-small">Confirm each document is valid for this RFQ, or upload an updated version for it.</p>
+          @if (!masterRows().length) {
+            <div class="rw-empty"><mat-icon>folder_off</mat-icon> You have no active documents in the Vendor Master.</div>
+          } @else {
+            <div class="rg-scroll">
+              <table class="pl-grid-table rg-table rw-vdocs" aria-label="Vendor Master documents">
+                <thead>
+                  <tr>
+                    <th class="rg-sr">#</th><th>Document Type</th><th>File</th><th>Expiry Date</th>
+                    <th class="vr-ok">OK for this RFQ</th><th>For this RFQ</th>
+                    @if (edit) { <th class="vr-actions">Update</th> }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of masterRows(); track m.master.id; let i = $index) {
+                    <tr [class.vr-pending]="attempted() && submitAttempted() && m.state === 'pending'">
+                      <td class="rg-sr">{{ i + 1 }}</td>
+                      <td>{{ humanize(m.master.documentType) }}</td>
+                      <td class="rw-file">
+                        <a [href]="m.master.documentUrl" target="_blank" rel="noopener" download>{{ m.master.fileName || 'Download' }}</a>
+                      </td>
+                      <td>{{ m.master.expiryDate ? (m.master.expiryDate | date: 'mediumDate') : '—' }}</td>
+                      <td class="vr-ok">
+                        <mat-checkbox [checked]="m.state === 'confirmed'" [disabled]="!edit || m.state === 'updated'"
+                          (change)="confirmMaster(m, $event.checked)" [attr.aria-label]="'OK: ' + humanize(m.master.documentType)" />
+                      </td>
+                      <td>
+                        @switch (m.state) {
+                          @case ('confirmed') { <span class="rg-yes"><mat-icon>check_circle</mat-icon> Confirmed</span> }
+                          @case ('updated') {
+                            <span class="vr-updated"><mat-icon>upload_file</mat-icon> Updated</span>
+                            <a class="vr-small" [href]="m.linked!.documentUrl" target="_blank" rel="noopener" download>{{ m.linked!.fileName }}</a>
+                          }
+                          @default { <span class="rg-awaiting">Not confirmed</span> }
+                        }
+                      </td>
+                      @if (edit) {
+                        <td class="vr-actions">
+                          <input #upd type="file" hidden (change)="updateMaster(m, $event)" />
+                          <button mat-stroked-button type="button" (click)="upd.click()" [disabled]="uploading() === m.master.id">
+                            @if (uploading() === m.master.id) { <mat-spinner diameter="16" /> } @else { <mat-icon>swap_horiz</mat-icon> }
+                            Update
+                          </button>
+                          @if (m.state === 'updated') {
+                            <button mat-icon-button type="button" matTooltip="Use the Vendor Master version instead" (click)="confirmMaster(m, false)"
+                              [attr.aria-label]="'Undo update ' + humanize(m.master.documentType)"><mat-icon>undo</mat-icon></button>
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <app-rfq-documents [(documents)]="documents" section="VENDOR_QUALIFICATION" title="Additional Qualification Documents"
+            [editable]="edit" [locked]="othersDocument" [rowFilter]="additionalOnly"
+            emptyText="Upload any further qualification documents for this RFQ." />
+        </section>
+      </mat-tab>
+
+      <!-- 9. Checklist (vendor) -->
+      <mat-tab>
+        <ng-template mat-tab-label>@if (edit) { <mat-icon class="vr-tab-edit">edit</mat-icon> } Checklist</ng-template>
+        <section class="rw-section">
+          <div class="rw-bar">
+            <span class="rw-muted">Tick what your offer includes. A "No" needs the reason.</span>
+            <span class="rw-spacer"></span>
+            <span class="rw-pill rw-pill--info">{{ progress().checklist }} of {{ progress().checklistTotal }} answered</span>
+          </div>
+          @for (group of [{ title: 'Technical offer must include', rows: checklistTechnical() }, { title: 'Commercial offer must include', rows: checklistCommercial() }]; track group.title) {
+            <h4 class="rw-subtitle">{{ group.title }}</h4>
+            <div class="rg-scroll">
+              <table class="pl-grid-table rg-table" [attr.aria-label]="group.title">
+                <thead><tr><th class="rg-sr">#</th><th style="width: 34%">Item</th><th class="rw-yn">Included</th><th>Reason (if No)</th></tr></thead>
+                <tbody>
+                  @for (c of group.rows; track c.key; let i = $index) {
+                    @let reasonMissing = attempted() && c.provided === false && !c.reason?.trim();
+                    <tr>
+                      <td class="rg-sr">{{ i + 1 }}</td>
+                      <td>{{ c.label }}</td>
+                      <td class="rw-yn">
+                        @if (edit) {
+                          <mat-radio-group [value]="c.provided" (change)="setChecklist(c.key, { provided: $event.value })"
+                            [class.rw-yn--error]="answerMissing(c.provided)" [attr.aria-label]="c.label + ' included'">
+                            <mat-radio-button [value]="true">Yes</mat-radio-button>
+                            <mat-radio-button [value]="false">No</mat-radio-button>
+                          </mat-radio-group>
+                        } @else if (c.provided === true) { <span class="rg-yes"><mat-icon>check_circle</mat-icon> Yes</span> }
+                        @else if (c.provided === false) { <span class="rg-no"><mat-icon>cancel</mat-icon> No</span> }
+                        @else { <span class="rg-awaiting">Not answered</span> }
+                      </td>
+                      <td>
+                        @if (edit) {
+                          <input type="text" class="rg-input" maxlength="2000" [value]="c.reason ?? ''" [class.rg-input--error]="reasonMissing"
+                            [placeholder]="c.provided === false ? 'Why is it not included?' : ''"
+                            (input)="setChecklist(c.key, { reason: valueOf($event) })" [attr.aria-label]="c.label + ' reason'" />
+                          @if (reasonMissing) { <div class="rg-error">Give the reason it is not included</div> }
+                        } @else { <span class="rg-pre">{{ c.reason || '—' }}</span> }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <!-- 10. Compliance (vendor answers) -->
+      <mat-tab>
+        <ng-template mat-tab-label>@if (edit) { <mat-icon class="vr-tab-edit">edit</mat-icon> } Compliance</ng-template>
+        <section class="rw-section">
+          <div class="rg-scroll">
+            <table class="pl-grid-table rg-table" aria-label="Compliance items">
+              <thead>
+                <tr>
+                  <th class="rg-sr">Sr#</th>
+                  <th style="width: 32%">Requirement</th>
+                  <th style="width: 24%">Vendor Response</th>
+                  <th class="rw-yn">Compliant (Yes/No)</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of compliances(); track $index; let i = $index) {
+                  @let remarksMissing = attempted() && c.compliant === false && !c.remarks?.trim();
+                  <tr>
+                    <td class="rg-sr">{{ i + 1 }}</td>
+                    <td class="rg-pre">{{ c.requirement }}</td>
+                    <td>
+                      @if (edit) {
+                        <input type="text" class="rg-input" maxlength="2000" [value]="c.vendorResponse ?? ''"
+                          (input)="setCompliance(i, { vendorResponse: valueOf($event) })" [attr.aria-label]="'Vendor response ' + (i + 1)" />
+                      } @else { <span class="rg-pre">{{ c.vendorResponse || '—' }}</span> }
+                    </td>
+                    <td class="rw-yn">
+                      @if (edit) {
+                        <mat-radio-group [value]="c.compliant" (change)="setCompliance(i, { compliant: $event.value })"
+                          [class.rw-yn--error]="answerMissing(c.compliant)" [attr.aria-label]="'Compliant ' + (i + 1)">
+                          <mat-radio-button [value]="true">Yes</mat-radio-button>
+                          <mat-radio-button [value]="false">No</mat-radio-button>
+                        </mat-radio-group>
+                      } @else if (c.compliant === true) { <span class="rg-yes"><mat-icon>check_circle</mat-icon> Yes</span> }
+                      @else if (c.compliant === false) { <span class="rg-no"><mat-icon>cancel</mat-icon> No</span> }
+                      @else { <span class="rg-awaiting">Not answered</span> }
+                    </td>
+                    <td>
+                      @if (edit) {
+                        <input type="text" class="rg-input" maxlength="2000" [value]="c.remarks ?? ''" [class.rg-input--error]="remarksMissing"
+                          [placeholder]="c.compliant === false ? 'Required when not compliant' : 'Optional'"
+                          (input)="setCompliance(i, { remarks: valueOf($event) })" [attr.aria-label]="'Remarks ' + (i + 1)" />
+                        @if (remarksMissing) { <div class="rg-error">Required when not compliant</div> }
+                      } @else { <span class="rg-pre">{{ c.remarks || '—' }}</span> }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td class="rg-empty" colspan="5"><mat-icon>fact_check</mat-icon><span>This RFQ has no compliance items.</span></td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </mat-tab>
+
+      <!-- 11. Deviation (vendor) -->
+      <mat-tab>
+        <ng-template mat-tab-label>@if (edit) { <mat-icon class="vr-tab-edit">edit</mat-icon> } Deviation</ng-template>
+        <section class="rw-section">
+          <p class="rw-muted rw-small">Clause No. and RFQ Requirement are required. Tick Vendor Deviation when you deviate; when it is not ticked, give the justification.</p>
+          <app-rfq-deviation-table [(rows)]="deviations" [editable]="edit" [attempted]="attempted()" />
+        </section>
+      </mat-tab>
+
+      <!-- 12. Review & Submit -->
+      <mat-tab [label]="edit ? 'Review & Submit' : 'Summary'">
+        <section class="rw-section">
+          @let p = progress();
+          <dl class="rw-facts">
+            <div><dt>Quoted currency</dt><dd>{{ quotedCurrency() || '—' }}</dd></div>
+            <div><dt>Items priced</dt><dd>{{ p.priced }} of {{ p.items }}</dd></div>
+            <div><dt>Quotation total</dt><dd>{{ totals().grand | number: '1.2-4' }} {{ quotedCurrency() }}</dd></div>
+            <div><dt>Total (USD)</dt><dd>{{ totals().usd | number: '1.2-4' }}</dd></div>
+            <div><dt>Qualification documents</dt><dd>{{ p.documents }} of {{ p.masters }} confirmed / updated</dd></div>
+            <div><dt>Checklist</dt><dd>{{ p.checklist }} of {{ p.checklistTotal }} answered</dd></div>
+            <div><dt>Compliance</dt><dd>{{ p.compliance }} of {{ p.complianceTotal }} answered</dd></div>
+            <div><dt>Deviations</dt><dd>{{ p.deviations }}</dd></div>
+            @if (r.quotedAt) { <div><dt>Last submitted</dt><dd>{{ r.quotedAt | date: 'medium' }}</dd></div> }
+          </dl>
+          @if (edit) {
+            @if (submitIssues().length) {
+              <div class="rw-blockers">
+                <strong><mat-icon>checklist</mat-icon> Before submitting:</strong>
+                <ul>@for (b of submitIssues(); track b) { <li>{{ b }}</li> }</ul>
+              </div>
+            } @else {
+              <div class="rw-ready"><mat-icon>check_circle</mat-icon> Ready to submit — the buyer will be emailed that your response is in.</div>
+            }
+          }
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+
+    <!-- ── Footer ─────────────────────────────────────────────────── -->
+    <footer class="rw-footer">
+      <button mat-button type="button" (click)="backToList()" [disabled]="saving()">{{ edit ? 'Cancel' : 'Close' }}</button>
+      <span class="rw-spacer"></span>
+      @if (tabIndex() > 0) {
+        <button mat-button type="button" (click)="previous()"><mat-icon>chevron_left</mat-icon> Back</button>
+      }
+      @if (tabIndex() < tabCount - 1) {
+        <button mat-button type="button" (click)="next()">Next <mat-icon iconPositionEnd>chevron_right</mat-icon></button>
+      }
+      @if (edit) {
+        <button mat-stroked-button type="button" (click)="save(false)" [disabled]="saving()"><mat-icon>save</mat-icon> Save Draft</button>
+        <button mat-raised-button color="primary" type="button" (click)="save(true)" [disabled]="saving()">
+          @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>send</mat-icon> }
+          {{ r.status === 'QUOTED' ? 'Submit Updated Response' : 'Submit Response' }}
+        </button>
+      }
+    </footer>
+  }
+</div>
