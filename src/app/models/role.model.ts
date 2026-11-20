@@ -37,6 +37,9 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 const LEGACY_ROLE_ALIASES: Record<string, AppRole> = {
   Manager: 'DepartmentManager',
   Viewer: 'User',
+  // Vendor accounts: menus as a plain User; AuthService.isExternal opens the vendor screens.
+  ExternalUser: 'User',
+  Vendor: 'User',
 };
 
 /**

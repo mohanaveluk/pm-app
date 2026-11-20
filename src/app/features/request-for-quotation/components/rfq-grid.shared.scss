@@ -1,0 +1,96 @@
+// Editable grids of the RFQ workspace (price schedule, checklist, compliance,
+// deviation, other charges). The table border/radius come from the global
+// `table.pl-grid-table` rule in styles.scss.
+
+:host { display: block; }
+
+.rg-scroll { overflow-x: auto; }
+
+.rg-table {
+  width: 100%;
+  min-width: 760px;
+  font-size: 0.88rem;
+
+  th { padding: 9px 8px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+  td { padding: 7px 8px; vertical-align: top; }
+}
+
+.rg-sr { width: 48px; text-align: center; color: #7d93ad; }
+td.rg-sr { padding-top: 15px; }
+.rg-check { width: 130px; text-align: center; }
+td.rg-check { padding-top: 8px; }
+.rg-actions { width: 56px; text-align: center; }
+.rg-num { text-align: right; white-space: nowrap; }
+.rg-req { color: var(--error); margin-left: 2px; }
+.rg-pre { white-space: pre-line; }
+.rg-muted { color: #8a9bb0; font-size: 0.82rem; }
+
+.rg-input {
+  width: 100%;
+  min-width: 70px;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card, #fff);
+  color: inherit;
+  font: inherit;
+
+  &--num { text-align: right; }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+  }
+
+  &--error {
+    border-color: var(--error);
+
+    &:focus { border-color: var(--error); box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.15); }
+  }
+
+  &:read-only { background: #fff; }
+}
+
+textarea.rg-input { height: auto; min-height: 36px; padding: 7px 9px; resize: vertical; }
+
+.rg-error { margin-top: 3px; color: var(--error); font-size: 0.76rem; }
+
+.rg-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: #ffebee;
+  color: var(--error);
+  font-size: 0.86rem;
+}
+
+.rg-empty {
+  padding: 24px 16px !important;
+  text-align: center;
+  color: #5a7a9e;
+
+  mat-icon { display: block; margin: 0 auto 6px; font-size: 30px; width: 30px; height: 30px; color: #a8bdd4; }
+  span { display: block; margin-bottom: 10px; }
+}
+
+.rg-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+.rg-yes, .rg-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.82rem;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.rg-yes { color: var(--success); }
+.rg-no { color: #b26a00; }
+.rg-awaiting { color: #8a9bb0; font-style: italic; font-size: 0.82rem; }

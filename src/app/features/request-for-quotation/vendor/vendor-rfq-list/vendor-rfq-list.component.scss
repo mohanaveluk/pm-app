@@ -1,0 +1,33 @@
+.vl-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+
+  @media (max-width: 760px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.vl-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: #fff;
+  color: #4a5f78;
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { border-color: var(--primary); }
+
+  &--active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+  }
+
+  &__n { font-size: 1.5rem; font-weight: 700; color: var(--primary); line-height: 1.2; }
+}

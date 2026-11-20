@@ -26,7 +26,7 @@ function flush(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve));
 }
 
-async function setup(hasPermission: (permission: string) => boolean) {
+async function setup(hasPermission: (permission: string) => boolean, external = false) {
   TestBed.configureTestingModule({
     providers: [
       NavigationService,
@@ -37,6 +37,7 @@ async function setup(hasPermission: (permission: string) => boolean) {
         useValue: {
           hasPermission,
           hasAnyPermission: (perms: string[]) => perms.some(hasPermission),
+          isExternal: signal(external),
         },
       },
       { provide: MENU_DATA_SOURCE, useValue: { getMenu: () => of(FAKE_MENU) } },
@@ -78,5 +79,10 @@ describe('NavigationService', () => {
     expect(service.isFavorite('dashboard')).toBe(true);
     service.toggleFavorite('dashboard');
     expect(service.isFavorite('dashboard')).toBe(false);
+  });
+
+  it('hides items without a permission from external (vendor) accounts', async () => {
+    const service = await setup(() => false, true);
+    expect(service.menu().map((m) => m.id)).not.toContain('dashboard');
   });
 });

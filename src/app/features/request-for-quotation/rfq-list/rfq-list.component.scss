@@ -1,0 +1,71 @@
+.rl-status { width: 200px; }
+.rl-rev {
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: #f1f4f9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4a5f78;
+}
+.rl-sub { font-size: 0.74rem; color: #8a9bb0; }
+.rl-center { text-align: center; }
+.rl-actions { white-space: nowrap; }
+.rl-soon { color: var(--error); font-weight: 600; }
+.rl-lock { font-size: 15px; width: 15px; height: 15px; vertical-align: -2px; color: #6f87a3; }
+
+.rfq-status {
+  &--draft { background: #eceff1; color: #455a64; }
+  &--issued { background: #e3f2fd; color: var(--primary); }
+  &--acknowledged { background: #ede7f6; color: #5e35b1; }
+  &--declined { background: #fbe9e7; color: #bf360c; }
+  &--quoted { background: #fff3e0; color: #b26a00; }
+  &--completed { background: #e0f2f1; color: #00796b; }
+  &--approved { background: #e8f5e9; color: var(--success); }
+  &--cancelled { background: #ffebee; color: var(--error); }
+}
+
+.rl-view-toggle { margin-right: 4px; }
+
+// ── Vendor / project heading rows ──────────────────────────────────
+.rl-group {
+  td.rl-group__cell {
+    padding: 8px 14px;
+    background: #e8f1fc;
+    font-weight: 600;
+    text-align: left;
+  }
+}
+
+.rl-group__icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: var(--primary);
+}
+
+.rl-group__code {
+  margin-right: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.rl-group__name { color: #1b2433; }
+
+.rl-group__count {
+  margin-left: 10px;
+  padding: 1px 9px;
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.rl-groups-total { margin: 8px 14px 0; font-size: 0.8rem; color: #6f87a3; }
+
+:host ::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper { background-color: #fff; }

@@ -13,6 +13,8 @@ export interface User {
   isVerified?: boolean;
   avatar: string;
   organizationId: string;
+  /** A vendor account (is_internal = 0 / ExternalUser): it sees only the vendor screens. */
+  isExternal?: boolean;
 }
 
 export interface UserToken {

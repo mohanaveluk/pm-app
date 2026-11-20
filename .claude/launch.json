@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start", "--", "--port", "4201"],
       "port": 4201
+    },
+    {
+      "name": "pm-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "../pm-api", "run", "start:prod"],
+      "port": 3000
     }
   ]
 }

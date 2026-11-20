@@ -81,7 +81,8 @@ export class NavigationService {
   }
 
   private isPermitted(item: MenuItem): boolean {
-    if (!item.permission) return true;
+    // External accounts: no permission means internal-only unless the item opts in.
+    if (!item.permission) return !this.permissionService.isExternal() || item.externalAccess === true;
     return Array.isArray(item.permission)
       ? this.permissionService.hasAnyPermission(item.permission)
       : this.permissionService.hasPermission(item.permission);

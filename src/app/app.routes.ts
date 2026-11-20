@@ -147,8 +147,19 @@ export const routes: Routes = [
         data: { breadcrumb: 'Purchase Orders', title: 'Purchase Orders', icon: 'receipt_long', permission: PERMISSIONS.PO_VIEW },
       },
       {
+        // Older RFQ emails linked here; the vendor's form lives under /vendor-rfqs.
+        path: 'rfqs/:id/acknowledge',
+        redirectTo: 'vendor-rfqs/:id/acknowledge',
+      },
+      {
+        path: 'vendor-rfqs',
+        loadChildren: () => import('./features/request-for-quotation/vendor/vendor-rfq.routes').then(m => m.VENDOR_RFQ_ROUTES),
+        canActivate: [permissionGuard],
+        data: { breadcrumb: 'Requests for Quotation', title: 'Requests for Quotation', icon: 'request_quote', permission: PERMISSIONS.RFQ_RESPOND },
+      },
+      {
         path: 'rfqs',
-        loadComponent: comingSoon,
+        loadChildren: () => import('./features/request-for-quotation/rfq.routes').then(m => m.RFQ_ROUTES),
         canActivate: [permissionGuard],
         data: { breadcrumb: 'RFQs', title: 'Requests for Quotation', icon: 'request_quote', permission: PERMISSIONS.RFQ_VIEW },
       },

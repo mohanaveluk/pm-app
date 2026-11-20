@@ -21,4 +21,9 @@ export interface MenuItem {
   favorite?: boolean;
   disabled?: boolean;
   hidden?: boolean;
+  /**
+   * External (vendor) accounts see an item only when they hold its permission;
+   * an item WITHOUT a permission is hidden from them unless this is true.
+   */
+  externalAccess?: boolean;
 }

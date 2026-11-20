@@ -1,0 +1,97 @@
+<section class="rd">
+  <div class="rd-head">
+    <h4 class="rd-title"><mat-icon>attach_file</mat-icon> {{ title() }}</h4>
+    <span class="rd-count">{{ rows().length }}</span>
+    <span class="rd-spacer"></span>
+    @if (editable()) {
+      @if (pickable(); as options) {
+        <mat-form-field appearance="outline" class="rd-pick" subscriptSizing="dynamic">
+          <mat-label>{{ pickLabel() }}</mat-label>
+          <mat-select multiple [value]="pickedIds()" (selectionChange)="onPick($event.value)"
+            [disabled]="!options.length" panelClass="rd-pick-panel">
+            <mat-option class="select-search-option" [value]="null">
+              <input class="select-search" placeholder="Search documents…" [value]="pickSearch()"
+                (input)="pickSearch.set($any($event.target).value)" (click)="stop($event)" (keydown)="stop($event)" />
+            </mat-option>
+            @for (p of filteredPickable(); track p.id) {
+              <mat-option [value]="p.id">{{ p.label }}</mat-option>
+            } @empty {
+              <mat-option disabled>No documents match</mat-option>
+            }
+          </mat-select>
+          @if (!options.length) { <mat-hint>No documents available to select</mat-hint> }
+        </mat-form-field>
+      }
+      <input #files type="file" multiple hidden (change)="onFiles($event)" />
+      <button mat-stroked-button color="primary" type="button" (click)="files.click()" [disabled]="uploading() > 0">
+        @if (uploading() > 0) { <mat-spinner diameter="16" /> } @else { <mat-icon>upload_file</mat-icon> }
+        {{ uploading() > 0 ? 'Uploading ' + uploading() + '…' : 'Upload' }}
+      </button>
+    }
+  </div>
+
+  @if (rows().length) {
+    <div class="rd-scroll">
+      <table class="pl-grid-table rd-table">
+        <thead>
+          <tr>
+            <th class="rd-sr">#</th>
+            <th>Document</th>
+            <th>File</th>
+            <th>Source</th>
+            <th class="rd-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.index; let i = $index) {
+            <tr>
+              <td class="rd-sr">{{ i + 1 }}</td>
+              <td>
+                @if (editingIndex() === r.index && !locked()(r.doc)) {
+                  <input #nameInput class="rd-input" [value]="r.doc.documentName" maxlength="200"
+                    aria-label="Document name"
+                    (keydown.enter)="finishRename(r.index, nameInput.value)"
+                    (keydown.escape)="editingIndex.set(null)"
+                    (blur)="finishRename(r.index, nameInput.value)" />
+                } @else {
+                  <span class="rd-name">{{ r.doc.documentName }}</span>
+                }
+              </td>
+              <td class="rd-file">
+                {{ r.doc.fileName || '—' }}
+                @if (size(r.doc.fileSizeBytes)) { <span class="rd-muted">· {{ size(r.doc.fileSizeBytes) }}</span> }
+              </td>
+              <td><span class="rd-source">{{ sourceText(r.doc) }}</span></td>
+              <td class="rd-actions">
+                <a mat-icon-button [href]="r.doc.documentUrl" target="_blank" rel="noopener" download
+                  matTooltip="Download" [attr.aria-label]="'Download ' + r.doc.documentName">
+                  <mat-icon>download</mat-icon>
+                </a>
+                @if (editable() && !locked()(r.doc)) {
+                  <button mat-icon-button type="button" matTooltip="Rename" (click)="startRename(r.index)"
+                    [attr.aria-label]="'Rename ' + r.doc.documentName">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <input #replaceInput type="file" hidden (change)="onReplace(r.index, $event)" />
+                  <button mat-icon-button type="button" matTooltip="Replace file" (click)="replaceInput.click()"
+                    [attr.aria-label]="'Replace ' + r.doc.documentName">
+                    <mat-icon>swap_horiz</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" matTooltip="Delete" (click)="remove(r.index)"
+                    [attr.aria-label]="'Delete ' + r.doc.documentName">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="rd-empty">
+      <mat-icon>folder_open</mat-icon>
+      <span>{{ emptyText() }}</span>
+    </div>
+  }
+</section>

@@ -5,6 +5,10 @@ import { ApiService } from './api.service';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { TokenStorageService } from '../core/auth/token-storage.service';
+import { takeReturnUrl } from '../core/auth/return-url';
+
+/** Role names of vendor (external) accounts — mirrors RFQ_VENDOR_ROLE on the server. */
+const VENDOR_ROLES = ['ExternalUser', 'Vendor'];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,6 +23,8 @@ export class AuthService {
   readonly role = computed<AppRole>(() => this.currentUser()?.role ?? 'User');
   readonly isSuperAdmin = computed(() => this.role() === 'SuperAdmin');
   readonly isOrgAdmin = computed(() => this.role() === 'OrganizationAdmin');
+  /** A vendor account: it sees only the vendor screens (RFQs issued to its vendor). */
+  readonly isExternal = computed(() => this.currentUser()?.isExternal === true);
 
   constructor() {
     const user = this.tokenStorage.getUser();
@@ -113,14 +119,25 @@ export class AuthService {
       isVerified: u['is_verified'] as boolean,
       createdAt: u['created_at'] ? new Date(u['created_at'] as string) : new Date(),
       organizationId: u['organizationId'] as string,
+      mobile: (u['mobile'] as string | null) ?? undefined,
+      isExternal: u['is_internal'] === false || u['is_internal'] === 0 || VENDOR_ROLES.includes(u['roleName'] as string),
     };
     this.tokenStorage.setSession(res.access_token, res.refresh_token, user);
     this.currentUser.set(user);
     this.isAuthenticated.set(true);
-    this.redirectByRole(user.role);
+    const returnUrl = takeReturnUrl();
+    if (returnUrl) {
+      void this.router.navigateByUrl(returnUrl);
+      return;
+    }
+    this.redirectByRole(user.role, user.isExternal === true);
   }
 
-  private redirectByRole(role: AppRole): void {
+  private redirectByRole(role: AppRole, external = false): void {
+    if (external) {
+      void this.router.navigate(['/vendor-rfqs']);
+      return;
+    }
     const map: Record<AppRole, string> = {
       SuperAdmin: '/admin/dashboard',
       OrganizationAdmin: '/admin/dashboard',
