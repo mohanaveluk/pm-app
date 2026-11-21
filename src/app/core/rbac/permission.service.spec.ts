@@ -3,14 +3,12 @@ import { signal } from '@angular/core';
 import { PermissionService } from './permission.service';
 import { AuthService } from '../../services';
 import { AppRole } from '../../models/role.model';
-import { VendorRfqAccessService } from './vendor-rfq-access.service';
 
-function setup(role: AppRole, external = false, acknowledgedTotal = 0) {
+function setup(role: AppRole, external = false) {
   TestBed.configureTestingModule({
     providers: [
       PermissionService,
       { provide: AuthService, useValue: { role: signal(role), isExternal: signal(external) } },
-      { provide: VendorRfqAccessService, useValue: { summary: signal(external ? { acknowledgedTotal } : null) } },
     ],
   });
   return TestBed.inject(PermissionService);
@@ -63,14 +61,10 @@ describe('PermissionService', () => {
     expect(service.hasRole('WarehouseManager')).toBe(false);
   });
 
-  it('gives a vendor (external) account the RFQ response screens, and the menu once it has acknowledged an RFQ', () => {
-    const before = setup('User', true, 0);
-    expect(before.hasPermission('rfq.respond')).toBe(true);
-    expect(before.hasPermission('rfq.vendor-menu')).toBe(false);
-    expect(before.hasPermission('rfq.view')).toBe(false);
-    TestBed.resetTestingModule();
-    const after = setup('User', true, 1);
-    expect(after.hasPermission('rfq.vendor-menu')).toBe(true);
+  it('always gives a vendor (external) account its RFQ screens and menu entry — even before any RFQ is issued to it', () => {
+    const vendor = setup('User', true);
+    expect(vendor.hasPermission('rfq.respond')).toBe(true);
+    expect(vendor.hasPermission('rfq.view')).toBe(false);
   });
 
   it('does not give internal users the vendor RFQ screens', () => {
@@ -83,7 +77,7 @@ describe('PermissionService', () => {
     expect(internal.hasPermission('material-requisitions.review')).toBe(true);
     expect(internal.hasPermission('material-requisitions.approve')).toBe(true);
     TestBed.resetTestingModule();
-    const vendor = setup('User', true, 1);
+    const vendor = setup('User', true);
     expect(vendor.hasPermission('material-requisitions.review')).toBe(false);
     expect(vendor.hasPermission('material-requisitions.approve')).toBe(false);
     expect(vendor.hasPermission('profile.view')).toBe(true);

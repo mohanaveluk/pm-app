@@ -12,9 +12,9 @@ interface VendorSummary {
 }
 
 /**
- * For vendor (external) accounts: how many RFQs they have acknowledged. The
- * "Requests for Quotation" menu entry shows once there is at least one.
- * Loaded on sign-in and refreshed after the vendor acknowledges an RFQ.
+ * For vendor (external) accounts: their RFQs by stage (the counters on the
+ * vendor RFQ list). Loaded on sign-in and refreshed after the vendor
+ * acknowledges an RFQ.
  */
 @Injectable({ providedIn: 'root' })
 export class VendorRfqAccessService {

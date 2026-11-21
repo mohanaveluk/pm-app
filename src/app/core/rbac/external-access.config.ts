@@ -21,10 +21,8 @@ import { PERMISSIONS } from './permissions.const';
 export const EXTERNAL_ALLOWED_PERMISSIONS: readonly string[] = [
   PERMISSIONS.DASHBOARD_VIEW,
   PERMISSIONS.PROFILE_VIEW,
-  // Requests for Quotation issued to the vendor: acknowledge and respond.
+  // Requests for Quotation issued to the vendor: the menu entry, acknowledge and respond.
   PERMISSIONS.RFQ_RESPOND,
-  // The RFQ menu entry (granted once the vendor has acknowledged an RFQ).
-  PERMISSIONS.RFQ_VENDOR_MENU,
 ];
 
 export const INTERNAL_ONLY_PERMISSIONS: readonly string[] = [
