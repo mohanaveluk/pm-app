@@ -53,8 +53,15 @@
     } @else if (!rows().length) {
       <div class="pl-state">
         <mat-icon>{{ hasFilters() ? 'search_off' : 'request_quote' }}</mat-icon>
-        <p class="pl-state__title">{{ hasFilters() ? 'No matching RFQs' : 'No Requests for Quotation yet' }}</p>
-        <p class="pl-state__hint">RFQs issued to your company appear here, and you are emailed each one.</p>
+        <p class="pl-state__title">{{ hasFilters() ? 'No matching RFQs' : 'No RFQs available' }}</p>
+        <p class="pl-state__hint">
+          {{ hasFilters()
+            ? 'No RFQ matches this filter or search. Choose All RFQs or clear the search.'
+            : 'No Request for Quotation has been issued to your company yet. When a buyer issues one, it appears here and you receive an email with a link to acknowledge it.' }}
+        </p>
+        @if (hasFilters()) {
+          <button mat-stroked-button (click)="setStage('all')"><mat-icon>filter_alt_off</mat-icon> Show all RFQs</button>
+        }
       </div>
     } @else {
       <div class="pl-table-scroll">

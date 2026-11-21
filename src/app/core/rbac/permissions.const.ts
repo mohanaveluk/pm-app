@@ -201,8 +201,6 @@ export const PERMISSIONS = {
   RFQ_MANAGE: 'rfq.manage',
   /** Vendor accounts: acknowledge and respond to the RFQs issued to them. */
   RFQ_RESPOND: 'rfq.respond',
-  /** Vendor accounts that have acknowledged an RFQ: the RFQ menu entry. */
-  RFQ_VENDOR_MENU: 'rfq.vendor-menu',
 
   WAREHOUSE_VIEW: 'warehouse.view',
   WAREHOUSE_MANAGE: 'warehouse.manage',
